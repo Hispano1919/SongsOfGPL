@@ -474,6 +474,22 @@ function world.World:tick()
 		PROFILER:end_timer("production")
 	end
 
+	if WORLD.current_tick_in_month == 2 then
+		PROFILER:start_timer("traders")
+
+		DATA.for_each_province(function (province)
+			DATA.for_each_character_location_from_location(province, function (item)
+				local character = DATA.character_location_get_character(item)
+				if (HAS_TRAIT(character, TRAIT.TRADER)) then
+					DCON.ai_update_price_belief(character);
+					DCON.ai_trade(character)
+				end
+			end)
+		end)
+
+		PROFILER:end_timer("traders")
+	end
+
 	if WORLD.settled_provinces_by_identifier[WORLD.current_tick_in_month] ~= nil then
 
 		-- Monthly tick per realm
@@ -629,7 +645,6 @@ function world.World:tick()
 
 		PROFILER:start_timer("decisions")
 
-
 		for _, settled_province in pairs(ta) do
 			DATA.for_each_character_location_from_location(settled_province, function (item)
 				local character = DATA.character_location_get_character(item)
@@ -638,9 +653,6 @@ function world.World:tick()
 				end
 			end)
 		end
-
-		---#logging LOGS:write("decisions end\n")
-		---#logging LOGS:flush()
 
 		PROFILER:end_timer("decisions")
 	end

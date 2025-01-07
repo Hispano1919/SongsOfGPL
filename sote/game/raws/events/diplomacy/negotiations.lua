@@ -712,7 +712,9 @@ return function ()
 			end
 
 			for good, amount in pairs(trade_agreement.goods_transfer_from_initiator_to_target) do
-				local change = amount * DATA.pop_get_price_memory(character, good)
+				-- percieved value of goods depends on amount of wealth you can get when selling them:
+				-- expensive to buy but cheap to sell goods are essentially worthless
+				local change = amount * DATA.pop_get_price_belief_sell(character, good)
 
 				if change > 0 then
 					wealth_gain = wealth_gain + change

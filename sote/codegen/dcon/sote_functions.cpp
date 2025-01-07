@@ -1960,3 +1960,79 @@ void update_map_mode_pointer(uint8_t* map, uint32_t world_size) {
 		map[pixel_index * 4 + 3] = uint8_t(255 * 1);
 	});
 }
+
+void ai_update_price_belief(int32_t trader_raw_id) {
+	auto trader = dcon::pop_id { dcon::pop_id::value_base_t(trader_raw_id - 1)};
+	auto province = state.pop_get_location_from_character_location(trader);
+
+	if (!province) {
+		return;
+	}
+
+	// there is passive decrease of sell price
+	// and passive increase of buy price (up to a certain limit)
+	// to represent reduction of confidence in ability
+	// to sell and buy at current prices you believe in
+
+	// another force is moving your price beliefs toward the local price
+
+	state.for_each_trade_good([&](dcon::trade_good_id tgid) {
+		auto sell = state.pop_get_price_belief_sell(trader, tgid);
+		auto buy = state.pop_get_price_belief_buy(trader, tgid);
+		auto local_price = state.province_get_local_prices(province, tgid);
+
+		if (sell == 0.f) {
+			state.pop_set_price_belief_sell(trader, tgid, local_price * 0.8);
+		}
+		if (buy == 0.f) {
+			state.pop_set_price_belief_buy(trader, tgid, local_price * 1.2);
+		}
+
+		auto belief_sell_gradient = (local_price * 0.9f - sell) * 0.1f - 0.01f;
+		auto belief_buy_gradient = (local_price * 1.1f - buy) * 0.1f + 0.01f;
+
+		state.pop_set_price_belief_sell(trader, tgid, std::max(0.01f, sell + belief_sell_gradient));
+		state.pop_set_price_belief_buy(trader, tgid, std::max(0.01f, buy + belief_buy_gradient));
+	});
+}
+
+void ai_trade(int32_t trader_raw_id) {
+	auto trader = dcon::pop_id { dcon::pop_id::value_base_t(trader_raw_id - 1)};
+	auto province = state.pop_get_location_from_character_location(trader);
+
+	if (!province) {
+		return;
+	}
+
+	// buy if you belive you can sell for higher price
+	// sell if you belive you can buy for lower price
+
+	auto& wealth = state.pop_get_savings(trader);
+	auto& local_traders_wealth = state.province_get_local_wealth(province);
+
+	state.for_each_trade_good([&](dcon::trade_good_id tgid) {
+		auto sell = state.pop_get_price_belief_sell(trader, tgid);
+		auto buy = state.pop_get_price_belief_buy(trader, tgid);
+
+		auto local_price = state.province_get_local_prices(province, tgid);
+		auto& local_stockpile = state.province_get_local_storage(province, tgid);
+		auto& trader_stockpile = state.pop_get_inventory(trader, tgid);
+
+		// TODO: move the sell and buy functions to cpp
+		// and figure out a way to store notifications
+
+		if (local_stockpile >= 1 && wealth > local_price && sell > local_price * 1.2f) {
+			wealth -= local_price;
+			local_traders_wealth += local_price;
+			local_stockpile -= 1;
+			trader_stockpile += 1;
+		}
+
+		if (trader_stockpile >= 1 && local_traders_wealth > local_price && buy < local_price * 0.8f) {
+			wealth += local_price;
+			local_traders_wealth -= local_price;
+			local_stockpile += 1;
+			trader_stockpile -= 1;
+		}
+	});
+}

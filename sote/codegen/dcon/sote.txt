@@ -429,7 +429,12 @@ object {
         tag { scenario }
     }
     property{
-        name { price_memory }
+        name { price_belief_sell }
+        type { array{trade_good_id}{float} }
+        tag { scenario }
+    }
+    property{
+        name { price_belief_buy }
         type { array{trade_good_id}{float} }
         tag { scenario }
     }

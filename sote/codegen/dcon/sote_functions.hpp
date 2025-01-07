@@ -44,4 +44,7 @@ extern "C" {
 	DCON_LUADLL_API void load_state(char const*);
 	DCON_LUADLL_API void update_map_mode_pointer(uint8_t* map, uint32_t world_size);
 	DCON_LUADLL_API int32_t get_neighbor(int32_t tile_id, uint8_t neighbor_index, uint32_t world_size);
+
+	DCON_LUADLL_API void ai_update_price_belief(int32_t trader_raw_id);
+	DCON_LUADLL_API void ai_trade(int32_t trader_raw_id);
 }

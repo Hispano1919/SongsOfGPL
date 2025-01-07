@@ -423,12 +423,12 @@ function EconomicEffects.buy(character, good, amount)
 
 	local price = ev.get_local_price(province, good)
 
-	local price_memory = DATA.pop_get_price_memory(character, good)
+	local price_belief = DATA.pop_get_price_belief_buy(character, good)
 
-	if price_memory == 0 then
-		DATA.pop_set_price_memory(character, good, price)
+	if price_belief == 0 then
+		DATA.pop_set_price_belief_buy(character, good, price)
 	else
-		DATA.pop_set_price_memory(character, good, price_memory * (3 / 4) + price * (1 / 4))
+		DATA.pop_set_price_belief_buy(character, good, price_belief * (3 / 4) + price * (1 / 4))
 	end
 
 	local cost = price * amount
@@ -582,11 +582,11 @@ function EconomicEffects.character_buy_use(character, use, amount)
 		local good = DATA.use_weight_get_trade_good(weight_id)
 		local weight = DATA.use_weight_get_weight(weight_id)
 		local good_price = ev.get_local_price(province, good)
-		local memory = DATA.pop_get_price_memory(character, good)
-		if memory == 0 then
-			DATA.pop_set_price_memory(character, good, good_price)
+		local price_belief = DATA.pop_get_price_belief_buy(character, good)
+		if price_belief == 0 then
+			DATA.pop_set_price_belief_buy(character, good, good_price)
 		else
-			DATA.pop_set_price_memory(character, good, memory * (3 / 4) + good_price * (1 / 4))
+			DATA.pop_set_price_belief_buy(character, good, price_belief * (3 / 4) + good_price * (1 / 4))
 		end
 		local goods_available = DATA.province_get_local_storage(province, good)
 		if goods_available > 0 then
@@ -826,13 +826,13 @@ function EconomicEffects.sell(character, good, amount)
 	local province = PROVINCE(character)
 	local price = ev.get_pessimistic_local_price(province, good, amount, true)
 
-	local memory = DATA.pop_get_price_memory(character, good)
+	local memory = DATA.pop_get_price_belief_sell(character, good)
 	local new_memory = price
 	if memory > 0 then
 		new_memory = memory * (3 / 4) + price * (1 / 4)
 	end
 
-	DATA.pop_set_price_memory(character, good, new_memory)
+	DATA.pop_set_price_belief_sell(character, good, new_memory)
 
 	local cost = price * amount
 
