@@ -3,22 +3,23 @@ Handles build of DataContainer:
 https://github.com/schombert/DataContainer
 """
 import os
+import sys
 import platform
 import time
 import subprocess
 from pathlib import Path
 from shutil import copyfile, move
 
-COMPILE_DCON_GEN = True
-COMPILE_LUA_GEN = True
+COMPILE_DCON_GEN = sys.argv[1]
+COMPILE_LUA_GEN = sys.argv[2]
 
-CODEGEN_DCON = True
-CODEGEN_LUA = True
+CODEGEN_DCON = sys.argv[3]
+CODEGEN_LUA = sys.argv[4]
 
 SYSTEM = platform.system()
 MACHINE = platform.machine()
 
-print("BUILDING FOR " + SYSTEM, MACHINE)
+print(SYSTEM, MACHINE)
 
 root = Path().absolute()
 
@@ -34,7 +35,7 @@ additional_functions_source = \
 additional_functions_header = \
     codegen_path.joinpath("dcon").joinpath("sote_functions.hpp")
 
-generation_folder = root.joinpath("builder")
+generation_folder = root.joinpath("build")
 repo_folder = generation_folder.joinpath("DataContainer")
 
 dcon_generator_folder = repo_folder.joinpath("DataContainerGenerator")

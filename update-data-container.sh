@@ -1,2 +1,2 @@
-rm -rf ./builder/DataContainer
-git clone https://github.com/ineveraskedforthis/DataContainer.git ./builder/DataContainer --depth 1
+rm -rf ./build/DataContainer
+git clone https://github.com/ineveraskedforthis/DataContainer.git ./build/DataContainer --depth 1
