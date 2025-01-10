@@ -3,6 +3,7 @@ Handles build of DataContainer:
 https://github.com/schombert/DataContainer
 """
 import os
+import platform
 import time
 import subprocess
 from pathlib import Path
@@ -14,7 +15,13 @@ COMPILE_LUA_GEN = False
 CODEGEN_DCON = True
 CODEGEN_LUA = True
 
-codegen_path = Path().absolute().joinpath("sote").joinpath("codegen")
+SYSTEM = platform.system()
+MACHINE = platform.machine()
+
+print("OS: " + SYSTEM)
+print("CPU: " + MACHINE)
+
+codegen_path = Path().absolute().joinpath("codegen")
 
 description_path = \
     codegen_path.joinpath("dcon").joinpath("sote.txt")
@@ -45,11 +52,18 @@ additional_functions_src_destination = \
 additional_functions_header_destination = \
     generation_folder.joinpath("sote_functions.hpp")
 
+generator_name = "DataContainerGenerator"
+dll_generator_name = "LuaDLLGenerator"
+
+if os == 'nt':
+    generator_name += ".exe"
+    dll_generator_name += ".exe"
+
 generator_exe = \
-    generation_folder.joinpath("DataContainerGenerator.exe")
+    generation_folder.joinpath(generator_name)
 
 dll_generator_exe = \
-    generation_folder.joinpath("LuaDLLGenerator.exe")
+    generation_folder.joinpath(dll_generator_name)
 
 copyfile(description_path, description_destination)
 copyfile(additional_types_header, additional_types_destination)
@@ -62,7 +76,7 @@ if COMPILE_DCON_GEN:
     try:
         subprocess.run(subprocess.list2cmdline([ \
             "clang++",
-            "-std=c++20",
+            "-std=c++20", "-stdlib=libc++",
             dcon_generator_folder.joinpath("code_fragments.cpp"),
             dcon_generator_folder.joinpath("DataContainerGenerator.cpp"),
             dcon_generator_folder.joinpath("object_member_fragments.cpp"),
@@ -84,7 +98,7 @@ if COMPILE_LUA_GEN:
     print("compiling dll source code generator")
     subprocess.run(subprocess.list2cmdline([ \
         "clang++",
-        "-std=c++20",
+        "-std=c++20", "-stdlib=libc++",
         dll_generator_folder.joinpath("LuaDLLGenerator.cpp"),
         dll_generator_folder.joinpath("parsing.cpp"),
         "-o", "a.exe",
@@ -143,7 +157,7 @@ if os.name == 'nt':
         # "-O1",
         # "-O0"
         ] \
-        +["-std=c++20",
+        +["-std=c++20", "-stdlib=libc++",
         # "-msse4.1",
         "-shared",
         "-mavx2",
@@ -179,8 +193,8 @@ else:
     subprocess.run(" ".join(["clang++", "-O3",
                                             "-std=c++20", "-msse4.1", "-shared", "-fdeclspec",
                                             "-mavx2", "-fPIC",
-                                            "-L./sote/codegen/dll/linux",
-                                            "-Wl,-R./sote/codegen/dll/linux",
+                                            "-L./codegen/dll/linux",
+                                            "-Wl,-R./codegen/dll/linux",
                                             "-DPREFER_ONE_TBB", f'-I{str(codegen_path.joinpath("include"))}',
                                             str(generation_folder.joinpath("lua_objs.cpp")),
                                             str(generation_folder.joinpath("common_types.cpp")),
