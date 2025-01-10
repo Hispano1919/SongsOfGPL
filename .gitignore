@@ -11,8 +11,8 @@ seed.txt
 sote/seed.txt
 sote/logs/
 
-DataContainer
-DataContainer/*
+builder
+builder/*
 
 temp
 temp/*

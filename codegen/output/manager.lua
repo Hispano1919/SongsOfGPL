@@ -2,12 +2,47 @@ local ffi = require("ffi")
 ---manage dll loading
 
 
+-- match jit.os to python platform.system() here
+local os_patterns = {
+    ['linux'] = 'Linux',
+    ['windows'] = 'Windows',
+}
+-- match jit.arch to python platform.machine() here
+local arch_patterns = {
+    ['x64'] = 'x86_64',
+}
+
+SYSTEM = "unknown"
+MACHINE = "unknown"
+
+local jit_os = jit.os:lower()
+print(jit_os)
+for pattern, name in pairs(os_patterns) do
+    if jit_os:match(pattern) then
+        SYSTEM = name
+        break
+    end
+end
+
+local jit_arch = jit.arch:lower()
+print(jit_arch)
+for pattern, name in pairs(arch_patterns) do
+    if jit_arch:match(pattern) then
+        MACHINE = name
+        break
+    end
+end
+
+
+print("OS: " .. SYSTEM)
+print("CPU: " .. MACHINE)
+
+local dll_path = love.filesystem.getSourceBaseDirectory() .. "/libraries/" .. SYSTEM .. "/" .. MACHINE
+
 if love.system.getOS() == "Windows" then
-	local dll_path = love.filesystem.getSourceBaseDirectory() .. "/sote/codegen/dll/win/"
-	DCON = ffi.load(dll_path .. "dcon.dll")
+	DCON = ffi.load(dll_path .. "/dcon.dll")
 else
-	local dll_path = love.filesystem.getSourceBaseDirectory() .. "/sote/codegen/dll/linux/"
-	DCON = ffi.load(dll_path .. "dcon.so")
+	DCON = ffi.load(dll_path .. "/dcon.so")
 end
 
 

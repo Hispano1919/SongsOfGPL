@@ -9,8 +9,8 @@ import subprocess
 from pathlib import Path
 from shutil import copyfile, move
 
-COMPILE_DCON_GEN = False
-COMPILE_LUA_GEN = False
+COMPILE_DCON_GEN = True
+COMPILE_LUA_GEN = True
 
 CODEGEN_DCON = True
 CODEGEN_LUA = True
@@ -18,10 +18,11 @@ CODEGEN_LUA = True
 SYSTEM = platform.system()
 MACHINE = platform.machine()
 
-print("OS: " + SYSTEM)
-print("CPU: " + MACHINE)
+print("BUILDING FOR " + SYSTEM, MACHINE)
 
-codegen_path = Path().absolute().joinpath("codegen")
+root = Path().absolute()
+
+codegen_path = root.joinpath("codegen")
 
 description_path = \
     codegen_path.joinpath("dcon").joinpath("sote.txt")
@@ -33,9 +34,9 @@ additional_functions_source = \
 additional_functions_header = \
     codegen_path.joinpath("dcon").joinpath("sote_functions.hpp")
 
-repo_folder = Path().absolute().joinpath("DataContainer")
+generation_folder = root.joinpath("builder")
+repo_folder = generation_folder.joinpath("DataContainer")
 
-generation_folder = repo_folder.joinpath("lua_dll_build_test")
 dcon_generator_folder = repo_folder.joinpath("DataContainerGenerator")
 dll_generator_folder = repo_folder.joinpath("LuaDLLGenerator")
 
@@ -59,11 +60,14 @@ if os == 'nt':
     generator_name += ".exe"
     dll_generator_name += ".exe"
 
+binary_folder = generation_folder.joinpath(SYSTEM).joinpath(MACHINE)
+os.makedirs(binary_folder, exist_ok=True)
+
 generator_exe = \
-    generation_folder.joinpath(generator_name)
+    binary_folder.joinpath(generator_name)
 
 dll_generator_exe = \
-    generation_folder.joinpath(dll_generator_name)
+    binary_folder.joinpath(dll_generator_name)
 
 copyfile(description_path, description_destination)
 copyfile(additional_types_header, additional_types_destination)
@@ -112,7 +116,8 @@ if CODEGEN_LUA:
 for file in os.listdir(common_include):
     copyfile(common_include.joinpath(file), generation_folder.joinpath(file))
 
-dll_folder = codegen_path.joinpath("dll")
+dll_folder = root.joinpath("libraries").joinpath(SYSTEM).joinpath(MACHINE)
+os.makedirs(dll_folder, exist_ok = True)
 
 O2 = "-inline -mldst-motion -gvn -elim-avail-extern -slp-vectorizer -constmerge".split()
 O3 = "-callsite-splitting -argpromotion"
@@ -175,8 +180,6 @@ if os.name == 'nt':
 
     time.sleep(0.1)
 
-    dll_folder = dll_folder.joinpath("win")
-
     # dire times require dire solutions
     for i in range(10):
         try:
@@ -208,6 +211,5 @@ else:
 
     print("compilation completed")
     print("it took " + str(time.time() - now) + " seconds")
-    dll_folder = dll_folder.joinpath("linux")
     move("./dcon.so", dll_folder.joinpath("dcon.so"))
 
