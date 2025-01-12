@@ -10,16 +10,16 @@ import subprocess
 from pathlib import Path
 from shutil import copyfile, move
 
-COMPILE_DCON_GEN = sys.argv[1]
-COMPILE_LUA_GEN = sys.argv[2]
+COMPILE_DCON_GEN = sys.argv[1]=="true"
+COMPILE_LUA_GEN = sys.argv[2]=="true"
 
-CODEGEN_DCON = sys.argv[3]
-CODEGEN_LUA = sys.argv[4]
+CODEGEN_DCON = sys.argv[3]=="true"
+CODEGEN_LUA = sys.argv[4]=="true"
 
 SYSTEM = platform.system()
 MACHINE = platform.machine()
 
-print(SYSTEM, MACHINE)
+print("py",SYSTEM, MACHINE)
 
 root = Path().absolute()
 
@@ -61,14 +61,14 @@ if os == 'nt':
     generator_name += ".exe"
     dll_generator_name += ".exe"
 
-binary_folder = generation_folder.joinpath(SYSTEM).joinpath(MACHINE)
-os.makedirs(binary_folder, exist_ok=True)
+system_path = generation_folder.joinpath(SYSTEM).joinpath(MACHINE)
+os.makedirs(system_path, exist_ok=True)
 
 generator_exe = \
-    binary_folder.joinpath(generator_name)
+    system_path.joinpath(generator_name)
 
 dll_generator_exe = \
-    binary_folder.joinpath(dll_generator_name)
+    system_path.joinpath(dll_generator_name)
 
 copyfile(description_path, description_destination)
 copyfile(additional_types_header, additional_types_destination)
@@ -81,7 +81,7 @@ if COMPILE_DCON_GEN:
     try:
         subprocess.run(subprocess.list2cmdline([ \
             "clang++",
-            "-std=c++20", "-stdlib=libc++",
+            "-std=c++20",
             dcon_generator_folder.joinpath("code_fragments.cpp"),
             dcon_generator_folder.joinpath("DataContainerGenerator.cpp"),
             dcon_generator_folder.joinpath("object_member_fragments.cpp"),
@@ -103,7 +103,7 @@ if COMPILE_LUA_GEN:
     print("compiling dll source code generator")
     subprocess.run(subprocess.list2cmdline([ \
         "clang++",
-        "-std=c++20", "-stdlib=libc++",
+        "-std=c++20",
         dll_generator_folder.joinpath("LuaDLLGenerator.cpp"),
         dll_generator_folder.joinpath("parsing.cpp"),
         "-o", "a.exe",
@@ -117,7 +117,7 @@ if CODEGEN_LUA:
 for file in os.listdir(common_include):
     copyfile(common_include.joinpath(file), generation_folder.joinpath(file))
 
-dll_folder = root.joinpath("libraries").joinpath(SYSTEM).joinpath(MACHINE)
+dll_folder = root.joinpath("lib").joinpath(SYSTEM).joinpath(MACHINE)
 os.makedirs(dll_folder, exist_ok = True)
 
 O2 = "-inline -mldst-motion -gvn -elim-avail-extern -slp-vectorizer -constmerge".split()
@@ -163,7 +163,7 @@ if os.name == 'nt':
         # "-O1",
         # "-O0"
         ] \
-        +["-std=c++20", "-stdlib=libc++",
+        +["-std=c++20",
         # "-msse4.1",
         "-shared",
         "-mavx2",
@@ -197,9 +197,9 @@ else:
     subprocess.run(" ".join(["clang++", "-O3",
                                             "-std=c++20", "-msse4.1", "-shared", "-fdeclspec",
                                             "-mavx2", "-fPIC",
-                                            "-L./codegen/dll/linux",
-                                            "-Wl,-R./codegen/dll/linux",
-                                            "-DPREFER_ONE_TBB", f'-I{str(codegen_path.joinpath("include"))}',
+                                            ("-L./lib/"+SYSTEM+"/"+MACHINE),
+                                            ("-Wl,-R./lib/"+SYSTEM+"/"+MACHINE),
+                                            "-DPREFER_ONE_TBB", f'-I{str(generation_folder.joinpath(SYSTEM).joinpath(MACHINE).joinpath("include"))}',
                                             str(generation_folder.joinpath("lua_objs.cpp")),
                                             str(generation_folder.joinpath("common_types.cpp")),
                                             str(additional_functions_src_destination),

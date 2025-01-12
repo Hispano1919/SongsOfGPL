@@ -3,31 +3,45 @@ Help()
 {
     echo
     echo "Build .dll or .so for this operating system and cpu architecture."
-    echo " -d     compile DataContainerGenerator"
-    echo " -g     compile LuaDLLGenerator"
-    echo " -c     clean build folder afterwards"
-    echo " -u     update DataContainer repository"
+    echo
+    echo " -b     (re)build oneTBB and generators"
+    echo " -f     fetch repositories and (re)build all"
+    echo " -c     clean build folder"
     echo
 }
 
 Clean=false
-Update=false
-COMPILE_LUA=false
-COMPILE_DCON=false
+FetchTBB=false
+FetchDCon=false
+CompileTBB=false
+CompileLua=false
+CompileDCon=false
+
+# match bash OSTYPE to python platform.machine()
+case "$OSTYPE" in
+  darwin*)  System="Mac" ;; 
+  linux*)   System="Linux" ;;
+  msys*)    System="Windows" ;;
+  cygwin*)  System="Windows" ;;
+  *)        System="unknown: $OSTYPE" ;;
+esac
+Machine="$(uname -p)"
+echo "sh $System $Machine"
 
 #check for optional rebuilding options
-while getopts ":hbcr" option; do
+while getopts ":hbfc" option; do
     case $option in
         h) # display Help
             Help
             exit;;
         b) # build generators
-            Lua=true
-            DCon=true;;
-        c) # clean builder folder
+            CompileTBB=true;;
+        f) # update and build
+            rm -rf ./build
+            rm -rf ./lib/$System/$Machine
+            ;;
+        c) # clean build folder
             Clean=true;;
-        r) # update DataContainer repo
-            Repo=true;;
         \?) # Invalid option
             echo "Error: Invalid option $OPTARG"
             Help
@@ -35,33 +49,57 @@ while getopts ":hbcr" option; do
     esac
 done
 
-Arch="$(uname -p)"
-
 # check for generators
-if ! [ -f "./build/Linux/$Arch/LuaDLLGenerator" ]; then
-    echo "LuaDLLGenerator not found!"
-    COMPILE_LUA=true
+if ! [ -f "./build/$System/$Machine/LuaDLLGenerator" ]; then
+    echo "LuaDLLGenerator not found"
+    CompileLua=true
 fi
-if ! [ -f "./build/Linux/$Arch/DataContainerGenerator" ]; then
-    echo "DataContainerGenerator not found!"
-    COMPILE_DCON=true
-fi
-
-Build=$COMPILE_DCON||$COMPILE_LUA
-echo "$Build"
-# check for datacontainer repo
-if $Build && ! [ -d "./build/DataContainer/.git" ]; then
-    echo "DataContainer repository not found!"
-    Repo=true
+if ! [ -f "./build/$System/$Machine/DataContainerGenerator" ]; then
+    echo "DataContainerGenerator not found"
+    CompileDCon=true
 fi
 
-# clean and redownload repository
-if $Repo; then
+# check for tbb librariers and includes
+if [[ $CompileLua || $CompileDCon ]]; then
+    if ! [ -f "./lib/$System/$Machine/libtbb.so" ]; then
+        echo "oneTBB libaries not found"
+        CompileTBB=true
+    fi
+    if ! [ -d "./build/$System/$Machine/include" ]; then
+        echo "oneTBB includes not found"
+        CompileTBB=true
+    fi
+fi
+
+if $CompileTBB && ! [ -d "./build/oneTBB/.git" ]; then
+    echo "Fetching oneTBB repository..."
+    rm -rf ./build/oneTBB
+    git clone https://github.com/uxlfoundation/oneTBB.git ./build/oneTBB --depth 1
+fi
+
+if $CompileTBB; then
+    CompileDCon=true
+    CompileLua=true
+    rm -rf ./build/libtbb/$System/$Machine
+    cmake -S ./build/oneTBB -B ./build/libtbb/$System/$Machine \
+        -DCMAKE_POLICY_DEFAULT_CMP0177=NEW \
+        -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang \
+        -DCMAKE_CXX_STANDARD=20 \
+        -DCMAKE_INSTALL_PREFIX=./build/$System/$Machine \
+        -DCMAKE_INSTALL_LIBDIR=../../../lib/$System/$Machine \
+        -DCMAKE_INSTALL_INCLUDEDIR=./include \
+        -DTBB_TEST=OFF -DCMAKE_BUILD_TYPE=Release
+    cmake --build ./build/libtbb/$System/$Machine
+    cmake --install ./build/libtbb/$System/$Machine
+fi
+
+# clean and redownload repositories
+if [[ $CompileDCon || $CompileLua ]] && ! [ -d "./build/DataContainer/.git" ]; then
     echo "Fetching DataContainer repository..."
-    ./update-data-container.sh
+    git clone https://github.com/ineveraskedforthis/DataContainer.git ./build/DataContainer --depth 1
 fi
 
-python3 codegen/build.py $COMPILE_LUA $COMPILE_DCON true true
+python3 codegen/build.py $CompileDCon $CompileLua true true
 
 if $Clean; then
     echo "Removing build files..."

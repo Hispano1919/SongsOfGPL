@@ -37,7 +37,7 @@ end
 print("OS: " .. SYSTEM)
 print("CPU: " .. MACHINE)
 
-local dll_path = love.filesystem.getSourceBaseDirectory() .. "/libraries/" .. SYSTEM .. "/" .. MACHINE
+local dll_path = love.filesystem.getSourceBaseDirectory() .. "/lib/" .. SYSTEM .. "/" .. MACHINE
 
 if love.system.getOS() == "Windows" then
 	DCON = ffi.load(dll_path .. "/dcon.dll")

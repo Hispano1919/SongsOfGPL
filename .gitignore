@@ -14,5 +14,8 @@ sote/logs/
 build
 build/*
 
+lib/*/*/cmake/*
+lib/*/*/pkgconfig/*
+
 temp
 temp/*
