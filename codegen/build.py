@@ -19,7 +19,7 @@ CODEGEN_LUA = sys.argv[4]=="true"
 SYSTEM = platform.system()
 MACHINE = platform.machine()
 
-print("py",SYSTEM, MACHINE)
+print("platform",SYSTEM, MACHINE)
 
 root = Path().absolute()
 
@@ -77,7 +77,8 @@ copyfile(additional_functions_header, additional_functions_header_destination)
 
 
 if COMPILE_DCON_GEN:
-    print("compiling datacontainer")
+    print("Compiling DataContainerGenerator...")
+    now = time.time()
     try:
         subprocess.run(subprocess.list2cmdline([ \
             "clang++",
@@ -95,12 +96,17 @@ if COMPILE_DCON_GEN:
         print(subprocess.list2cmdline(command_line_error.cmd))
         raise
     move("a.exe", generator_exe)
+    print("DataContainerGenerator took " + str(time.time() - now) + " seconds to compile.")
 
 if CODEGEN_DCON:
+    print("Running DataContainerGenerator...")
+    now = time.time()
     subprocess.run([generator_exe, description_destination], check=True)
+    print("DataContainerGenerator took " + str(time.time() - now) + " seconds to run.")
 
 if COMPILE_LUA_GEN:
-    print("compiling dll source code generator")
+    print("Compiling LuaDLLGenerator...")
+    now = time.time()
     subprocess.run(subprocess.list2cmdline([ \
         "clang++",
         "-std=c++20",
@@ -109,9 +115,13 @@ if COMPILE_LUA_GEN:
         "-o", "a.exe",
     ]), check=True, shell=True)
     move("a.exe", dll_generator_exe)
+    print("LuaDLLGenerator took " + str(time.time() - now) + " seconds to compile.")
 
 if CODEGEN_LUA:
+    print("Running LuaDLLGenerator...")
+    now = time.time()
     subprocess.run([dll_generator_exe, description_destination], check=True)
+    print("LuaDLLGenerator took " + str(time.time() - now) + " seconds to run.")
 
 # compile dll itself
 for file in os.listdir(common_include):
@@ -155,7 +165,7 @@ O3 = "-callsite-splitting -argpromotion"
 # ]
 
 if os.name == 'nt':
-    print("compiling dll")
+    print("Compiling dll...")
     now = time.time()
     subprocess.run(subprocess.list2cmdline([ \
         "clang++",
@@ -176,8 +186,7 @@ if os.name == 'nt':
     ]), check=True, shell=True)
 
 
-    print("compilation completed")
-    print("it took " + str(time.time() - now) + " seconds")
+    print("DLL took " + str(time.time() - now) + " seconds")
 
     time.sleep(0.1)
 
@@ -191,7 +200,7 @@ if os.name == 'nt':
         except PermissionError:
             time.sleep(0.5)
 else:
-    print("compile linux library")
+    print("Compiling linux library...")
     now = time.time()
 
     subprocess.run(" ".join(["clang++", "-O3",
@@ -210,7 +219,6 @@ else:
                              ]),
                    check = True, shell = True)
 
-    print("compilation completed")
-    print("it took " + str(time.time() - now) + " seconds")
+    print("Linux Library took " + str(time.time() - now) + " seconds to compile.")
     move("./dcon.so", dll_folder.joinpath("dcon.so"))
 

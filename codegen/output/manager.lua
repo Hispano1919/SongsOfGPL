@@ -16,7 +16,6 @@ SYSTEM = "unknown"
 MACHINE = "unknown"
 
 local jit_os = jit.os:lower()
-print(jit_os)
 for pattern, name in pairs(os_patterns) do
     if jit_os:match(pattern) then
         SYSTEM = name
@@ -25,7 +24,6 @@ for pattern, name in pairs(os_patterns) do
 end
 
 local jit_arch = jit.arch:lower()
-print(jit_arch)
 for pattern, name in pairs(arch_patterns) do
     if jit_arch:match(pattern) then
         MACHINE = name
@@ -33,9 +31,8 @@ for pattern, name in pairs(arch_patterns) do
     end
 end
 
-
-print("OS: " .. SYSTEM)
-print("CPU: " .. MACHINE)
+print("jit id: " ..  jit.os .. " " .. jit.arch)
+print("library path: lib/" .. SYSTEM .. "/" .. MACHINE)
 
 local dll_path = love.filesystem.getSourceBaseDirectory() .. "/lib/" .. SYSTEM .. "/" .. MACHINE
 

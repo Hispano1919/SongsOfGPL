@@ -39,7 +39,7 @@ while getopts ":hbfc" option; do
         f) # update and build
             rm -rf ./build
             rm -rf ./lib/$System/$Machine
-            ;;
+            CompileTBB=true;;
         c) # clean build folder
             Clean=true;;
         \?) # Invalid option
@@ -51,22 +51,18 @@ done
 
 # check for generators
 if ! [ -f "./build/$System/$Machine/LuaDLLGenerator" ]; then
-    echo "LuaDLLGenerator not found"
     CompileLua=true
 fi
 if ! [ -f "./build/$System/$Machine/DataContainerGenerator" ]; then
-    echo "DataContainerGenerator not found"
     CompileDCon=true
 fi
 
 # check for tbb librariers and includes
 if [[ $CompileLua || $CompileDCon ]]; then
     if ! [ -f "./lib/$System/$Machine/libtbb.so" ]; then
-        echo "oneTBB libaries not found"
         CompileTBB=true
     fi
     if ! [ -d "./build/$System/$Machine/include" ]; then
-        echo "oneTBB includes not found"
         CompileTBB=true
     fi
 fi
@@ -78,17 +74,18 @@ if $CompileTBB && ! [ -d "./build/oneTBB/.git" ]; then
 fi
 
 if $CompileTBB; then
+    echo "Building oneTBB libraries..."
     CompileDCon=true
     CompileLua=true
     rm -rf ./build/libtbb/$System/$Machine
     cmake -S ./build/oneTBB -B ./build/libtbb/$System/$Machine \
-        -DCMAKE_POLICY_DEFAULT_CMP0177=NEW \
+        -DCMAKE_POLICY_DEFAULT_CMP0177=NEW -Wno-deprecated \
         -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang \
         -DCMAKE_CXX_STANDARD=20 \
         -DCMAKE_INSTALL_PREFIX=./build/$System/$Machine \
         -DCMAKE_INSTALL_LIBDIR=../../../lib/$System/$Machine \
         -DCMAKE_INSTALL_INCLUDEDIR=./include \
-        -DTBB_TEST=OFF -DCMAKE_BUILD_TYPE=Release
+        -DTBB_TEST=OFF #-DCMAKE_BUILD_TYPE=Release
     cmake --build ./build/libtbb/$System/$Machine
     cmake --install ./build/libtbb/$System/$Machine
 fi
@@ -99,6 +96,7 @@ if [[ $CompileDCon || $CompileLua ]] && ! [ -d "./build/DataContainer/.git" ]; t
     git clone https://github.com/ineveraskedforthis/DataContainer.git ./build/DataContainer --depth 1
 fi
 
+echo "Running python build script..."
 python3 codegen/build.py $CompileDCon $CompileLua true true
 
 if $Clean; then
