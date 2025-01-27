@@ -197,108 +197,88 @@ end
 
 ---Returns the adjusted health value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number attack health modified by pop race and sex
-function rtab.POP.get_health(pop, unit)
-	return DATA.unit_type_get_base_health(unit) * rtab.POP.size(pop)
+function rtab.POP.get_health(pop)
+	return rtab.POP.size(pop)
 end
 
 ---Returns the adjusted attack value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted attack modified by pop race and sex
-function rtab.POP.get_attack(pop, unit)
-	return DATA.unit_type_get_base_attack(unit) * rtab.POP.job_efficiency(pop, JOBTYPE.WARRIOR)
+function rtab.POP.get_attack(pop)
+	return rtab.POP.job_efficiency(pop, JOBTYPE.WARRIOR)
 end
 
 ---Returns the adjusted armor value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted armor modified by pop race and sex
-function rtab.POP.get_armor(pop, unit)
-	return DATA.unit_type_get_base_armor(unit)
+function rtab.POP.get_armor(pop)
+	return 1
 end
 
 ---Returns the adjusted speed value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
----@return number pop_adjusted speed modified by pop race and sex
-function rtab.POP.get_speed(pop, unit)
-	if unit ~= INVALID_ID then
-		return DATA.unit_type_get_speed(unit)
-	end
-	return 1
+---@return speed pop_adjusted speed modified by pop race and sex
+function rtab.POP.get_speed(pop)
+	---@type speed
+	local result = {
+		base = 1,
+		can_fly = false,
+		forest_fast = DATA.race_get_requires_large_forest(DATA.pop_get_race(pop)),
+		river_fast = DATA.race_get_requires_large_river(DATA.pop_get_race(pop))
+	}
+
+	return result
 end
 
 ---Returns the adjusted combat strength values for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number health
 ---@return number attack
 ---@return number armor
 ---@return number speed
-function rtab.POP.get_strength(pop, unit)
-	return rtab.POP.get_health(pop, unit), rtab.POP.get_attack(pop, unit), rtab.POP.get_armor(pop, unit), rtab.POP.get_speed(pop, unit)
+function rtab.POP.get_strength(pop)
+	return rtab.POP.get_health(pop), rtab.POP.get_attack(pop), rtab.POP.get_armor(pop), rtab.POP.get_speed(pop).base
 end
 
 ---Returns the adjusted spotting value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted spotting modified by pop race and sex
-function rtab.POP.get_spotting(pop, unit)
+function rtab.POP.get_spotting(pop)
 	local race = DATA.pop_get_race(pop)
 	local spotting = DATA.race_get_spotting(race)
-	if unit ~= INVALID_ID then
-		return DATA.unit_type_get_spotting(unit) * spotting
-	end
 	return spotting
 end
 
 ---Returns the adjusted visibility value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted visibility modified by pop race and sex
-function rtab.POP.get_visibility(pop, unit)
+function rtab.POP.get_visibility(pop)
 	local race = DATA.pop_get_race(pop)
 	local visibility = DATA.race_get_visibility(race)
 	local mod = visibility * rtab.POP.size(pop)
-	if unit ~= INVALID_ID then
-		return DATA.unit_type_get_visibility(unit) * mod
-	end
 	return mod
 end
 
 ---Returns the adjusted travel day cost value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted food need modified by pop race and sex
-function rtab.POP.get_supply_use(pop, unit)
+function rtab.POP.get_supply_use(pop)
 	local pop_food = rtab.POP.calculate_need_use_case_satisfaction(pop, NEED.FOOD, CALORIES_USE_CASE)
 	local base = 0
-	if unit ~= INVALID_ID then
-		base = base + DATA.unit_type_get_supply_used(unit)
-	end
-
 	return (base + pop_food) / 30
 end
 
 ---Returns the adjusted hauling capacity value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted hauling modified by pop race and sex
-function rtab.POP.get_supply_capacity(pop, unit)
+function rtab.POP.get_supply_capacity(pop)
 	local race = DATA.pop_get_race(pop)
 	local job = DATA.race_get_male_efficiency(race, JOBTYPE.HAULING)
 	if DATA.pop_get_female(pop) then
 		job = DATA.race_get_female_efficiency(race, JOBTYPE.HAULING)
 	end
-
-	local base = 0
-	if unit ~= INVALID_ID then
-		base = base + DATA.unit_type_get_supply_capacity(unit)
-	end
-
-	return base + job
+	return job
 end
 
 

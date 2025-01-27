@@ -24,3 +24,4 @@ free_will bool
 is_player bool
 rank CHARACTER_RANK
 dna float[20]
+ai_data AI_DATA

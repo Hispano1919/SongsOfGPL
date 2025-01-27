@@ -1,53 +1,37 @@
-local path = require "game.ai.pathfinding"
+local pathfinding = require "game.ai.pathfinding"
 
 local warband_utils = require "game.entities.warband"
 local province_utils = require "game.entities.province".Province
 local realm_utils = require "game.entities.realm".Realm
+local army_utils = require "game.entities.army"
+local ut = require "game.ui-utils"
 
 local economy_effects = require "game.raws.effects.economy"
+local politics_effect = require "game.raws.effects.politics"
+local warband_effects = require "game.raws.effects.warband"
+
+local economy_values = require "game.raws.values.economy"
 local military_values = require "game.raws.values.military"
 local demography_utils = require "game.raws.effects.demography"
 
 local MilitaryEffects = {}
 
----Sets character as a recruiter of warband
----@param character Character
----@param warband Warband
-function MilitaryEffects.set_recruiter(warband, character)
-	local recruiter_warband = DATA.get_warband_recruiter_from_warband(warband)
-	if recruiter_warband ~= INVALID_ID then
-		DATA.warband_recruiter_set_recruiter(recruiter_warband, character)
-	else
-		DATA.force_create_warband_recruiter(character, warband)
-	end
-end
-
----unets character as a recruiter of warband
----@param character Character
----@param warband Warband
-function MilitaryEffects.unset_recruiter(warband, character)
-	local recruiter_warband = DATA.get_warband_recruiter_from_warband(warband)
-
-	if recruiter_warband ~= INVALID_ID then
-		DATA.delete_warband_recruiter(recruiter_warband)
-	end
-end
-
 ---Gathers new warband in the name of *leader*
 ---@param leader Character
 function MilitaryEffects.gather_warband(leader)
 	local province = PROVINCE(leader)
-	local leadership = DATA.get_warband_leader_from_leader(leader)
-
-	if leadership ~= INVALID_ID then
+	if LEADER_OF_WARBAND(leader) ~= INVALID_ID then
 		return
 	end
 
-	local warband = province_utils.new_warband(province)
+	local warband = DATA.create_warband()
+	DATA.force_create_warband_location(DATA.province_get_center(province), warband)
+	DATA.warband_set_current_status(warband, WARBAND_STATUS.IDLE)
+	DATA.warband_set_idle_stance(warband, WARBAND_STANCE.FORAGE)
 	DATA.warband_set_name(warband, "Warband of " .. NAME(leader))
 
 	DATA.force_create_warband_leader(leader, warband)
-	MilitaryEffects.set_recruiter(warband, leader)
+	warband_effects.set_recruiter(warband, leader)
 
 	if WORLD:does_player_see_realm_news(PROVINCE_REALM(province)) then
 		WORLD:emit_notification(NAME(leader) .. " is gathering his own warband.")
@@ -58,11 +42,12 @@ end
 ---@param realm Realm
 function MilitaryEffects.gather_guard(realm)
 	local province = CAPITOL(realm)
-	local warband = province_utils.new_warband(province)
+	local warband = DATA.create_warband()
+	DATA.force_create_warband_location(DATA.province_get_center(province), warband)
+	DATA.warband_set_current_status(warband, WARBAND_STATUS.IDLE)
+	DATA.warband_set_idle_stance(warband, WARBAND_STANCE.FORAGE)
 	DATA.warband_set_name(warband, "Guard of " .. DATA.realm_get_name(realm))
-
 	DATA.force_create_realm_guard(warband, realm)
-
 	if WORLD:does_player_see_realm_news(realm) then
 		WORLD:emit_notification("Guard was organised.")
 	end
@@ -86,13 +71,10 @@ end
 ---comment
 ---@param leader Character
 function MilitaryEffects.dissolve_warband(leader)
-	local leadership = DATA.get_warband_leader_from_leader(leader)
-
-	if leadership == INVALID_ID then
+	local warband = DATA.warband_leader_get_warband(DATA.get_warband_leader_from_leader(leader))
+	if warband == INVALID_ID then
 		return
 	end
-
-	local warband = DATA.warband_leader_get_warband(leadership)
 	economy_effects.gift_to_warband(warband, leader, -DATA.warband_get_treasury(warband))
 	DATA.delete_warband(warband)
 
@@ -101,158 +83,247 @@ function MilitaryEffects.dissolve_warband(leader)
 	end
 end
 
----Starts a patrol in primary_target province
+---Updates patrols and distributes patrol rewards across the entire realm
 ---@param root Realm
----@param primary_target Province
-function MilitaryEffects.patrol(root, primary_target)
-	if WORLD:does_player_see_realm_news(root) then
-		WORLD:emit_notification("Our warriors will patrol " ..
-			DATA.province_get_name(primary_target) ..
-			" for a few months.")
-	end
+function MilitaryEffects.update_patrol(root)
+	DATA.for_each_realm_provinces_from_realm(root, function (item)
+		local province = DATA.realm_provinces_get_province(item)
+		local total_patrol_size = 0
+		DATA.for_each_warband_location_from_location(DATA.province_get_center(province), function (wloc)
+			local warband = DATA.warband_location_get_warband(wloc)
+			if (DATA.warband_get_current_status(warband) == WARBAND_STATUS.PATROL) then
+				local size = warband_utils.size(warband)
+				total_patrol_size = total_patrol_size + size
+			end
+		end)
+		DATA.province_inc_mood(province, 0.001 * total_patrol_size)
+		if total_patrol_size > 0 then
+			local reward = 0
+			local max_reward = DATA.realm_get_quests_patrol(root)[province]
+			if max_reward then
+				reward = math.min(max_reward, total_patrol_size)
+				DATA.realm_get_quests_patrol(root)[province] = max_reward - reward
+			end
 
-	---@type table<Warband, Warband>
-	local patrol = {}
-
-	DATA.realm_get_patrols(root)
-
-	for _, warband in pairs(DATA.realm_get_patrols(root)[primary_target]) do
-		patrol[warband] = warband
-	end
-
-	for _, warband in pairs(patrol) do
-		realm_utils.remove_patrol(root, primary_target, warband)
-		DATA.warband_set_current_status(warband, WARBAND_STATUS.PATROL)
-	end
-
-	---@type PatrolData
-	local patrol_data = { target = primary_target, defender = LEADER(root), travel_time = 29, patrol = patrol, origin = root }
-
-	WORLD:emit_action(
-		"patrol-province",
-		LEADER(root),
-		patrol_data,
-		90, false
-	)
+			DATA.for_each_warband_location_from_location(DATA.province_get_center(province), function (wloc)
+				local warband = DATA.warband_location_get_warband(wloc)
+				local size = warband_utils.size(warband)
+				DATA.warband_inc_treasury(warband, reward * size / total_patrol_size)
+				assert(DATA.warband_get_treasury(warband) == DATA.warband_get_treasury(warband),
+					"NAN TREASURY FROM PATROL SUCCESS"
+					.. "\n reward: "
+					.. tostring(reward)
+					.. "\n size: "
+					.. tostring(size)
+					.. "\n total_patrol_size: "
+					.. tostring(total_patrol_size)
+				)
+			end)
+		end
+	end)
 end
 
-
----comment
----@param root Character
----@param primary_target Province
-function MilitaryEffects.covert_raid(root, primary_target)
-	local leadership = DATA.get_warband_leader_from_leader(root)
+---Raid on local settlement.
+---If party doesn't try to hide, then battle is always initiated but rewards are as big as possible.
+---If party tries to hide, then if party is spotted then it has to fight to get away and receives a battle penalty
+---@param raider Character
+---@param hide boolean
+function MilitaryEffects.raid(raider, hide)
+	local leadership = DATA.get_warband_leader_from_leader(raider)
 	assert(leadership ~= INVALID_ID)
 	local warband = DATA.warband_leader_get_warband(leadership)
 
-	---@type table<Warband, Warband>
-	local warbands = {}
-	warbands[warband] = warband
+	local tile = WARBAND_TILE(warband)
+	local province = TILE_PROVINCE(tile)
 
-	local army = realm_utils.raise_army(REALM(root), warbands)
-	DATA.army_set_destination(army, primary_target)
+	---print("center check")
 
-	local travel_time, _ = path.hours_to_travel_days(path.pathfind(
-		PROVINCE(root),
-		primary_target,
-		military_values.army_speed(army),
-		DATA.realm_get_known_provinces(REALM(root))
-	))
-
-	if WORLD:does_player_see_realm_news(REALM(root)) then
-		WORLD:emit_notification(NAME(root) .. " is leading his warriors move toward " ..
-			DATA.province_get_name(primary_target) ..
-			", they should arrive in " ..
-			math.floor(travel_time + 0.5) .. " days. We can expect to hear back from them in " .. math.floor(travel_time * 2 + 0.5) .. " days.")
+	local center = DATA.province_get_center(province)
+	if (center ~= tile) then
+		return
 	end
 
-	DATA.warband_set_current_status(warband, WARBAND_STATUS.RAIDING)
+	---print("passed")
 
-	---@type RaidData
-	local raid_data = {
-		raider = root,
-		target = primary_target,
-		travel_time = travel_time,
-		army = army,
-		origin = REALM(root)
-	}
+	if WORLD:does_player_see_realm_news(REALM(raider)) then
+		WORLD:emit_notification(
+			NAME(raider)
+			.. " is raiding "
+			.. DATA.province_get_name(province)
+		)
+	end
 
-	WORLD:emit_action(
-		"covert-raid",
-		root,
-		raid_data,
-		travel_time, false
-	)
+	local origin = REALM(raider)
+	local retreat = false
+	local success = false
+	local losses = 0
+	local realm = PROVINCE_REALM(province)
+	local attacking_army = {warband}
+
+	local spotted = false
+	if hide and not province_utils.army_spot_test(province, attacking_army) and (province_utils.patrol_size(province) > 0) then
+		spotted = true
+	end
+	if not hide then
+		spotted = true
+	end
+	---print("spotted?:", spotted)
+	if hide then
+		if not spotted then
+			success = true
+		else
+			success = false
+			if realm and WORLD:does_player_see_realm_news(realm) then
+				WORLD:emit_notification(NAME(raider)
+				.. " attempted to raid us but they were spotted and backed down.")
+			end
+		end
+	end
+
+
+	if spotted then
+		-- Battle time!
+		-- First, raise the defending army.
+		local def = realm_utils.available_defenders(realm, province)
+		local attack_succeed, attack_losses, def_losses = MilitaryEffects.attack(attacking_army, def, true)
+		losses = attack_losses
+		if attack_succeed then
+			success = true
+			if WORLD:does_player_see_realm_news(realm) then
+				WORLD:emit_notification("Our neighbor, " ..
+					NAME(raider) ..
+					", sent warriors to raid us. We lost " ..
+					tostring(def_losses) ..
+					" warriors and our enemies lost " ..
+					tostring(attack_losses) .. " and our province was looted.")
+			end
+		else
+			success = false
+			if WORLD:does_player_see_realm_news(realm) then
+				WORLD:emit_notification("Our neighbor, " ..
+					NAME(raider) ..
+					", sent warriors to raid us. We lost " ..
+					tostring(def_losses) ..
+					" warriors and our enemies lost " ..
+					tostring(attack_losses) .. ". We managed to fight off the aggressors.")
+			end
+		end
+	end
+
+	---print("success: ", success)
+
+	if success then
+		-- Take their wealth, raid their stockpiles
+		local max_loot = army_utils.loot_capacity(attacking_army)
+
+		local real_loot = math.min(max_loot, DATA.province_get_local_wealth(province))
+		economy_effects.change_local_wealth(province, -real_loot, ECONOMY_REASON.RAID)
+
+		if realm ~= INVALID_ID and max_loot > real_loot then
+			local leftover = max_loot - real_loot
+			local potential_loot = economy_values.raidable_treasury(realm)
+			local extra = math.min(potential_loot, leftover)
+			economy_effects.change_treasury(realm, -extra, ECONOMY_REASON.RAID)
+			real_loot = real_loot + extra
+		end
+
+		if real_loot ~= real_loot then
+			error("NAN LOOT FROM RAID"
+				.. "\n max_loot: "
+				.. tostring(max_loot)
+				.. "\n real_loot: "
+				.. tostring(real_loot)
+				.. "\n province.local_wealt: "
+				.. tostring(DATA.province_get_local_wealth(province))
+			)
+		end
+
+		---print(real_loot)
+
+		politics_effect.mood_shift_from_wealth_shift(province, -real_loot)
+		if realm ~= INVALID_ID then
+			politics_effect.popularity_shift_scaled_with_wealth(raider, realm, -real_loot)
+		end
+
+		---@type RaidResultSuccess
+		local success_data = {
+			target = province,
+			loot = real_loot,
+			losses = losses,
+			raider = raider,
+			origin = origin
+		}
+
+		WORLD:emit_immediate_action(
+			"covert-raid-success",
+			raider,
+			success_data
+		)
+
+		if WORLD:does_player_see_realm_news(realm) then
+			WORLD:emit_notification("An unknown adversary raided our province " ..
+				PROVINCE_NAME(province) ..
+				" and stole " .. ut.to_fixed_point2(real_loot) .. MONEY_SYMBOL .. " worth of goods!")
+		end
+	else
+		if retreat then
+			---@type RaidResultRetreat
+			local retreat_data = { target = province, raider = raider, origin = origin }
+			WORLD:emit_immediate_action(
+				"covert-raid-retreat",
+				raider,
+				retreat_data
+			)
+		else
+			---@type RaidResultFail
+			local retreat_data = {
+				raider = raider,
+				losses = losses,
+				origin = origin
+			}
+
+			WORLD:emit_immediate_action(
+				"covert-raid-fail",
+				raider,
+				retreat_data
+			)
+		end
+	end
 end
 
----Sends army toward target and calls one argument callback with army and travel time toward province
----@param army Army
----@param origin Province
----@param target Province
----@param callback fun(army: Army, travel_time: number)
-function MilitaryEffects.send_army(army, origin, target, callback)
-	local travel_time, _ = path.hours_to_travel_days(path.pathfind(
+---Sends party toward target
+---@param party warband_id
+---@param target tile_id
+function MilitaryEffects.send_party(party, target)
+	local origin = DATA.warband_location_get_location(DATA.get_warband_location_from_warband(party))
+	local _, path = pathfinding.pathfind(
 		origin,
 		target,
-		military_values.army_speed(army),
-		DATA.realm_get_known_provinces(PROVINCE_REALM(origin))
-	))
-
-	DATA.army_set_destination(army, target)
-
-	DATA.for_each_army_membership_from_army(army, function (item)
-		local warband = DATA.army_membership_get_member(item)
-		DATA.warband_set_current_status(warband, WARBAND_STATUS.ATTACKING)
-	end)
-
-	callback(army, travel_time)
-end
-
----comment
----@param character Character
----@return Army?
-function MilitaryEffects.gather_loyal_army_attack(character)
-
-	local province = PROVINCE(character)
-	assert(province ~= INVALID_ID)
-
-	---@type table<Warband, Warband>
-	local idle_loyal_warbands = {}
-
-	DATA.for_each_warband_location_from_location(province, function (item)
-		local warband = DATA.warband_location_get_warband(item)
-		local leadership = DATA.get_warband_leader_from_warband(warband)
-		local leader = DATA.warband_leader_get_leader(leadership)
-		local loyal_to = LOYAL_TO(leader)
-
-		if
-			DATA.warband_get_current_status(warband) == WARBAND_STATUS.IDLE
-			and (
-				(leader == character)
-				or
-				(loyal_to == character)
-			)
-		then
-			idle_loyal_warbands[warband] = warband
-		end
-	end)
-
-	return realm_utils.raise_army(PROVINCE_REALM(province), idle_loyal_warbands)
+		military_values.warband_speed(party),
+		DATA.realm_get_known_provinces(REALM(WARBAND_LEADER(party)))
+	)
+	if path then
+		DATA.warband_set_current_path(party, path)
+	end
 end
 
 ---Fights a location, returns whether or not the attack was a success.
----@param attacker army_id
----@param defender army_id The opposing defending army_utils.
+---@param attacker warband_id[]
+---@param defender warband_id[]
 ---@param spotted boolean Set it to true if the army was spotted before battle, false otherwise.
 ---@return boolean success, number attacker_losses, number defender_losses
 function MilitaryEffects.attack(attacker, defender, spotted)
+
+	if #defender == 0 then
+		return true, 0, 0
+	end
+
 	local atk_armor = 0
 	local atk_speed = 0
 	local atk_attack = 0
 	local atk_hp = 0
 	local atk_stack = 0
-	for _, army_membership in pairs(DATA.get_army_membership_from_army(attacker)) do
-		local warband = DATA.army_membership_get_member(army_membership)
+	for _, warband in pairs(attacker) do
 		local health, attack, armor, speed, count = warband_utils.total_strength(warband)
 		atk_armor = atk_armor + armor
 		atk_attack = atk_attack + attack
@@ -275,8 +346,7 @@ function MilitaryEffects.attack(attacker, defender, spotted)
 	local def_attack = 0
 	local def_hp = 0
 	local def_stack = 0
-	for _, army_membership in pairs(DATA.get_army_membership_from_army(defender)) do
-		local warband = DATA.army_membership_get_member(army_membership)
+	for _, warband in pairs(defender) do
 		local health, attack, armor, speed, count = warband_utils.total_strength(warband)
 		def_armor = def_armor + armor
 		def_attack = def_attack + attack

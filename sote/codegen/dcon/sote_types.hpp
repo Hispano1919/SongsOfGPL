@@ -151,6 +151,12 @@ enum class POLITICS_REASON : uint8_t {
     OTHER = 8,
 };
 
+enum class UNIT_TYPE : uint8_t {
+    INVALID = 0,
+    WARRIOR = 1,
+    CIVILIAN = 2,
+};
+
 enum class LAW_TRADE : uint8_t {
     INVALID = 0,
     NO_REGULATION = 1,

@@ -255,20 +255,6 @@ function st.run()
 			local cg = cult.CultureGroup:new()
 			local culture = cult.Culture:new(cg)
 
-			local max_unit_weight = 0
-			---@type table<unit_type_id, number>
-			local weights = {}
-			for _, unit in pairs(RAWS_MANAGER.unit_types_by_name) do
-				if DATA.get_technology_unit_from_unlocked(unit) == RAWS_MANAGER.technologies_by_name['paleolithic-knowledge'] then
-					local v = love.math.random()
-					max_unit_weight = max_unit_weight + v
-					weights[unit] = v
-				end
-			end
-			for unit, weight in pairs(weights) do
-				DATA.culture_set_traditional_units(culture, unit, weight / max_unit_weight)
-			end
-
 			DATA.culture_set_traditional_militarization(culture, 0.05 + 0.1 * love.math.random())
 
 			local rg = rel.Religion:new(culture)

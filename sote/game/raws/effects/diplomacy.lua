@@ -1,6 +1,9 @@
 local economy_effects = require "game.raws.effects.economy"
 local politics_effects = require "game.raws.effects.politics"
 local realm_utils = require "game.entities.realm".Realm
+local province_utils = require "game.entities.province".Province
+local military_effects = require "game.raws.effects.military"
+local message_effects = require "game.raws.effects.messages"
 
 local effects = {}
 
@@ -8,8 +11,11 @@ local effects = {}
 ---@param overlord Realm
 ---@param tributary Realm
 function effects.set_tributary(overlord, tributary)
+	---print("set tributary", overlord, tributary)
 
 	local tributary_is_overlord_of_overlord = false
+
+	---@type realm_subject_relation_id
 	local to_delete = INVALID_ID
 
 	DATA.for_each_realm_subject_relation_from_subject(overlord, function (item)
@@ -65,6 +71,7 @@ end
 ---@param overlord Realm
 ---@param tributary Realm
 function effects.unset_tributary(overlord, tributary)
+	---@type realm_subject_relation_id
 	local to_delete = INVALID_ID
 
 	DATA.for_each_realm_subject_relation_from_subject(tributary, function (item)
@@ -96,6 +103,55 @@ function effects.dissolve_realm_and_clear_diplomacy(realm)
 	WORLD.realms_changed = true
 
 	politics_effects.dissolve_realm(realm)
+end
+
+---commenting
+---@param character pop_id
+function effects.enforce_tributary(character)
+	local warband = LEADER_OF_WARBAND(character)
+	if (warband == INVALID_ID) then
+		print("effects.enforce_tributary invalid warband")
+		return
+	end
+	local tile = WARBAND_TILE(warband)
+	local province = TILE_PROVINCE(tile)
+	local realm = PROVINCE_REALM(province)
+	if realm == INVALID_ID then
+		print("effects.enforce_tributary invalid local realm")
+		-- The province doesn't have a realm
+		return
+	end
+	if DATA.province_get_center(province) ~= WARBAND_TILE(warband) then
+		return
+	end
+
+	-- Battle time!
+
+	-- spot test
+	-- it's an open attack, so our visibility is multiplied by 100
+	local spot_test = province_utils.army_spot_test(province, {warband}, 100)
+
+	-- First, raise the defending army.
+	local def = realm_utils.available_defenders(realm, province)
+	local attack_succeed, attack_losses, def_losses = military_effects.attack({warband}, def, spot_test)
+
+	-- Message handling
+	message_effects.tribute_raid(character, PROVINCE_REALM(province), attack_succeed, attack_losses, def_losses)
+
+	-- setting tributary
+	if attack_succeed then
+		message_effects.tribute_raid_success(REALM(character), realm)
+		effects.set_tributary(REALM(character), realm)
+		DATA.province_inc_mood(CAPITOL(realm), 0.05)
+		politics_effects.small_popularity_boost(character, REALM(character))
+		WORLD:emit_immediate_event('request-tribute-army-returns-success-notification', character, {})
+	else
+		message_effects.tribute_raid_fail(REALM(character), realm)
+		local mood = DATA.province_get_mood(CAPITOL(realm))
+		DATA.province_set_mood(CAPITOL(realm), math.max(0, mood - 0.05))
+		politics_effects.small_popularity_decrease(character, REALM(character))
+		WORLD:emit_immediate_event("request-tribute-army-returns-fail-notification", character, {})
+	end
 end
 
 return effects

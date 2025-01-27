@@ -17,7 +17,6 @@
 ---@field decisions_by_name table<string, DecisionRealm>
 ---@field decisions_characters_by_name table<string, DecisionCharacter>
 ---@field events_by_name table<string, Event>
----@field unit_types_by_name table<string, unit_type_id>
 ---@field do_logging boolean
 local raws_manager = {}
 
@@ -44,7 +43,6 @@ function raws_manager:new()
 	w.decisions_by_name = {}
 	w.decisions_characters_by_name = {}
 	w.events_by_name = {}
-	w.unit_types_by_name = {}
 
 	w.do_logging = true
 

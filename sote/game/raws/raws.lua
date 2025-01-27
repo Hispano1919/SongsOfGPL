@@ -62,11 +62,6 @@ return function(do_logging, load_save)
 	require "game.raws.building-types-loader".load()
 
 	if do_logging then
-		print('unit-types')
-	end
-	require "game.raws.unit-types-loader".load()
-
-	if do_logging then
 		print('decisions')
 	end
 	require "game.raws.decisions-loader".load()

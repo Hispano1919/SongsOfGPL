@@ -756,17 +756,6 @@ object {
     }
 }
 object {
-    name { army }
-    storage_type { erasable }
-    size { 50000 }
-    tag {scenario}
-    property{
-        name { destination }
-        type { province_id }
-        tag { scenario }
-    }
-}
-object {
     name { warband }
     storage_type { erasable }
     size { 50000 }
@@ -1214,23 +1203,6 @@ relationship {
     }
 }
 relationship {
-    name { army_membership }
-    storage_type { erasable }
-    size { 50000 }
-    tag {scenario}
-    link {
-        object { army }
-        name { army }
-        type { many }
-        index_storage{array}
-    }
-    link {
-        object { warband }
-        name { member }
-        type { unique }
-    }
-}
-relationship {
     name { warband_leader }
     storage_type { erasable }
     size { 50000 }
@@ -1284,7 +1256,7 @@ relationship {
     size { 50000 }
     tag {scenario}
     link {
-        object { province }
+        object { tile }
         name { location }
         type { many }
         index_storage{array}
@@ -1469,23 +1441,6 @@ relationship {
         name { successor }
         type { many }
         index_storage{array}
-    }
-}
-relationship {
-    name { realm_armies }
-    storage_type { erasable }
-    size { 15000 }
-    tag {scenario}
-    link {
-        object { realm }
-        name { realm }
-        type { many }
-        index_storage{array}
-    }
-    link {
-        object { army }
-        name { army }
-        type { unique }
     }
 }
 relationship {
@@ -1812,6 +1767,12 @@ object {
     name { politics_reason }
     storage_type { contiguous }
     size { 10 }
+    tag {scenario}
+}
+object {
+    name { unit_type }
+    storage_type { contiguous }
+    size { 4 }
     tag {scenario}
 }
 object {
@@ -2300,92 +2261,6 @@ object {
     }
     property{
         name { maximum_elevation }
-        type { float }
-        tag { scenario }
-    }
-}
-object {
-    name { unit_type }
-    storage_type { contiguous }
-    size { 20 }
-    tag {scenario}
-    property{
-        name { r }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { g }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { b }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { base_price }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { upkeep }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { supply_used }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { trade_good_requirements }
-        type { array{uint32_t}{base_types::trade_good_container} }
-        tag { scenario }
-    }
-    property{
-        name { base_health }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { base_attack }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { base_armor }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { speed }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { foraging }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { bonuses }
-        type { array{unit_type_id}{float} }
-        tag { scenario }
-    }
-    property{
-        name { supply_capacity }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { spotting }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { visibility }
         type { float }
         tag { scenario }
     }

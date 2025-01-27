@@ -53,6 +53,49 @@ Trigger.Pretrigger.not_ai_or_is_trader = {
 	end
 }
 
+---@type Pretrigger
+Trigger.Pretrigger.is_tribute_collector = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "You are not allowed to collect tribute" }
+	end,
+	condition = function(root)
+		return office_triggers.tribute_collector(root, REALM(root))
+	end
+}
+
+---@type Pretrigger
+Trigger.Pretrigger.is_at_tributary_capital = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "Local province does not pay tribute to your realm" }
+	end,
+	condition = function(root)
+		local province_in = PROVINCE(root)
+		if province_in == INVALID_ID then
+			province_in = TILE_PROVINCE(WARBAND_TILE(LEADER_OF_WARBAND(root)))
+		end
+
+		return diplomacy_trigger.pays_tribute_to(PROVINCE_REALM(province_in), REALM(root))
+	end
+}
+
+---@type Pretrigger
+Trigger.Pretrigger.at_core_realm_province = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "You have not entered a settlement you can collect taxes from" }
+	end,
+	condition = function(root)
+		local province = PROVINCE(root)
+		if province == INVALID_ID then
+			return false
+		end
+		local local_realm = PROVINCE_REALM(province)
+		if local_realm == REALM(root) then
+			return true
+		end
+		return false
+	end
+}
+
 ---Prepares a trigger which is true if one of list_of_pretriggers is true
 ---@param list_of_pretriggers Pretrigger[]
 ---@return Pretrigger

@@ -771,6 +771,15 @@ void pops_produce() {
 
 	state.for_each_pop([&](auto ids) {
 		auto province = state.pop_get_location_from_pop_location(ids);
+
+		if (!province) {
+			auto warband = state.pop_get_warband_from_warband_unit(ids);
+			if (warband) {
+				auto tile = state.warband_get_location_from_warband_location(warband);
+				province = state.tile_get_province_from_tile_province_membership(tile);
+			}
+		}
+
 		auto size = state.province_get_size(province);
 		auto forage_time = state.pop_get_forage_ratio(ids);
 
@@ -2001,6 +2010,10 @@ void ai_trade(int32_t trader_raw_id) {
 	auto province = state.pop_get_location_from_character_location(trader);
 
 	if (!province) {
+		return;
+	}
+
+	if (state.pop_get_is_player(trader)) {
 		return;
 	}
 

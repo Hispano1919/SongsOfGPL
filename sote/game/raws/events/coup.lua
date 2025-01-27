@@ -92,7 +92,7 @@ return function()
 					tooltip = "I will challenge " .. NAME(LEADER(realm)) .. '!',
 					viable = function() return true end,
 					outcome = function()
-                        WORLD:emit_action("coup", character, associated_data, 0, true)
+                        WORLD:emit_immediate_action("coup", character, associated_data)
 					end,
 					ai_preference = function()
                         if pretender_power > target_power then

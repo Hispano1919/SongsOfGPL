@@ -306,7 +306,7 @@ end
 ---@param realm Realm
 ---@return number
 function EconomicEffects.collect_tribute(collector, realm)
-	local hauling = pop_utils.get_supply_capacity(collector, INVALID_ID) * 2
+	local hauling = pop_utils.get_supply_capacity(collector) * 2
 	local max_tribute = DATA.realm_get_budget_budget(realm, BUDGET_CATEGORY.TRIBUTE)
 	local tribute_amount = math.min(hauling, math.floor(max_tribute))
 
@@ -986,7 +986,7 @@ function EconomicEffects.collect_tax(character)
 		end
 	end
 
-	DATA.for_each_pop_location(function (item)
+	DATA.for_each_pop_location_from_location(LOCAL_PROVINCE(character), function (item)
 		local pop = DATA.pop_location_get_pop(item)
 		local savings = DATA.pop_get_savings(pop)
 		if savings > 0 then

@@ -277,7 +277,7 @@ local function forage_targets_for_a_given_use_case(race, province, use_case, nee
 
 	for i = 1, MAX_RESOURCES_IN_PROVINCE_INDEX do
 		local forage_case = DATA.province_get_foragers_targets_forage(province, i)
-		local required_job =  DATA.forage_resource_get_handle(forage_case)
+		local required_job = DATA.forage_resource_get_handle(forage_case)
 		local amount = DATA.province_get_foragers_targets_amount(province, i)
 		local output_good = DATA.province_get_foragers_targets_output_good(province, i)
 		local output_value = DATA.province_get_foragers_targets_output_value(province, i)
