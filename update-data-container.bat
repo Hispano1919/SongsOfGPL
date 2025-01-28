@@ -1,1 +1,1 @@
-rmdir DataContainer /S /Q & git clone "https://github.com/ineveraskedforthis/DataContainer.git" --depth 1
+rmdir ./build/DataContainer /S /Q & git clone "https://github.com/ineveraskedforthis/DataContainer.git" ./build/DataContainer --depth 1

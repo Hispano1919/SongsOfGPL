@@ -18,6 +18,9 @@ CODEGEN_LUA = sys.argv[4]=="true"
 
 SYSTEM = platform.system()
 MACHINE = platform.machine()
+is_x86 = MACHINE in ("AMD64", "x86_64")
+if is_x86:
+    MACHINE = "x86_64"
 
 print("platform",SYSTEM, MACHINE)
 
