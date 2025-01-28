@@ -1,0 +1,107 @@
+local ffi = require("ffi")
+----------unit_type----------
+
+
+---unit_type: LSP types---
+
+---Unique identificator for unit_type entity
+---@class (exact) unit_type_id : table
+---@field is_unit_type number
+---@class (exact) fat_unit_type_id
+---@field id unit_type_id Unique unit_type id
+---@field name string 
+
+---@class struct_unit_type
+
+---@class (exact) unit_type_id_data_blob_definition
+---@field name string 
+---Sets values of unit_type for given id
+---@param id unit_type_id
+---@param data unit_type_id_data_blob_definition
+function DATA.setup_unit_type(id, data)
+    DATA.unit_type_set_name(id, data.name)
+end
+
+ffi.cdef[[
+int32_t dcon_create_unit_type();
+bool dcon_unit_type_is_valid(int32_t);
+void dcon_unit_type_resize(uint32_t sz);
+uint32_t dcon_unit_type_size();
+]]
+
+---unit_type: FFI arrays---
+---@type (string)[]
+DATA.unit_type_name= {}
+
+---unit_type: LUA bindings---
+
+DATA.unit_type_size = 4
+---@return unit_type_id
+function DATA.create_unit_type()
+    ---@type unit_type_id
+    local i  = DCON.dcon_create_unit_type() + 1
+    return i --[[@as unit_type_id]] 
+end
+---@param func fun(item: unit_type_id) 
+function DATA.for_each_unit_type(func)
+    ---@type number
+    local range = DCON.dcon_unit_type_size()
+    for i = 0, range - 1 do
+        func(i + 1 --[[@as unit_type_id]])
+    end
+end
+---@param func fun(item: unit_type_id):boolean 
+---@return table<unit_type_id, unit_type_id> 
+function DATA.filter_unit_type(func)
+    ---@type table<unit_type_id, unit_type_id> 
+    local t = {}
+    ---@type number
+    local range = DCON.dcon_unit_type_size()
+    for i = 0, range - 1 do
+        if func(i + 1 --[[@as unit_type_id]]) then t[i + 1 --[[@as unit_type_id]]] = t[i + 1 --[[@as unit_type_id]]] end
+    end
+    return t
+end
+
+---@param unit_type_id unit_type_id valid unit_type id
+---@return string name 
+function DATA.unit_type_get_name(unit_type_id)
+    return DATA.unit_type_name[unit_type_id]
+end
+---@param unit_type_id unit_type_id valid unit_type id
+---@param value string valid string
+function DATA.unit_type_set_name(unit_type_id, value)
+    DATA.unit_type_name[unit_type_id] = value
+end
+
+local fat_unit_type_id_metatable = {
+    __index = function (t,k)
+        if (k == "name") then return DATA.unit_type_get_name(t.id) end
+        return rawget(t, k)
+    end,
+    __newindex = function (t,k,v)
+        if (k == "name") then
+            DATA.unit_type_set_name(t.id, v)
+            return
+        end
+        rawset(t, k, v)
+    end
+}
+---@param id unit_type_id
+---@return fat_unit_type_id fat_id
+function DATA.fatten_unit_type(id)
+    local result = {id = id}
+    setmetatable(result, fat_unit_type_id_metatable)
+    return result --[[@as fat_unit_type_id]]
+end
+---@enum UNIT_TYPE
+UNIT_TYPE = {
+    INVALID = 0,
+    WARRIOR = 1,
+    CIVILIAN = 2,
+}
+local index_unit_type
+index_unit_type = DATA.create_unit_type()
+DATA.unit_type_set_name(index_unit_type, "warrior")
+index_unit_type = DATA.create_unit_type()
+DATA.unit_type_set_name(index_unit_type, "civilian")
