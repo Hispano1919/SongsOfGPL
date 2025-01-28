@@ -15,7 +15,6 @@ local pe = require "game.raws.effects.politics"
 
 ---@class (exact) AttackData
 ---@field raider Character
----@field origin Realm
 
 ---@class (exact) RaidResultSuccess
 ---@field raider Character

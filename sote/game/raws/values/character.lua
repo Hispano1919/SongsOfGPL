@@ -94,34 +94,14 @@ end
 -- Used for diplomatic actions when there is no moving character: only abstract "diplomat"  \
 -- To be removed when we will have actual diplomats.
 ---@param race Race
----@return fun(tile: tile_id): number
+---@return speed
 function character_values.travel_speed_race(race)
-	local function speed(tile)
-		-- TODO: add adittional race variable which influences this base value
-		---@type number
-		local race_modifier = 1
-		local river_fast = DATA.race_get_requires_large_river(race)
-		local forest_fast = DATA.race_get_requires_large_forest(race)
-
-		--- todo: recalculate properly given a month
-		local waterflow = math.min(DATA.tile_get_july_waterflow(tile), DATA.tile_get_january_waterflow(tile))
-
-		--- good enough
-		local forestation = DATA.tile_get_broadleaf(tile) + DATA.tile_get_conifer(tile) + DATA.tile_get_shrub(tile) * 0.1
-
-		if river_fast then
-			---@type number
-			race_modifier = race_modifier * (1 + waterflow / 10)
-		end
-		if not forest_fast then
-			---@type number
-			race_modifier = race_modifier * (1 - forestation * 0.95)
-		end
-
-		return race_modifier / 50
-	end
-
-	return speed
+	return {
+		base = 1,
+		can_fly = false,
+		forest_fast = DATA.race_get_requires_large_forest(race),
+		river_fast = DATA.race_get_requires_large_river(race)
+	}
 end
 
 return character_values

@@ -590,7 +590,13 @@ function world.World:tick()
 			end
 			--- counted in hours
 			local progress = DATA.warband_get_movement_progress(item)
-			progress = progress - hours_per_day
+			--- consume day worth of supplies
+			local supplies_availability = economy_effects.consume_supplies(
+				item,
+				1
+			)
+			--- depending on amount of available supplies, move the party
+			progress = progress - hours_per_day * supplies_availability
 			while progress <= 0 and #current_path > 0 do
 				local last_tile = table.remove(current_path, #current_path)
 				travel_effects.move_party(item, last_tile)

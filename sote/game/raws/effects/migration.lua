@@ -3,6 +3,7 @@ local economy_effects = require "game.raws.effects.economy"
 local realm_utils = require "game.entities.realm".Realm
 local military_effects = require "game.raws.effects.military"
 local diplomacy_effects = require "game.raws.effects.diplomacy"
+local travel_effects = require "game.raws.effects.travel"
 local language_utils = require "game.entities.language".Language
 
 local MigrationEffects = {}
@@ -64,6 +65,8 @@ function MigrationEffects.start_migration(character)
 	realm_utils.remove_province(realm, province)
 	DATA.realm_set_capitol(realm, INVALID_ID)
 	WORLD:unset_settled_province(province)
+
+	travel_effects.exit_settlement(character)
 end
 
 ---settle down with warband in a given province
@@ -82,7 +85,7 @@ function MigrationEffects.settle_down(character, become_owner)
 			---@type realm_pop_id[]
 			local temp = {}
 			DATA.for_each_realm_pop_from_realm(target_realm, function (item)
-				table.insert(temp)
+				table.insert(temp, item)
 			end)
 			for _, item in pairs(temp) do
 				DATA.realm_pop_set_realm(item, migrating_realm)
@@ -97,7 +100,7 @@ function MigrationEffects.settle_down(character, become_owner)
 			---@type realm_pop_id[]
 			local temp = {}
 			DATA.for_each_realm_pop_from_realm(migrating_realm, function (item)
-				table.insert(temp)
+				table.insert(temp, item)
 			end)
 			for _, item in pairs(temp) do
 				DATA.realm_pop_set_realm(item, target_realm)

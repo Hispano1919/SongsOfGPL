@@ -759,6 +759,9 @@ void pops_produce() {
 	});
 	state.for_each_pop([&](auto ids) {
 		auto province = state.pop_get_location_from_pop_location(ids);
+		if (!province) {
+			province = state.pop_get_location_from_character_location(ids);
+		}
 		state.province_get_foragers(province) += state.pop_get_forage_ratio(ids);
 	});
 
@@ -771,6 +774,9 @@ void pops_produce() {
 
 	state.for_each_pop([&](auto ids) {
 		auto province = state.pop_get_location_from_pop_location(ids);
+		if (!province) {
+			province = state.pop_get_location_from_character_location(ids);
+		}
 
 		if (!province) {
 			auto warband = state.pop_get_warband_from_warband_unit(ids);
@@ -1010,7 +1016,6 @@ void building_produce() {
 			auto good = dcon::trade_good_id{dcon::trade_good_id::value_base_t(output.good - 1)};
 			auto inventory = state.building_get_inventory(ids, good);
 
-
 			state.building_set_inventory(ids, good, inventory + output.amount * output_scale * min_input);
 
 			base_types::trade_good_container& stats = state.building_get_amount_of_outputs(ids, i);
@@ -1085,13 +1090,17 @@ void pops_consume() {
 
 void pops_sell() {
 	state.for_each_pop([&](auto pop) {
+		if (state.pop_get_is_player(pop)) {
+			return;
+		}
 		auto province = state.pop_get_location_from_pop_location(pop);
 		if (!province) {
-			province = state.pop_get_location_from_pop_location(pop);
+			province = state.pop_get_location_from_character_location(pop);
 		}
 		auto income = 0.f;
 		state.for_each_trade_good([&](auto trade_good) {
 			auto inventory = state.pop_get_inventory(pop, trade_good);
+			auto sell_ratio = 0.1f + 0.9f * (1.f - state.trade_good_get_decay(trade_good));
 			income += inventory * 0.1f * state.province_get_local_prices(province, trade_good);
 			state.pop_set_inventory(pop, trade_good, inventory * 0.9f);
 			record_production(province, trade_good, inventory * 0.1f);
@@ -1138,7 +1147,7 @@ void pops_demand() {
 	state.for_each_pop([&](auto pop){
 		auto province = state.pop_get_location_from_pop_location(pop);
 		if (!province) {
-			province = state.pop_get_location_from_pop_location(pop);
+			province = state.pop_get_location_from_character_location(pop);
 		}
 
 		auto budget = state.pop_get_savings(pop) * state.pop_get_spend_savings_ratio(pop);
@@ -1260,7 +1269,7 @@ void pops_buy() {
 	state.for_each_pop([&](auto pop){
 		auto province = state.pop_get_location_from_pop_location(pop);
 		if (!province) {
-			province = state.pop_get_location_from_pop_location(pop);
+			province = state.pop_get_location_from_character_location(pop);
 		}
 
 		auto budget = state.pop_get_savings(pop) * state.pop_get_spend_savings_ratio(pop);

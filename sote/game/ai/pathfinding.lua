@@ -81,7 +81,7 @@ function pa.tile_distance(A, B, speed, is_corner)
 
 	local move_cost_A = movement_cost(A)
 	local move_cost_B = movement_cost(B)
-	local movement_cost_mod = 10
+	local movement_cost_mod = 100
 	if not speed.can_fly then
 		movement_cost_mod = movement_cost_mod * (1 + math.max(0, DATA.tile_get_elevation(A) - DATA.tile_get_elevation(B)) / 50)
 	end
@@ -201,7 +201,7 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 
 			for _, neigh in pairs(candidates) do
 				if visited[neigh] ~= true then
-					local alt = dist + pa.tile_distance(tile, neigh, speed)
+					local alt = dist + pa.tile_distance(tile, neigh, speed, false)
 					local old_distance = distance_cache[neigh] or math.huge
 
 					if alt < old_distance then

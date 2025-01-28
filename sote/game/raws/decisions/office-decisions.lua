@@ -195,7 +195,7 @@ local function load()
 		end
 	)
 
-	Decision.Character:new_from_trigger_lists(
+	Decision.CharacterSelf:new_from_trigger_lists(
 		'establish-guard',
 		"Establish guard",
 		utils.constant_string("Establish guard - a group of warriors devoted to protection of your current capitol."),
@@ -205,13 +205,12 @@ local function load()
 			NO_GUARD_LOCAL
 		},
 		{
+			DESIGNATES_OFFICES_LOCAL
 		},
-		{
-		},
-		function(root, primary_target, secondary_target)
+		function(root)
 			military_effects.gather_guard(province_utils.realm(PROVINCE(root)))
 		end,
-		function(root, primary_target, secondary_target)
+		function(root)
 			return 1
 		end
 	)

@@ -336,137 +336,76 @@ local function load()
 
 	-- migrate decision
 
-	Decision.Character:new {
-		name = 'migrate-realm-start',
-		ui_name = "Start migration",
-		tooltip = function(root, _)
-			if DATA.pop_get_busy(root) then
-				return "You are too busy to consider it."
-			end
-			if not ot.decides_foreign_policy(root, REALM(root)) then
-				return "You have no right to order your tribe to do this"
-			end
-			if PROVINCE(root) ~= DATA.realm_get_capitol(REALM(root)) then
-				return "You has to be with your people during migration"
-			end
-			return "Start migration"
+	Decision.CharacterSelf:new_from_trigger_lists (
+		"migrate-realm-start", "Start migration",
+		function (root, _)
+			return "Abandon your lands and start migration"
 		end,
-		sorting = 1,
-		primary_target = "province",
-		secondary_target = 'none',
-		base_probability = 0.9, -- Almost every month
-		pretrigger = function(root)
-			if not ot.decides_foreign_policy(root, REALM(root)) then
-				return false
-			end
-			return true
-		end,
-		clickable = function(root, _)
-			if PROVINCE(root) ~= DATA.realm_get_capitol(REALM(root)) then
-				return false
-			end
-
-			local capitol = DATA.realm_get_capitol(REALM(root))
-			local is_neighbour = false
-
-			DATA.for_each_province_neighborhood_from_origin(capitol, function (item)
-				local province = DATA.province_neighborhood_get_target(item)
-				if province == primary_target then
-					is_neighbour = true
-				end
-			end)
-
-			return is_neighbour
-		end,
-		available = function(root, primary_target)
-			if DATA.pop_get_busy(root) then
-				return false
-			end
-			if not ot.decides_foreign_policy(root, REALM(root)) then
-				return false
-			end
-			if PROVINCE(root) ~= DATA.realm_get_capitol(REALM(root)) then
-				return false
-			end
-
-			return not dt.province_controlled_by(primary_target, REALM(root))
-		end,
-		ai_secondary_target = function(root, primary_target)
-			return nil, true
-		end,
-		ai_will_do = function(root, primary_target, secondary_target)
-			return 0
-		end,
-		effect = function(root, primary_target, secondary_target)
+		0,
+		{
+			pretriggers.not_busy, pretriggers.foreign_policy_decision_maker, pretriggers.at_capitol
+		},
+		{
+			pretriggers.foreign_policy_decision_maker
+		},
+		function (root)
 			migration_effects.start_migration(root)
+		end,
+		function (root)
+			return 0
 		end
-	}
+	)
 
-	Decision.Character:new {
-		name = 'migrate-realm-settle',
-		ui_name = "Settle local lands",
-		tooltip = function(root, _)
-			if DATA.pop_get_busy(root) then
-				return "You are too busy to consider it."
+	Decision.CharacterSelf:new_from_trigger_lists (
+		"migrate-realm-invade", "Invade local lands",
+		function (root, primary_target)
+			return "Start invasion"
+		end,
+		0,
+		{
+			pretriggers.not_busy, pretriggers.foreign_policy_decision_maker, pretriggers.during_migration,
+			pretriggers.at_province_center
+		},
+		{
+			pretriggers.foreign_policy_decision_maker, pretriggers.during_migration
+		},
+		function (root)
+			local local_realm = PROVINCE_REALM(LOCAL_PROVINCE(root))
+			if local_realm == INVALID_ID then
+				migration_effects.settle_down(root, true)
+			else
+				WORLD:emit_immediate_event("migration-invasion-preparation", root, PROVINCE_REALM(LOCAL_PROVINCE(root)))
 			end
-			if not ot.decides_foreign_policy(root, REALM(root)) then
-				return "You have no right to order your tribe to do this"
-			end
-			if CAPITOL(REALM(root)) ~= INVALID_ID then
-				return "You haven't started migration"
-			end
-			if PROVINCE(root) ~= DATA.realm_get_capitol(REALM(root)) then
-				return "You has to be with your people during migration"
-			end
+		end,
+		function (root)
+			return 1
+		end
+	)
+	Decision.CharacterSelf:new_from_trigger_lists (
+		"migrate-realm-settle", "Settle local lands",
+		function (root, primary_target)
 			return "Start migration"
 		end,
-		sorting = 1,
-		primary_target = "province",
-		secondary_target = 'none',
-		base_probability = 0.9, -- Almost every month
-		pretrigger = function(root)
-			if not ot.decides_foreign_policy(root, REALM(root)) then
-				return false
-			end
-			if CAPITOL(REALM(root)) ~= INVALID_ID then
-				return false
-			end
-			return true
-		end,
-		clickable = function(root, _)
-			if not DATA.tile_get_is_land(WARBAND_TILE(LEADER_OF_WARBAND(root))) then
-				return false
-			end
-			return true
-		end,
-		available = function(root, _)
-			if DATA.pop_get_busy(root) then
-				return false
-			end
-			if not ot.decides_foreign_policy(root, REALM(root)) then
-				return false
-			end
-			if PROVINCE(root) ~= DATA.realm_get_capitol(REALM(root)) then
-				return false
-			end
-
-			return true
-		end,
-		ai_secondary_target = function(root, _)
-			return nil, true
-		end,
-		ai_will_do = function(root, _, secondary_target)
-			return 0
-		end,
-		effect = function(root, _, secondary_target)
-			local local_realm = PROVINCE_REALM(PROVINCE(root))
+		0,
+		{
+			pretriggers.not_busy, pretriggers.foreign_policy_decision_maker, pretriggers.during_migration,
+			pretriggers.at_province_center
+		},
+		{
+			pretriggers.foreign_policy_decision_maker, pretriggers.during_migration
+		},
+		function (root)
+			local local_realm = PROVINCE_REALM(LOCAL_PROVINCE(root))
 			if local_realm == INVALID_ID then
 				migration_effects.settle_down(root, true)
 			else
 				WORLD:emit_immediate_event("migration-request", LEADER(local_realm), root )
 			end
+		end,
+		function (root)
+			return 1
 		end
-	}
+	)
 
 	local colonisation_cost = 10 -- base 10 per family unit transfered
 

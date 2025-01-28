@@ -56,13 +56,13 @@ end
 ---Dissolve realm's guard
 ---@param realm Realm
 function MilitaryEffects.dissolve_guard(realm)
-	local guard = DATA.get_realm_guard_from_realm(realm)
+	local guard = DATA.realm_guard_get_guard(DATA.get_realm_guard_from_realm(realm))
 
 	if guard == INVALID_ID then
 		return
 	end
 
-	DATA.delete_warband(DATA.realm_guard_get_guard(guard))
+	DATA.delete_warband(guard)
 	if WORLD:does_player_see_realm_news(realm) then
 		WORLD:emit_notification("Realm's guard was dissolved.")
 	end

@@ -103,10 +103,10 @@ end
 ---@param k POP
 ---@param v unit_type_id
 local function render_unit_speed (rect, k, v)
-	local base = pop_utils.get_speed(k)
+	local base = pop_utils.get_speed(k).base
 	ut.generic_number_field(
 		"fast-forward-button.png",
-		base.base,
+		base,
 		rect,
 		NAME(k) .. " has a speed of " .. ut.to_fixed_point2(base) .. "."
 		.. "\n - As a " ..  ((v ~= INVALID_ID) and DATA.unit_type_get_name(v) or "noncombatant") .. ", " .. NAME(k) .. " has a base speed of " .. ut.to_fixed_point2(base) .. ".",
@@ -608,8 +608,8 @@ function window.draw(gamescene)
 			ib.text_button_to_realm(gamescene, province_realm, realm_text_rect,
 				REALM_NAME(province_realm), "The warband is currently in a province belonging " .. REALM_NAME(province_realm) .. ".")
 		else
-			ut.render_icon_panel(realm_icon_rect, "uncertainty.png", 1, 1, 1, 1)
-			ut.text_button("no realm", realm_text_rect, "The provincec the warband is currently in is claimed by no one.")
+			ut.render_icon(realm_icon_rect, "uncertainty.png", 1, 1, 1, 1)
+			ut.text_button("no realm", realm_text_rect, "The province the warband is currently in is claimed by no one.")
 		end
 	end
 

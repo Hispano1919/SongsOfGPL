@@ -14,7 +14,8 @@ local warband_utils = require "game.entities.warband"
 
 local EconomicEffects = {}
 
----consumes `days` worth amount of supplies
+--- consumes `days` worth amount of supplies
+--- returns ratio consumed / desired
 ---@param warband warband_id
 ---@param days number
 ---@return number
@@ -40,7 +41,10 @@ function EconomicEffects.consume_supplies(warband, days)
 			.. "\n days = "
 			.. tostring(days))
 	end
-	return consumed
+	if consumption == 0 then
+		return 1
+	end
+	return consumed / consumption
 end
 
 ---Change realm treasury and display effects to player
@@ -490,11 +494,7 @@ end
 function EconomicEffects.consume_use_case_from_inventory(pop, use_case, amount)
 	local supply = ev.available_use_case_from_inventory(pop, use_case)
 	if supply < amount then
-		error("NOT ENOUGH IN INVENTORY: "
-			.. "\n supply = "
-			.. tostring(supply)
-			.. "\n amount = "
-			.. tostring(amount))
+		amount = supply
 	end
 	local consumed = tabb.accumulate(DATA.get_use_weight_from_use_case(use_case), 0, function(a, _, weight_id)
 		local good = DATA.use_weight_get_trade_good(weight_id)

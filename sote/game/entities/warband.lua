@@ -210,12 +210,12 @@ function warband_utils.speed(warband)
 		local pop = DATA.warband_unit_get_unit(membership)
 		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
-		result = result + pop_utils.get_speed(pop)
+		result = result + pop_utils.get_speed(pop).base
 	end
 	for _, pop in pairs(warband_utils.get_officers(warband)) do
 		local warband_membership =  DATA.warband_unit_get_warband(DATA.get_warband_unit_from_unit(pop))
 		if warband_membership == INVALID_ID then
-			result = result + pop_utils.get_speed(pop)
+			result = result + pop_utils.get_speed(pop).base
 		end
 	end
 	return result, math.max(result / warband_utils.size(warband), 0)
@@ -308,7 +308,7 @@ function warband_utils.fire_unit(warband, pop)
 	assert(warband == fat_membership.warband, "INVALID OPERATION: POP WAS IN A WRONG WARBAND")
 
 	DATA.warband_inc_units_current(warband, fat_membership.type, -1)
-	DATA.warband_inc_total_upkeep(warband, -DATA.unit_type_get_upkeep(fat_membership.type))
+	DATA.warband_inc_total_upkeep(warband, -base_unit_upkeep)
 
 	DATA.delete_warband_unit(membership)
 end

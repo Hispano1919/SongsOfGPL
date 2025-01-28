@@ -475,31 +475,9 @@ function load()
 					tooltip = "Launch the invasion",
 					viable = function() return true end,
 					outcome = function()
-						local realm = REALM(character)
-
-						local army = military_effects.gather_loyal_army_attack(character)
-						if army == nil then
-							if character == WORLD.player_character then
-								WORLD:emit_notification("I had launched the invasion of " .. REALM_NAME(target_realm))
-							end
-						else
-							local function callback(army, travel_time)
-								---@type AttackData
-								local data = {
-									raider = character,
-									origin = realm,
-									target = CAPITOL(target_realm),
-									army = army
-								}
-
-								WORLD:emit_immediate_action('migration-invasion-attack', character, data)
-							end
-
-							military_effects.send_army(army, PROVINCE(character), CAPITOL(target_realm), callback)
-
-							if character == WORLD.player_character then
-								WORLD:emit_notification("I had launched the invasion of " .. REALM_NAME(target_realm))
-							end
+						WORLD:emit_immediate_action('migration-invasion-attack', character, {raider = character})
+						if character == WORLD.player_character then
+							WORLD:emit_notification("I had launched the invasion of " .. REALM_NAME(target_realm))
 						end
 					end,
 
@@ -534,10 +512,6 @@ function load()
 		base_probability = 0,
 		event_background_path = "",
 		fallback = function(self, associated_data)
-			---@type AttackData
-			associated_data = associated_data
-			local army = associated_data.army
-			realm_utils.disband_army(army)
 		end,
 		on_trigger = function(self, root, associated_data)
 			---@type AttackData
@@ -564,20 +538,19 @@ function load()
 			-- First, raise the defending army.
 			local def = realm_utils.available_defenders(realm, province)
 			local attack_succeed, attack_losses, def_losses = military_effects.attack(army, def, spot_test)
-			realm_utils.disband_army(def) -- disband the army after battle
 
 			-- migrating
 			if attack_succeed then
-				migration_effects.settle_down(raider, true)
-				WORLD:emit_immediate_event("migration-invasion-success", raider, army)
-
 				DATA.for_each_home_from_home(province, function (item)
 					local pop = DATA.home_get_pop(item)
-
 					if IS_CHARACTER(pop) then
 						WORLD:emit_immediate_event("migration-invasion-success-target", pop, raider)
 					end
 				end)
+
+				WORLD:emit_immediate_event("migration-invasion-success", raider, army)
+
+				migration_effects.settle_down(raider, true)
 			else
 				UNSET_BUSY(raider)
 				WORLD:emit_immediate_event("migration-invasion-failure", raider, army)
@@ -604,8 +577,6 @@ function load()
 		function(root, associated_data)
 			---@type Army
 			associated_data = associated_data
-
-			realm_utils.disband_army(associated_data)
 		end
 	)
 
@@ -623,8 +594,6 @@ function load()
 		function(root, associated_data)
 			---@type Army
 			associated_data = associated_data
-
-			realm_utils.disband_army(associated_data)
 		end
 	)
 

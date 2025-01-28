@@ -32,7 +32,7 @@ end
 ---@param pop pop_id
 function demo.outlaw_pop(province, pop)
 	-- ignore pops which are already outlawed
-	if DATA.get_outlaw_location_from_outlaw(pop) then
+	if DATA.outlaw_location_get_location(DATA.get_outlaw_location_from_outlaw(pop)) ~= INVALID_ID then
 		return
 	end
 
@@ -52,7 +52,7 @@ end
 ---@param warband warband_id
 ---@param unit_type UNIT_TYPE
 function demo.recruit(pop, warband, unit_type)
-	local membership = DATA.get_warband_unit_from_unit(pop)
+	local membership = DATA.warband_unit_get_warband(DATA.get_warband_unit_from_unit(pop))
 	-- if pop is already drafted, do nothing
 	if membership ~= INVALID_ID then
 		return
@@ -61,8 +61,14 @@ function demo.recruit(pop, warband, unit_type)
 	-- clean pop data
 	demo.fire_pop(pop)
 	warband_utils.unregister_military(pop)
-	DATA.delete_character_location(DATA.get_character_location_from_character(pop))
-	DATA.delete_pop_location(DATA.get_pop_location_from_pop(pop))
+
+	if DATA.character_location_get_location(DATA.get_character_location_from_character(pop)) ~= INVALID_ID then
+		DATA.delete_character_location(DATA.get_character_location_from_character(pop))
+	end
+
+	if DATA.pop_location_get_location(DATA.get_pop_location_from_pop(pop)) ~= INVALID_ID then
+		DATA.delete_pop_location(DATA.get_pop_location_from_pop(pop))
+	end
 
 	-- set warband
 	warband_utils.hire_unit(warband, pop, unit_type)

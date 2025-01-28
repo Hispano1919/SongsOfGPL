@@ -149,7 +149,9 @@ return function()
 					tooltip = "I get back to the exploration of local lands.",
 					viable = function() return true end,
 					outcome = outcome_accept,
-					ai_preference = 1
+					ai_preference = function ()
+						return 1
+					end
 				}
 			}
 		end
