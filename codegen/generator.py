@@ -19,13 +19,14 @@ REGISTERED_STRUCTS: typing.Dict[str, StructDescription] = {}
 # retrieve list of names of entity linked to a given name and name of according field
 REGISTERED_LINKS: typing.Dict[str, typing.List[typing.Tuple[str, str]]] = {}
 
-DESCRIPTION_PATH = "./sote/codegen/description"
-DESCRIPTION_RAWS_PATH = "./sote/codegen/description_raws"
-DESCRIPTION_STATIC_PATH = "./sote/codegen/description_static"
-DESCRIPTION_STRUCTS_PATH = "./sote/codegen/description_structs"
-OUTPUT_PATH = "./sote/codegen/output/generated.lua"
-DCON_DESC_PATH = "./sote/codegen/dcon/sote.txt"
-CPP_COMMON_TYPES_PATH = "./sote/codegen/dcon/sote_types.hpp"
+DESCRIPTION_PATH = "./codegen/description"
+DESCRIPTION_RAWS_PATH = "./codegen/description_raws"
+DESCRIPTION_STATIC_PATH = "./codegen/description_static"
+DESCRIPTION_STRUCTS_PATH = "./codegen/description_structs"
+OUTPUT_PATH = "./codegen/output/generated.lua"
+LUAGEN_PATH = "./codegen/output/"
+DCON_DESC_PATH = "./codegen/dcon/sote.txt"
+CPP_COMMON_TYPES_PATH = "./codegen/dcon/sote_types.hpp"
 NAMESPACE = "DATA"
 SAVE_FILE_NAME_LUA = "gamestatesave.bitserbeaver"
 SAVE_FILE_NAME_FFI = "gamestatesave.binbeaver"
@@ -1152,8 +1153,8 @@ class EntityDescription:
         result += f'---@return fat_{prefix_to_id_name(self.name)} fat_id\n'
         result += f"function {NAMESPACE}.fatten_{self.name}(id)\n"
         result +=  "    local result = {id = id}\n"
-        result += f"    setmetatable(result, fat_{prefix_to_id_name(self.name)}_metatable)"
-        result +=  "    return result\n"
+        result += f"    setmetatable(result, fat_{prefix_to_id_name(self.name)}_metatable)\n"
+        result += f"    return result --[[@as fat_{prefix_to_id_name(self.name)}]]\n"
         result +=  "end\n"
         return result
 
@@ -1310,7 +1311,7 @@ def tests():
     Generates tests for generated code
     """
     result = ""
-    for i in range(3):
+    for i in range(1):
         # result += f"function {NAMESPACE}.test_save_load_{i}()\n"
 
         # # generate data
@@ -1560,12 +1561,20 @@ with open(OUTPUT_PATH, "w", encoding="utf8") as out:
     out.write("\n")
     out.write(f'{NAMESPACE} = {{}}\n')
     for struct_description in STRUCTS_LIST:
-        out.write(str(struct_description))
-
+        with open (f'{LUAGEN_PATH}{struct_description.name}.lua', "w", encoding="utf8") as description_file:
+            description_file.write('local ffi = require("ffi")\n')
+            description_file.write(str(struct_description))
+        out.write(f'require "codegen.output.{struct_description.name}"\n')
     for entity_description in ENTITY_LIST:
-        out.write(str(entity_description))
+        with open (f'{LUAGEN_PATH}{entity_description.name}.lua', "w", encoding="utf8") as description_file:
+            description_file.write('local ffi = require("ffi")\n')
+            description_file.write(str(entity_description))
+        out.write(f'require "codegen.output.{entity_description.name}"\n')
     for entity_description in RAWS_LIST:
-        out.write(str(entity_description))
+        with open (f'{LUAGEN_PATH}{entity_description.name}.lua', "w", encoding="utf8") as description_file:
+            description_file.write('local ffi = require("ffi")\n')
+            description_file.write(str(entity_description))
+        out.write(f'require "codegen.output.{entity_description.name}"\n')
 
     out.write(auxiliary_types())
     out.write(save_state())
@@ -1573,7 +1582,6 @@ with open(OUTPUT_PATH, "w", encoding="utf8") as out:
     out.write(tests())
 
     out.write(f'return {NAMESPACE}\n')
-
 
 with open(DCON_DESC_PATH, "w", encoding="utf8") as out:
 
