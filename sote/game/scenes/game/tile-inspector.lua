@@ -305,40 +305,6 @@ local function realm_widget(gam, tile_id, panel)
 		gam.inspector = "characters"
 		gam.selected.province = tile_utils.province(tile_id)
 	end
-
-	if player ~= INVALID_ID then
-		local raid_rect = buttons_grid:next(UI_STYLE.square_button_large, UI_STYLE.square_button_large)
-		local patrol_rect = buttons_grid:next(UI_STYLE.square_button_large, UI_STYLE.square_button_large)
-
-		local patrol = RAWS_MANAGER.decisions_characters_by_name["patrol-target"]
-		local raid = RAWS_MANAGER.decisions_characters_by_name["personal-raid"]
-
-		local raid_tooltip = raid.tooltip(player, tile_utils.province(tile_id))
-		local patrol_tooltip = patrol.tooltip(player, tile_utils.province(tile_id))
-
-		local raid_potential = raid.clickable(player, tile_utils.province(tile_id)) and raid.pretrigger(player) and
-			raid.available(player, tile_utils.province(tile_id))
-		local patrol_potential = patrol.clickable(player, tile_utils.province(tile_id)) and patrol.pretrigger(player) and
-			patrol.available(player, tile_utils.province(tile_id))
-
-		if uit.icon_button(
-				ASSETS.icons["stone-spear.png"],
-				raid_rect,
-				raid_tooltip,
-				raid_potential
-			) then
-			raid.effect(player, tile_utils.province(tile_id))
-		end
-
-		if uit.icon_button(
-				ASSETS.icons["round-shield.png"],
-				patrol_rect,
-				patrol_tooltip,
-				patrol_potential
-			) then
-			patrol.effect(player, tile_utils.province(tile_id))
-		end
-	end
 end
 
 local function main_panel(gam, tile, panel)

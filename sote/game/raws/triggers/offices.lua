@@ -103,6 +103,11 @@ end
 ---@param character Character
 ---@param realm Realm
 function triggers.tribute_collector(character, realm)
+    --- leaders are always able to collect tribute
+    if LEADER(realm) == character then
+        return true
+    end
+
     local t = DATA.get_tax_collector_from_collector(character)
     if t == INVALID_ID then
         return false

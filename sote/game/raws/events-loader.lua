@@ -50,9 +50,6 @@ function ll.load()
 	log_stage("succession events")
 	require "game.raws.events.succession"()
 
-	log_stage("travel events")
-	require "game.raws.events.travel"()
-
 	log_stage("events")
 	require "game.raws.events._loader"()
 

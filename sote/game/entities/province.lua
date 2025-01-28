@@ -98,29 +98,26 @@ function prov.Province.update_size(province)
 	DATA.province_set_size(province, tabb.size(DATA.get_tile_province_membership_from_province(province)))
 end
 
----Returns the total military size of the province.
+---Returns the total amount of potential defenders of the province.
 ---@param province province_id
 ---@return number
 function prov.Province.military(province)
+	local settlement = DATA.province_get_center(province)
 	local total = 0
-	DATA.for_each_warband_location_from_location(province, function (item)
-		---@type number
-		total = total + warband_utils.size(DATA.warband_location_get_warband(item))
+	DATA.for_each_warband_location_from_location(settlement, function (item)
+		local warband = DATA.warband_location_get_warband(item)
+		if (warband == INVALID_ID) then
+			return
+		end
+
+		local leader = warband_utils.active_leader(warband)
+		if REALM(leader) == PROVINCE_REALM(province) then
+			total = total + warband_utils.size(warband)
+		end
 	end)
 	return total
 end
 
----Returns the total target military size of the province.
----@param province province_id
----@return number
-function prov.Province.military_target(province)
-	local total = 0
-	DATA.for_each_warband_location_from_location(province, function (item)
-		---@type number
-		total = total + warband_utils.target_size(DATA.warband_location_get_warband(item))
-	end)
-	return total
-end
 
 ---Returns the total population of the province, not including characters.
 ---Doesn't include outlaws and active armies.
@@ -315,11 +312,17 @@ function prov.Province.transfer_home(origin, pop, target)
 	end
 end
 
+---Amount of active defenders
 ---@param province province_id
-function prov.Province.local_army_size(province)
+function prov.Province.patrol_size(province)
+	local settlement = DATA.province_get_center(province)
 	local total = 0
-	DATA.for_each_warband_location_from_location(province, function (item)
+	DATA.for_each_warband_location_from_location(settlement, function (item)
 		local warband = DATA.warband_location_get_warband(item)
+		if (warband == INVALID_ID) then
+			return
+		end
+
 		local status = DATA.warband_get_current_status(warband)
 		if status == WARBAND_STATUS.PATROL then
 			---@type number
@@ -869,7 +872,7 @@ function prov.Province.get_spotting(province)
 		s = s + spotting
 	end)
 
-	DATA.for_each_warband_location_from_location(province, function (party)
+	DATA.for_each_warband_location_from_location(DATA.province_get_center(province), function (party)
 		local warband = DATA.warband_location_get_warband(party)
 		local status = DATA.warband_get_current_status(warband)
 		if status == WARBAND_STATUS.PATROL then
@@ -918,7 +921,7 @@ function prov.Province.spot_chance(province, visibility)
 end
 
 ---@param province province_id
----@param army army_id Attacking army
+---@param army warband_id[] Attacking army
 ---@param stealth_penalty number? Multiplicative penalty, multiplies army visibility score.
 ---@return boolean True if the army was spotted.
 function prov.Province.army_spot_test(province, army, stealth_penalty)
@@ -988,40 +991,6 @@ function prov.Province.get_unemployment(province)
 	end
 
 	return u
-end
-
----@param province province_id
----@return warband_id warband
-function prov.Province.new_warband(province)
-	local warband = DATA.create_warband()
-	DATA.force_create_warband_location(province, warband)
-	DATA.warband_set_current_status(warband, WARBAND_STATUS.IDLE)
-	DATA.warband_set_idle_stance(warband, WARBAND_STANCE.FORAGE)
-	return warband
-end
-
----@param province province_id
-function prov.Province.num_of_warbands(province)
-	local amount = 0
-	DATA.for_each_warband_location_from_location(province, function (item)
-		amount = amount + 1
-	end)
-	return amount
-end
-
----@param province province_id
----@return warband_id[]
-function prov.Province.vacant_warbands(province)
-	local res = {}
-
-	DATA.for_each_warband_location_from_location(province, function (item)
-		local warband = DATA.warband_location_get_warband(item)
-		if warband_utils.vacant(warband) then
-			table.insert(res, warband)
-		end
-	end)
-
-	return res
 end
 
 ---@param province province_id

@@ -85,7 +85,15 @@ function PoliticalValues.military_strength(character)
     local total_warlords = 0
     local total_army = 0
 
-    DATA.for_each_character_location_from_location(PROVINCE(character), function (item)
+    local province = PROVINCE(character)
+
+    if province == INVALID_ID then
+        -- handle the case of wandering party
+        local leading_warband = LEADER_OF_WARBAND(character)
+        return 1, warband_utils.size(leading_warband)
+    end
+
+    DATA.for_each_character_location_from_location(province, function (item)
         local test_character = DATA.character_location_get_character(item)
         local loyal_to = LOYAL_TO(test_character)
         local leading_warband = LEADER_OF_WARBAND(test_character)

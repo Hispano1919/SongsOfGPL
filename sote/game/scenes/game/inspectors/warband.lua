@@ -37,22 +37,8 @@ end
 ---@param rect Rect
 ---@param k POP
 ---@param v unit_type_id
-local function render_unit_icon (rect, k, v)
-	if v ~= INVALID_ID then
-		local fat = DATA.fatten_unit_type(v)
-		render_icon_panel(rect, fat.icon, fat.r, fat.g, fat.b, 1)
-	else
-		local fat = F_RACE(k)
-		render_icon_panel(rect, fat.icon, fat.r, fat.g, fat.b, 1)
-	end
-end
-
----@param rect Rect
----@param k POP
----@param v unit_type_id
 local function render_unit_health (rect, k, v)
-	local base = DATA.unit_type_get_base_health(v)
-	local stat = pop_utils.get_health(k, v)
+	local stat = pop_utils.get_health(k)
 	local female, her = "male", "his"
 	if DATA.pop_get_female(k) then
 		female, her = "female", "her"
@@ -66,7 +52,7 @@ local function render_unit_health (rect, k, v)
 		.. ut.to_fixed_point2(stat)
 		.. " health."
 		.. "\n - As a "  ..  DATA.unit_type_get_name(v) .. ", "
-		.. NAME(k) .. " has a base health of " .. ut.to_fixed_point2(base) .. "."
+		.. NAME(k) .. " has a base health of " .. ut.to_fixed_point2(stat) .. "."
 		.. "\n - Being a " .. female.. " " .. DATA.race_get_name(RACE(k))
 		.. " modifies this by " .. her .." size of " .. ut.to_fixed_point2(pop_utils.size(k)) .. ".",
 		ut.NUMBER_MODE.NUMBER,
@@ -77,8 +63,7 @@ end
 ---@param k POP
 ---@param v unit_type_id
 local function render_unit_attack (rect, k, v)
-	local base = DATA.unit_type_get_base_attack(v)
-	local stat = pop_utils.get_attack(k, v)
+	local stat = pop_utils.get_attack(k)
 	local job = pop_utils.job_efficiency(k, JOBTYPE.WARRIOR)
 	local female, her = "male", "his"
 	if DATA.pop_get_female(k) then
@@ -89,7 +74,7 @@ local function render_unit_attack (rect, k, v)
 		stat,
 		rect,
 		NAME(k) .. " has " .. ut.to_fixed_point2(stat) .. " attack."
-			.. "\n - As a " ..  DATA.unit_type_get_name(v) .. ", " .. NAME(k) .. " has a base attack of " .. ut.to_fixed_point2(base) .. "."
+			.. "\n - As a " ..  DATA.unit_type_get_name(v) .. ", " .. NAME(k) .. " has a base attack of " .. ut.to_fixed_point2(stat) .. "."
 			.. "\n - Being a " .. female.. " " .. DATA.race_get_name(RACE(k)) .. " modifies this by " .. her .." racial warrior efficiency of " .. ut.to_fixed_point2(job * 100) .. "%.",
 		ut.NUMBER_MODE.NUMBER,
 		ut.NAME_MODE.ICON)
@@ -99,16 +84,16 @@ end
 ---@param k POP
 ---@param v unit_type_id
 local function render_unit_armor (rect, k, v)
-	local base, stat = DATA.unit_type_get_base_armor(v), pop_utils.get_armor(k, v)
+	local base = pop_utils.get_armor(k)
 	local female, her = "male", "his"
 	if DATA.pop_get_female(k) then
 		female, her = "female", "her"
 	end
 	ut.generic_number_field(
 		"round-shield.png",
-		stat,
+		base,
 		rect,
-		NAME(k) .. " has " .. ut.to_fixed_point2(stat) .. " armor."
+		NAME(k) .. " has " .. ut.to_fixed_point2(base) .. " armor."
 			.. "\n - As a " ..  DATA.unit_type_get_name(v) .. ", " .. NAME(k) .. " has a base armor of " .. ut.to_fixed_point2(base) .. ".",
 		ut.NUMBER_MODE.NUMBER,
 		ut.NAME_MODE.ICON)
@@ -118,12 +103,12 @@ end
 ---@param k POP
 ---@param v unit_type_id
 local function render_unit_speed (rect, k, v)
-	local base, stat = ((v ~= INVALID_ID) and DATA.unit_type_get_speed(v) or 1), pop_utils.get_speed(k, v)
+	local base = pop_utils.get_speed(k).base
 	ut.generic_number_field(
 		"fast-forward-button.png",
-		stat,
+		base,
 		rect,
-		NAME(k) .. " has a speed of " .. ut.to_fixed_point2(stat) .. "."
+		NAME(k) .. " has a speed of " .. ut.to_fixed_point2(base) .. "."
 		.. "\n - As a " ..  ((v ~= INVALID_ID) and DATA.unit_type_get_name(v) or "noncombatant") .. ", " .. NAME(k) .. " has a base speed of " .. ut.to_fixed_point2(base) .. ".",
 		ut.NUMBER_MODE.PERCENTAGE,
 		ut.NAME_MODE.ICON)
@@ -133,16 +118,16 @@ end
 ---@param k POP
 ---@param v unit_type_id
 local function render_unit_spotting (rect, k, v)
-	local base, stat = ((v ~= INVALID_ID) and DATA.unit_type_get_spotting(v) or 1), pop_utils.get_spotting(k, v)
+	local base = pop_utils.get_spotting(k)
 	local female, her = "male", "his"
 	if DATA.pop_get_female(k) then
 		female, her = "female", "her"
 	end
 	ut.generic_number_field(
 		"magnifying-glass.png",
-		stat,
+		base,
 		rect,
-		NAME(k) .. " has a spotting bonus of " .. ut.to_fixed_point2(stat) .. "."
+		NAME(k) .. " has a spotting bonus of " .. ut.to_fixed_point2(base) .. "."
 			.. "\n - As a " .. ((v ~= INVALID_ID) and DATA.unit_type_get_name(v) or "noncombatant") .. ", " .. NAME(k) .. " has a base spotting bonus of " .. ut.to_fixed_point2(base) .. "."
 			.. "\n - Being a " .. female.. " " .. DATA.race_get_name(RACE(k)) .. " modifies this by " .. her .." racial spotting of " .. ut.to_fixed_point2(F_RACE(k).spotting * 100)
 			.. "%.",
@@ -154,16 +139,16 @@ end
 ---@param k POP
 ---@param v unit_type_id
 local function render_unit_visibility (rect, k, v)
-	local base, stat = ((v ~= INVALID_ID) and DATA.unit_type_get_visibility(v) or 1), pop_utils.get_visibility(k, v)
+	local base = pop_utils.get_visibility(k, v)
 	local female, her = "male", "his"
 	if DATA.pop_get_female(k) then
 		female, her = "female", "her"
 	end
 	ut.generic_number_field(
 		"high-grass.png",
-		stat,
+		base,
 		rect,
-		NAME(k) .. " has a visibility of " .. ut.to_fixed_point2(stat) .. "."
+		NAME(k) .. " has a visibility of " .. ut.to_fixed_point2(base) .. "."
 			.. "\n - As a " ..  ((v ~= INVALID_ID) and DATA.unit_type_get_name(v) or "noncombatant") .. ", " .. NAME(k) .. " has a base visibility of " .. ut.to_fixed_point2(base) .. "."
 			.. "\n - Being a " .. female.. " " .. DATA.race_get_name(RACE(k)) .. " modifies this by " .. her .." racial visibility of " .. ut.to_fixed_point2(F_RACE(k).visibility * 100)
 			.. "% and a size of " .. ut.to_fixed_point2(pop_utils.size(k)) ..".",
@@ -175,7 +160,7 @@ end
 ---@param k POP
 ---@param v unit_type_id
 local function render_unit_supply_use (rect, k, v)
-	local base, stat = ((v ~= INVALID_ID) and DATA.unit_type_get_supply_used(v) or 0) / 30, pop_utils.get_supply_use(k, v)
+	local base = pop_utils.get_supply_use(k)
 	local food_need = pop_values.calories_food_need(k)
 	local female, her = "male", "his"
 	if DATA.pop_get_female(k) then
@@ -183,9 +168,9 @@ local function render_unit_supply_use (rect, k, v)
 	end
 	ut.generic_number_field(
 		"sliced-bread.png",
-		stat,
+		base,
 		rect,
-		NAME(k) .. " uses " .. ut.to_fixed_point2(stat) .. " units of food per day of traveling."
+		NAME(k) .. " uses " .. ut.to_fixed_point2(base) .. " units of food per day of traveling."
 			.. "\n - As a " ..  ((v ~= INVALID_ID) and DATA.unit_type_get_name(v) or "noncombatant") .. ", " .. NAME(k) .. " has a base daily supply use of " .. ut.to_fixed_point2(base) .. "."
 			.. "\n - Being a " .. female.. " " .. DATA.race_get_name(RACE(k)) .. " adds " .. her .. " daily racial food consumption of "
 			.. ut.to_fixed_point2(food_need / 30).. " units per day.",
@@ -197,7 +182,7 @@ end
 ---@param k POP
 ---@param v unit_type_id
 local function render_unit_hauling (rect, k, v)
-	local base, stat = ((v ~= INVALID_ID) and DATA.unit_type_get_supply_capacity(v) or 0) / 4, pop_utils.get_supply_capacity(k, v)
+	local base = pop_utils.get_supply_capacity(k)
 	local job = pop_utils.job_efficiency(k, JOBTYPE.HAULING)
 	local female, her = "male", "his"
 	if DATA.pop_get_female(k) then
@@ -205,9 +190,9 @@ local function render_unit_hauling (rect, k, v)
 	end
 	ut.generic_number_field(
 		"cardboard-box.png",
-		stat,
+		base,
 		rect,
-		NAME(k) .. " has a hauling capacity of " .. ut.to_fixed_point2(stat) .. "."
+		NAME(k) .. " has a hauling capacity of " .. ut.to_fixed_point2(base) .. "."
 			.. "\n - As a " ..  ((v ~= INVALID_ID) and DATA.unit_type_get_name(v) or "noncombatant") .. ", " .. NAME(k) .. " has a base of " .. ut.to_fixed_point2(base) .. "."
 			.. "\n - Being a " .. female.. " " .. DATA.race_get_name(RACE(k)) .. " adds " .. her .." racial hauling job efficiency of " .. ut.to_fixed_point2(job) .. ".",
 		ut.NUMBER_MODE.NUMBER,
@@ -345,14 +330,8 @@ function window.draw(gamescene)
 			local unit_name = "officer"
 			local icon_rect = rect:subrect(0, 0, rect.height, rect.height, "left", "center")
 			local text_rect = rect:subrect(0, 0, rect.width - rect.height, rect.height, "right", "center")
-			local unit_type = DATA.warband_unit_get_type(DATA.get_warband_unit_from_unit(character))
-			if unit_type ~= INVALID_ID then
-				unit_name = DATA.unit_type_get_name(unit_type)
-				render_unit_icon(icon_rect, character, unit_type)
-			else
-				local race = F_RACE(character)
-				render_icon_panel(icon_rect, race.icon, race.r, race.g, race.b, 1)
-			end
+			local race = F_RACE(character)
+			render_icon_panel(icon_rect, race.icon, race.r, race.g, race.b, 1)
 			ui.text_panel(unit_name, text_rect)
 		else
 			ui.panel(rect, 1, true)
@@ -618,16 +597,19 @@ function window.draw(gamescene)
 		local realm_text_rect = rect:subrect(0, 0, rect.width - ut.BASE_HEIGHT, ut.BASE_HEIGHT, "right", "center")
 		local province_name_rect = rect:subrect(0, 0, rect.width, ut.BASE_HEIGHT, "right", "down")
 		local province_realm = nil
-		ib.text_button_to_province(gamescene, location, province_name_rect,
-			PROVINCE_NAME(location), "The warband is currently in the province of " .. PROVINCE_NAME(location) .. ".")
-		province_realm = PROVINCE_REALM(location)
+
+		local province = TILE_PROVINCE(location)
+
+		ib.text_button_to_province(gamescene, province, province_name_rect,
+			PROVINCE_NAME(province), "The warband is currently in the province of " .. PROVINCE_NAME(province) .. ".")
+		province_realm = PROVINCE_REALM(province)
 		if province_realm ~= INVALID_ID then
 			ib.icon_button_to_realm(gamescene, province_realm, realm_icon_rect)
 			ib.text_button_to_realm(gamescene, province_realm, realm_text_rect,
 				REALM_NAME(province_realm), "The warband is currently in a province belonging " .. REALM_NAME(province_realm) .. ".")
 		else
-			ut.render_icon_panel(realm_icon_rect, "uncertainty.png", 1, 1, 1, 1)
-			ut.text_button("no realm", realm_text_rect, "The provincec the warband is currently in is claimed by no one.")
+			ut.render_icon(realm_icon_rect, "uncertainty.png", 1, 1, 1, 1)
+			ut.text_button("no realm", realm_text_rect, "The province the warband is currently in is claimed by no one.")
 		end
 	end
 
@@ -928,289 +910,6 @@ function window.draw(gamescene)
 	local name_width = 295 -- magic number for fixing cetner stat alignment
 	local end_width = 90 -- magic number for fixing cetner stat alignment
 
-	--- builds and draws list of recruitable unit types
-	---@param rect Rect
-	local function draw_recruit_panel(rect)
-
-		-- UNIT TYPE RECRUIT PANEL
-		---@type table<unit_type_id, unit_type_id>
-		local unit_types = {}
-
-		DATA.for_each_unit_type(function (item)
-			if DATA.province_get_unit_types(location, item) == 1 then
-				unit_types[item] = item
-			end
-		end)
-
-		DATA.for_each_warband_unit(function (item)
-			local unit_type = DATA.warband_unit_get_type(item)
-			if unit_type ~= INVALID_ID then
-				unit_types[unit_type] = unit_type
-			end
-		end)
-
-		unit_list_state = list_widget(
-			rect,
-			unit_types,
-			{
-				{
-					header = ".",
-					render_closure = render_unit_icon,
-					width = icon_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_icon(v)
-					end
-				},
-				{
-					header = "name",
-					---@param v unit_type_id
-					render_closure = function (rect, k, v)
-						ui.text(DATA.unit_type_get_name(v), rect, "center", "center")
-					end,
-					width = name_width - stat_width * 2 - icon_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_name(v)
-					end
-				},
-				{
-					header = "upkeep",
-					---@param v unit_type_id
-					render_closure = function (rect, k, v)
-						ut.generic_number_field(
-							"receive-money.png",
-							DATA.unit_type_get_upkeep(v),
-							rect,
-							"The base monthly upkeep price for this unit type.",
-							ut.NUMBER_MODE.MONEY,
-							ut.NAME_MODE.ICON,
-							true)
-					end,
-					width = stat_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_upkeep(v)
-					end
-				},
-				{
-					header = "cost",
-					---@param v unit_type_id
-					render_closure = function (rect, k, v)
-						ut.generic_number_field(
-							"coins.png",
-							DATA.unit_type_get_base_price(v),
-							rect,
-							"The base hiring cost of this unit type.",
-							ut.NUMBER_MODE.MONEY,
-							ut.NAME_MODE.ICON)
-					end,
-					width = stat_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_base_price(v)
-					end
-				},
-				{
-					header = "health",
-					---@param v unit_type_id
-					render_closure = function (rect, k, v)
-						ut.generic_number_field(
-							"plus.png",
-							DATA.unit_type_get_base_health(v),
-							rect,
-							"The base value of health this unit type has.",
-							ut.NUMBER_MODE.NUMBER,
-							ut.NAME_MODE.ICON)
-					end,
-					width = stat_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_base_health(v)
-					end
-				},
-				{
-					header = "attack",
-					---@param v unit_type_id
-					render_closure = function (rect, k, v)
-						ut.generic_number_field(
-							"stone-axe.png",
-							DATA.unit_type_get_base_attack(v),
-							rect,
-							"The base attack strength of this unit type.",
-							ut.NUMBER_MODE.NUMBER,
-							ut.NAME_MODE.ICON)
-					end,
-					width = stat_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_base_attack(v)
-					end
-				},
-				{
-					header = "armor",
-					---@param v unit_type_id
-					render_closure = function (rect, k, v)
-						ut.generic_number_field(
-							"round-shield.png",
-							DATA.unit_type_get_base_armor(v),
-							rect,
-							"The base value for this unit type's armor.",
-							ut.NUMBER_MODE.NUMBER,
-							ut.NAME_MODE.ICON)
-					end,
-					width = stat_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_base_armor(v)
-					end
-				},
-				{
-					header = "speed",
-					---@param v unit_type_id
-					render_closure = function (rect, k, v)
-						ut.generic_number_field(
-							"fast-forward-button.png",
-							DATA.unit_type_get_speed(v),
-							rect,
-							"How fast this unit type moves.",
-							ut.NUMBER_MODE.PERCENTAGE,
-							ut.NAME_MODE.ICON)
-					end,
-					width = stat_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_speed(v)
-					end
-				},
-				{
-					header = "spotting",
-					---@param v unit_type_id
-					render_closure = function (rect, k, v)
-						ut.generic_number_field(
-							"magnifying-glass.png",
-							DATA.unit_type_get_visibility(v),
-							rect,
-							"How good this unit type is at spotting. Affects the chance of this warband spotting other warbands and armies.",
-							ut.NUMBER_MODE.NUMBER,
-							ut.NAME_MODE.ICON)
-					end,
-					width = stat_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_spotting(v)
-					end
-				},
-				{
-					header = "visibility",
-					---@param v unit_type_id
-					render_closure = function (rect, k, v)
-						ut.generic_number_field(
-							"high-grass.png",
-							DATA.unit_type_get_visibility(v),
-							rect,
-							"How easy it is to spot this unit type. Affects the chance of warbands and armies being spotted.",
-							ut.NUMBER_MODE.NUMBER,
-							ut.NAME_MODE.ICON)
-					end,
-					width = stat_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_visibility(v)
-					end
-				},
-				{
-					header = "supply",
-					---@param v unit_type_id
-					render_closure = function (rect, k, v)
-						ut.generic_number_field(
-							"sliced-bread.png",
-							DATA.unit_type_get_supply_used(v) / 30,
-							rect,
-							"Base supply used by unit type per day. Affects how much food the unit spends when traveling.",
-							ut.NUMBER_MODE.NUMBER,
-							ut.NAME_MODE.ICON)
-					end,
-					width = stat_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_supply_used(v) / 30
-					end
-				},
-				{
-					header = "hauling",
-					---@param v unit_type_id
-					render_closure = function (rect, k, v)
-						ut.generic_number_field(
-							"cardboard-box.png",
-							DATA.unit_type_get_supply_capacity(v) / 4,
-							rect,
-							"Base carrying capacity of unit type. Affects how much is looted when raiding.",
-							ut.NUMBER_MODE.NUMBER,
-							ut.NAME_MODE.ICON)
-					end,
-					width = stat_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_supply_capacity(v) / 4
-					end
-				},
-				{
-					header = "target",
-					---@param rect Rect
-					---@param v unit_type_id
-					render_closure = function (rect, k, v)
-						local can_recruit = false
-						if (player_character == INVALID_ID) then
-
-						elseif warband == LEADER_OF_WARBAND(player_character) then
-							can_recruit = true
-						elseif warband == RECRUITER_OF_WARBAND(player_character) then
-							can_recruit = true
-						end
-
-						local target = DATA.warband_get_units_target(warband, v)
-						local current = DATA.warband_get_units_current(warband, v)
-
-						local dec_but = rect:subrect(0,0, rect.height, rect.height, "left", "center")
-						if can_recruit then
-							if target > 0 then
-								if ut.icon_button(ASSETS.icons['minus.png'], dec_but, "Decrease the number of units to recrut by one.") then
-									DATA.warband_set_units_target(warband, v, math.max(0, target - 1))
-								end
-							else
-								ut.icon_button(ASSETS.icons['minus.png'], dec_but, "No unit to disband!", false)
-							end
-						end
-
-						ui.centered_text(tostring(current) .. '/' .. tostring(target), rect:subrect(0, 0, rect.width - 2 * rect.height, rect.height, "center", "center"))
-
-
-						local current_budget = warband_utils.monthly_budget(warband)
-						local target_budget = warband_utils.predict_upkeep(warband)
-
-						local inc_but = rect:subrect(0,0, rect.height, rect.height, "right", "center")
-						if can_recruit then
-							if current_budget > target_budget + DATA.unit_type_get_upkeep(v) then
-								if ut.icon_button(ASSETS.icons['plus.png'], inc_but, "Increase the number of units to recrut by one.") then
-									DATA.warband_set_units_target(warband, v, math.max(0, target + 1))
-								end
-							else
-								ut.icon_button(ASSETS.icons['plus.png'], inc_but, "Not enough military funding!", false)
-							end
-						end
-					end,
-					width = end_width,
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.warband_get_units_current(warband, v)
-					end
-				},
-			},
-			unit_list_state, nil, true
-		)()
-	end
-
 	--- draws list of all warriors in warband
 	---@param rect Rect
 	local function draw_warrior_panel(rect)
@@ -1229,16 +928,6 @@ function window.draw(gamescene)
 			rect,
 			units,
 			{
-				{
-					header = ".",
-					render_closure = render_unit_icon,
-					width = icon_width,
-					---@param k POP
-					---@param v unit_type_id
-					value = function (k, v)
-						return DATA.unit_type_get_name(v)
-					end
-				},
 				{
 					header = ".",
 					---@param k POP
@@ -1330,7 +1019,7 @@ function window.draw(gamescene)
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_health(k, v)
+						return pop_utils.get_health(k)
 					end
 				},
 				{
@@ -1340,7 +1029,7 @@ function window.draw(gamescene)
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_attack(k, v)
+						return pop_utils.get_attack(k)
 					end
 				},
 				{
@@ -1350,7 +1039,7 @@ function window.draw(gamescene)
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_armor(k, v)
+						return pop_utils.get_armor(k)
 					end
 				},
 				{
@@ -1360,7 +1049,7 @@ function window.draw(gamescene)
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_speed(k, v)
+						return pop_utils.get_speed(k).base
 					end
 				},
 				{
@@ -1370,7 +1059,7 @@ function window.draw(gamescene)
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_spotting(k, v)
+						return pop_utils.get_spotting(k)
 					end
 				},
 				{
@@ -1380,7 +1069,7 @@ function window.draw(gamescene)
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_visibility(k, v)
+						return pop_utils.get_visibility(k)
 					end
 				},
 				{
@@ -1390,7 +1079,7 @@ function window.draw(gamescene)
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_supply_use(k, v) / 30
+						return pop_utils.get_supply_use(k) / 30
 					end
 				},
 				{
@@ -1400,7 +1089,7 @@ function window.draw(gamescene)
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return  pop_utils.get_supply_capacity(k, v)
+						return  pop_utils.get_supply_capacity(k)
 					end
 				},
 				{
@@ -1463,13 +1152,6 @@ function window.draw(gamescene)
 	ui.panel(unit_panel)
 	unit_panel:shrink(spacing)
 	unit_panel_tab = ut.tabs(unit_panel_tab, unit_panel_layout, {
-		{
-			text = "RECRUIT",
-			tooltip = "Show all recruitable units in this province.",
-			closure = function ()
-				draw_recruit_panel(unit_panel)
-			end
-		},
 		{
 			text = "WARRIOR",
 			tooltip = "Show all warriors in this warband.",

@@ -32,7 +32,7 @@ return function ()
 
 			-- character assumes that realm will lose money at least for a year
 			local loss_of_money = 0
-			if realm then
+			if realm ~= INVALID_ID then
 				loss_of_money = economy_values.potential_monthly_tribute_size(realm) * 12
 			end
 
@@ -40,6 +40,8 @@ return function ()
 			local their_warlords, their_power = political_values.military_strength(associated_data)
 
 			if realm == INVALID_ID then
+				print("no options")
+
 				return {{
 					text = "I do not belong to any realm",
 					tooltip = "",
@@ -68,6 +70,8 @@ return function ()
 							WORLD:emit_notification(NAME(character) .. " agreed to pay tribute to my tribe")
 						end
 
+						---print("agree")
+
 						diplomacy_effects.set_tributary(REALM(associated_data), REALM(character))
 					end,
 
@@ -90,7 +94,9 @@ return function ()
 							WORLD:emit_notification("I refused to pay tribute to " .. NAME(associated_data))
 						end
 
-						WORLD:emit_event("request-tribute-refusal", associated_data, character, 10)
+						---print("refusal")
+
+						WORLD:emit_immediate_event("request-tribute-refusal", associated_data, character)
 					end,
 					ai_preference = AI_VALUE.generic_event_option(character, associated_data, 0, {})
 				}
@@ -133,11 +139,7 @@ return function ()
 							WORLD:emit_notification(NAME(character) .. " refused to pay tribute to my tribe. Time to teach them a lesson!")
 						end
 
-						local realm = REALM(character)
-						DATA.realm_set_prepare_attack_flag(realm, true)
-						SET_BUSY(character)
-
-						WORLD:emit_immediate_event("request-tribute-raid", character, target_realm)
+						diplomacy_effects.enforce_tributary(character)
 					end,
 
 					ai_preference = function ()

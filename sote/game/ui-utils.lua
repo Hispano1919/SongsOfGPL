@@ -781,7 +781,7 @@ function ut.calendar(gam)
 		:build()
 	local main = hor:next(ut.BASE_HEIGHT * 12, ut.BASE_HEIGHT)
 	ui.panel(main)
-	local www = (require "game.entities.world").ticks_per_hour
+	local www = WORLD.ticks_per_hour
 	local sht = WORLD.sub_hourly_tick
 	local minutes = math.floor(sht / www * 60)
 	local seconds = math.floor(sht / www * 60 * 60) % 60

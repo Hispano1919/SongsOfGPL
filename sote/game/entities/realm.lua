@@ -3,6 +3,7 @@ local tabb = require "engine.table"
 
 local province_utils = require "game.entities.province".Province
 local army_utils = require "game.entities.army"
+local warband_utils = require "game.entities.warband"
 
 realm_utils.Realm = {}
 
@@ -103,21 +104,6 @@ function realm_utils.Realm.get_random_province(realm)
 	end
 end
 
----Adds warband as potential patrol of province
----@param realm Realm
----@param prov Province
----@param warband Warband
-function realm_utils.Realm.add_patrol(realm, prov, warband)
-	if DATA.warband_get_current_status(warband) ~= WARBAND_STATUS.IDLE then return end
-	if DATA.realm_get_patrols(realm)[prov] then
-		DATA.realm_get_patrols(realm)[prov][warband] = warband
-	else
-		DATA.realm_get_patrols(realm)[prov]  = {}
-		DATA.realm_get_patrols(realm)[prov][warband] = warband
-	end
-	DATA.warband_set_current_status(warband, WARBAND_STATUS.PREPARING_PATROL)
-end
-
 ---Removes warband as potential patrol of province
 ---@param realm Realm
 ---@param prov Province
@@ -163,27 +149,6 @@ function realm_utils.Realm.get_court_efficiency(realm)
 		result = budget / target
 	end
 	return result
-end
-
----@param realm Realm
----@param province Province
----@return number
-function realm_utils.Realm.get_explore_cost(realm, province)
-	-- We don't want movement cost to ACTUALLY cost nigh infinite amounts on land
-	-- So we'll reduce it by this amount instead.
-	local mulp = 0.1
-	local fat_target = DATA.fatten_province(province)
-	if DATA.tile_get_is_land(fat_target.center) then
-		local path = require "game.ai.pathfinding"
-		local cost, r = path.pathfind(DATA.realm_get_capitol(realm), province, nil, DATA.realm_get_known_provinces(realm))
-		if r then
-			return cost * mulp
-		else
-			return math.huge
-		end
-	else
-		return fat_target.movement_cost
-	end
 end
 
 ---@param realm Realm
@@ -235,15 +200,6 @@ function realm_utils.Realm.get_realm_population(realm)
 	return total
 end
 
-function realm_utils.Realm.get_active_armies_size(realm)
-	local total = 0
-	DATA.for_each_realm_armies_from_realm(realm, function (item)
-		local army = DATA.realm_armies_get_army(item)
-		total = total + army_utils.size(army)
-	end)
-	return total
-end
-
 ---@param realm Realm
 ---@return number
 function realm_utils.Realm.get_realm_ready_military(realm)
@@ -251,35 +207,6 @@ function realm_utils.Realm.get_realm_ready_military(realm)
 	DATA.for_each_realm_provinces_from_realm(realm, function (location)
 		local province = DATA.realm_provinces_get_province(location)
 		total = total + province_utils.military(province)
-	end)
-	return total
-end
-
----@param realm Realm
----@return number
-function realm_utils.Realm.get_realm_military(realm)
-	return realm_utils.Realm.get_realm_ready_military(realm) + realm_utils.Realm.get_active_armies_size(realm)
-end
-
----@param realm Realm
----@return number
-function realm_utils.Realm.get_realm_military_target(realm)
-	local total = 0
-	DATA.for_each_realm_provinces_from_realm(realm, function (location)
-		local province = DATA.realm_provinces_get_province(location)
-		total = total + province_utils.military_target(province)
-	end)
-	return total
-end
-
-
----@param realm Realm
----@return number
-function realm_utils.Realm.get_realm_active_army_size(realm)
-	local total = 0
-	DATA.for_each_realm_armies_from_realm(realm, function (item)
-		local army = DATA.realm_armies_get_army(item)
-		total = total + army_utils.size(army)
 	end)
 	return total
 end
@@ -357,15 +284,6 @@ function realm_utils.Realm.is_realm_in_hierarchy(realm, realm_to_check_for, sour
 	end
 end
 
----@param realm Realm
----@return number
-function realm_utils.Realm.get_realm_militarization(realm)
-	local population = realm_utils.Realm.get_realm_population(realm)
-	if population then
-		return 0
-	end
-	return realm_utils.Realm.get_realm_military(realm) / population
-end
 
 ---@param realm Realm
 ---@param warband Warband
@@ -385,136 +303,23 @@ end
 ---Raise local army
 ---@param realm Realm
 ---@param province Province
----@return Army
-function realm_utils.Realm.raise_local_army(realm, province)
-	local army = DATA.create_army()
-	DATA.force_create_realm_armies(realm, army)
+---@return warband_id[]
+function realm_utils.Realm.available_defenders(realm, province)
+	local result = {}
 
 	if realm_utils.Realm.size(realm) == 0 then
-		return army
+		return result
 	end
 
-	DATA.for_each_warband_location_from_location(province, function (item)
+	DATA.for_each_warband_location_from_location(DATA.province_get_center(province), function (item)
 		local warband = DATA.warband_location_get_warband(item)
 		local status = DATA.warband_get_current_status(warband)
-		if status == WARBAND_STATUS.IDLE then
-			DATA.force_create_army_membership(army, warband)
-			realm_utils.Realm.raise_warband(realm, warband)
-		end
 		if status == WARBAND_STATUS.PATROL then
-			DATA.force_create_army_membership(army, warband)
-			realm_utils.Realm.raise_warband(realm, warband)
+			table.insert(result, warband)
 		end
 	end)
-
-	return army
+	return result
 end
-
----@param realm Realm
----@param warbands table<Warband, Warband>
----@return Army
-function realm_utils.Realm.raise_army(realm, warbands)
-	--print("army")
-	local army = DATA.create_army()
-	DATA.force_create_realm_armies(realm, army)
-
-	for _, warband in pairs(warbands) do
-		DATA.force_create_army_membership(army, warband)
-		realm_utils.Realm.raise_warband(realm, warband)
-	end
-
-	return army
-end
-
----Disbands an army and returns pops to their provinces.
----@param army Army
----@return table<Warband, Warband>
-function realm_utils.Realm.disband_army(army)
-	---@type table<Warband, Warband>
-	local warbands = {}
-	DATA.for_each_army_membership_from_army(army, function (item)
-		local warband = DATA.army_membership_get_member(item)
-
-		---@type pop_id[]
-		local to_return = {}
-
-		DATA.for_each_warband_unit_from_warband(warband, function (unit_membership)
-			local pop = DATA.warband_unit_get_unit(unit_membership)
-			table.insert(to_return, pop)
-		end)
-
-		for _, pop in pairs(to_return) do
-			local pop_location = DATA.get_pop_location_from_pop(pop)
-			local province = DATA.pop_location_get_location(pop_location)
-			if not IS_CHARACTER(pop) then
-				province_utils.return_pop_from_army(province, pop)
-			end
-		end
-
-		-- if warband was patrolling, keep the patrol status
-		local fat = DATA.fatten_warband(warband)
-		if fat.current_status ~= WARBAND_STATUS.PATROL then
-			fat.current_status = WARBAND_STATUS.IDLE
-		end
-
-		warbands[warband] = warband
-	end)
-
-	DATA.delete_army(army)
-
-	return warbands
-end
-
--- commenting as unused
-
--- ---@param realm Realm
--- ---@return table<Province, number>
--- function realm_utils.Realm.get_province_pop_weights(realm)
--- 	---@type table<Province, number>
--- 	local weights = {}
--- 	local total = 0
--- 	for _, p in pairs(self.provinces) do
--- 		local po = p:home_population()
--- 		total = total + po
--- 		weights[p] = po
--- 	end
--- 	for p, v in pairs(weights) do
--- 		weights[p] = v / total
--- 	end
--- 	return weights
--- end
-
--- ---@param realm Realm
--- function realm_utils.Realm.get_province_from_weights(realm, weights)
--- 	local w = love.math.random()
--- 	local sum = 0
--- 	for k, v in pairs(weights) do
--- 		sum = sum + v
--- 		if sum > w then
--- 			return k
--- 		end
--- 	end
--- 	return tabb.nth(self.provinces, 1)
--- end
-
--- ---@param realm Realm
--- ---@return Province
--- function realm_utils.Realm.get_random_pop_weighted_province(realm)
--- 	local ws = self:get_province_pop_weights()
--- 	return self:get_province_from_weights(ws)
--- end
-
--- ---@param realm Realm
--- ---@return table<number, Province>
--- function realm_utils.Realm.get_n_random_pop_weighted_provinces(realm, n)
--- 	---@type table<number, Province>
--- 	local returns = {}
--- 	local ws = self:get_province_pop_weights()
--- 	for i = 1, n do
--- 		returns[#returns + 1] = self:get_province_from_weights(ws)
--- 	end
--- 	return returns
--- end
 
 ---@param realm Realm
 ---@return number
@@ -529,8 +334,7 @@ function realm_utils.Realm.get_warbands(realm)
 
 	DATA.for_each_realm_provinces_from_realm(realm, function (item)
 		local part_of_the_realm = DATA.realm_provinces_get_province(item)
-		DATA.get_warband_location_from_location(part_of_the_realm)
-		DATA.for_each_warband_location_from_location(part_of_the_realm, function (location)
+		DATA.for_each_warband_location_from_location(DATA.province_get_center(part_of_the_realm), function (location)
 			table.insert(res, DATA.warband_location_get_warband(location))
 		end)
 	end)

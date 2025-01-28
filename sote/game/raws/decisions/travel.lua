@@ -1,247 +1,185 @@
 local tabb = require "engine.table"
 
-local pathfinding = require "game.ai.pathfinding"
 local Decision = require "game.raws.decisions"
 
-local warband_utils = require "game.entities.warband"
-local pop_utils = require "game.entities.pop".POP
-
-local character_values = require "game.raws.values.character"
-local military_values = require "game.raws.values.military"
 local economy_values = require "game.raws.values.economy"
 
 local economy_effects = require "game.raws.effects.economy"
+local travel_effects = require "game.raws.effects.travel"
+local military_effects = require "game.raws.effects.military"
+
 local economy_triggers = require "game.raws.triggers.economy"
 
 
+
 local function load()
-	---Returns travel time and path
-	---@param root Character
-	---@param primary_target Province
-	---@return number, Province[]|nil
-	local function path_property(root, primary_target)
-		local warband = LEADER_OF_WARBAND(root)
-		if warband then
-			return pathfinding.pathfind(
-				PROVINCE(root),
-				primary_target,
-				military_values.warband_speed(warband),
-				DATA.realm_get_known_provinces(REALM(root))
-			)
-		end
-		return pathfinding.pathfind(
-			PROVINCE(root),
-			primary_target,
-			character_values.travel_speed(root),
-			DATA.realm_get_known_provinces(REALM(root))
-		)
-	end
-
-	---@class (exact) TravelData
-	---@field destination Province
-	---@field travel_time number
-	---@field goal "travel"|"migration"
-	---@field path Province[]
-
-	---@type DecisionCharacterProvince
-	Decision.CharacterProvince:new {
-		name = 'travel',
-		ui_name = "Travel",
+	Decision.Character:new {
+		name = 'raid-settlement',
+		ui_name = "Raid settlement",
 		tooltip = function(root, primary_target)
-			local warband = LEADER_OF_WARBAND(root)
-			local status = DATA.warband_get_current_status(warband)
-
-			if warband == INVALID_ID then
-				return "You have to gather a party and supplies in order to travel."
-			end
-			local hours, path = path_property(root, primary_target)
-			if path == nil then
-				return "Impossible to reach"
-			end
-			local days = pathfinding.hours_to_travel_days(hours)
-			if economy_values.days_of_travel(warband) < days then
-				return "Not enough supplies to reach this province."
-			end
-			if status ~= WARBAND_STATUS.IDLE then
-				return "Your party is busy with " .. DATA.warband_status_get_name(status)
-			end
 			if BUSY(root) then
 				return "You are too busy to consider it."
 			end
-			return "Travel to " .. PROVINCE_NAME(primary_target)
+			if LEADER_OF_WARBAND(root) == INVALID_ID then
+				return "You have to be a leader of a party to raid settlements on your own."
+			end
+			return "Raid settlement"
 		end,
-		path = path_property,
-		sorting = 1,
-		primary_target = "province",
+		sorting = 2,
+		primary_target = 'none',
 		secondary_target = 'none',
-		base_probability = 1 / 12, -- Almost every yeaer
+		base_probability = 1 / 30,
 		pretrigger = function(root)
 			if BUSY(root) then return false end
-			if LEADER_OF_WARBAND(root) == INVALID_ID then return false end
-
-			-- check is expensive so limit it to traders and players
-			if (not HAS_TRAIT(root, TRAIT.TRADER)) and (WORLD.player_character ~= root) then
+			if LEADER_OF_WARBAND(root) == INVALID_ID then
 				return false
 			end
 			return true
 		end,
 		clickable = function(root, primary_target)
-			if PROVINCE_REALM(primary_target) == nil then return false end
-			if primary_target == PROVINCE(root) then return false end
-
-			return true
-		end,
-		available = function(root, primary_target)
-			if BUSY(root) then return false end
-			local hours, path = path_property(root, primary_target)
-			if path == nil then
+			if PROVINCE(root) ~= INVALID_ID then
 				return false
 			end
-			local days = pathfinding.hours_to_travel_days(hours)
-
-			if economy_values.days_of_travel(LEADER_OF_WARBAND(root)) < days then
+			local party = LEADER_OF_WARBAND(root)
+			if party == INVALID_ID then
 				return false
 			end
-
+			if WARBAND_TILE(party) ~= DATA.province_get_center(TILE_PROVINCE(WARBAND_TILE(party))) then
+				return false
+			end
+			if PROVINCE_REALM(TILE_PROVINCE(WARBAND_TILE(party))) == INVALID_ID then
+				return false
+			end
 			return true
 		end,
-		ai_target = function(root)
-			---@type Province[]
-			local targets = {}
-
-			DATA.for_each_province_neighborhood_from_origin(CAPITOL(REALM(root)), function (item)
-				local province = DATA.province_neighborhood_get_target(item)
-				local realm = PROVINCE_REALM(province)
-				if realm ~= INVALID_ID and economy_triggers.allowed_to_trade(root, realm) then
-					targets[province] = province
-				end
-			end)
-
-			DATA.for_each_realm_subject_relation_from_subject(REALM(root), function (item)
-				local overlord = DATA.realm_subject_relation_get_overlord(item)
-				if economy_triggers.allowed_to_trade(root, overlord) then
-					targets[CAPITOL(overlord)] = CAPITOL(overlord)
-				end
-			end)
-
-			DATA.for_each_realm_subject_relation_from_overlord(REALM(root), function (item)
-				local subject = DATA.realm_subject_relation_get_subject(item)
-				if economy_triggers.allowed_to_trade(root, subject) then
-					targets[CAPITOL(subject)] = CAPITOL(subject)
-				end
-			end)
-
-			for _, reward in pairs(DATA.realm_get_quests_explore(REALM(root))) do
-				targets[_] = _
-			end
-
-			-- TODO: ADD TRADE AGREEMENTS AND ADD CAPITOLS OF REALMS WITH TRADE AGREEMENTS SIGNED AS POTENTIAL TARGETS HERE
-
-			local _, prov = tabb.random_select_from_set(targets)
-			if prov then
-				return prov, true
-			end
-
-			return nil, false
-		end,
-		ai_secondary_target = function(root, primary_target)
-			return nil, true
+		available = function(root, primary_target, secondary_target)
+			return true
 		end,
 		ai_will_do = function(root, primary_target, secondary_target)
-			if HAS_TRAIT(root, TRAIT.TRADER) then
-				return 1
-			end
-
-			if RANK(root) == CHARACTER_RANK.CHIEF then
+			if PROVINCE_REALM(LOCAL_PROVINCE(root)) == REALM(root) then
 				return 0
 			end
-
-			-- local reward = DATA.realm_get_quests_explore(REALM(root))[primary_target] or 0
-
-			return 0
+			if not HAS_TRAIT(root, TRAIT.WARLIKE) then
+				return 0
+			end
+			return 0.5
 		end,
 		effect = function(root, primary_target, secondary_target)
-			local hours, path = path_property(root, primary_target)
-
-			if path == nil then
-				return
-			end
-
-			local days = pathfinding.hours_to_travel_days(hours)
-
-			if days > 150 then
-				days = 150
-			end
-			SET_BUSY(root)
-
-			---@type TravelData
-			local data = {
-				destination = primary_target,
-				goal = "travel",
-				path = path,
-				travel_time = days
-			}
-
-			if OPTIONS["travel-start"] == 0 and WORLD.player_character == root then
-				WORLD:emit_immediate_event("travel-start", root, data)
-			else
-				WORLD:emit_immediate_action("travel-start-action", root, data)
-			end
+			military_effects.raid(root, false)
 		end
 	}
 
 	Decision.Character:new {
-		name = 'travel-capital',
-		ui_name = "Travel to capital province",
+		name = 'enter-settlement',
+		ui_name = "Enter settlement",
 		tooltip = function(root, primary_target)
 			if BUSY(root) then
 				return "You are too busy to consider it."
 			end
-			return "Travel to the capital of your realm"
+			if LEADER_OF_WARBAND(root) == INVALID_ID then
+				return "You have to be a leader of a party to enter settlements on your own."
+			end
+			return "Enter settlement and settle down for a while"
 		end,
 		sorting = 2,
 		primary_target = 'none',
 		secondary_target = 'none',
-		base_probability = 1 / 36, -- travel home once a few years
+		base_probability = 1 / 30,
 		pretrigger = function(root)
 			if BUSY(root) then return false end
-			if PROVINCE(root) == CAPITOL(REALM(root)) then
+			if LEADER_OF_WARBAND(root) == INVALID_ID then
 				return false
 			end
 			return true
 		end,
-		clickable = function(root)
+		clickable = function(root, primary_target)
+			if PROVINCE(root) ~= INVALID_ID then
+				return false
+			end
+			local party = LEADER_OF_WARBAND(root)
+			if party == INVALID_ID then
+				return false
+			end
+			if WARBAND_TILE(party) ~= DATA.province_get_center(TILE_PROVINCE(WARBAND_TILE(party))) then
+				return false
+			end
+			if PROVINCE_REALM(TILE_PROVINCE(WARBAND_TILE(party))) == INVALID_ID then
+				return false
+			end
 			return true
 		end,
-		available = function(root)
-			if BUSY(root) then return false end
+		available = function(root, primary_target, secondary_target)
 			return true
 		end,
 		ai_will_do = function(root, primary_target, secondary_target)
-			if RANK(root) == CHARACTER_RANK.CHIEF and PROVINCE(root) ~= CAPITOL(REALM(root)) then
+			--- raiding AI doesn't enter settlements
+			local ai_state = DATA.pop_get_ai_data(root)
+			if (ai_state == nil) then
+				return 0
+			end
+			if ai_state.current_goal == AI_GOAL.RAID then
+				return 0
+			end
+			if ai_state.target_province == LOCAL_PROVINCE(root) then
 				return 1
 			end
-			if HAS_TRAIT(root, TRAIT.TRADER) then
-				return 1
-			end
-			return 0
+			return 0.5
 		end,
 		effect = function(root, primary_target, secondary_target)
-			local travel_time, _ = pathfinding.hours_to_travel_days(
-				pathfinding.pathfind(
-					PROVINCE(root),
-					CAPITOL(REALM(root)),
-					character_values.travel_speed(root),
-					DATA.realm_get_known_provinces(REALM(root))
-				)
-			)
+			travel_effects.enter_settlement(root)
+		end
+	}
 
-			if travel_time == math.huge then
-				travel_time = 150
+	Decision.Character:new {
+		name = 'exit-settlement',
+		ui_name = "Exit settlement",
+		tooltip = function(root, primary_target)
+			if BUSY(root) then
+				return "You are too busy to consider it."
 			end
-			SET_BUSY(root)
+			if LEADER_OF_WARBAND(root) == INVALID_ID then
+				return "You have to be a leader of a party to travel on your own."
+			end
 
-			WORLD:emit_action("travel", root, CAPITOL(REALM(root)), travel_time, true)
+			return "Exit settlement and start your travel"
+		end,
+		sorting = 2,
+		primary_target = 'none',
+		secondary_target = 'none',
+		base_probability = 1 / 30,
+		pretrigger = function(root)
+			if BUSY(root) then return false end
+
+			if LEADER_OF_WARBAND(root) == INVALID_ID then
+				return false
+			end
+
+			return true
+		end,
+		clickable = function(root, primary_target)
+			if PROVINCE(root) == INVALID_ID then
+				return false
+			end
+			return true
+		end,
+		available = function(root, primary_target, secondary_target)
+			return true
+		end,
+		ai_will_do = function(root, primary_target, secondary_target)
+			local ai_state = DATA.pop_get_ai_data(root)
+			if (ai_state == nil) then
+				return 0
+			end
+			if ai_state.target_province == LOCAL_PROVINCE(root) then
+				return 0
+			end
+			if ai_state.current_goal ==	AI_GOAL.IDLE then
+				return 0
+			end
+			return 1
+		end,
+		effect = function(root, primary_target, secondary_target)
+			travel_effects.exit_settlement(root)
 		end
 	}
 

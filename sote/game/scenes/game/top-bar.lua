@@ -4,6 +4,7 @@ local uit = require "game.ui-utils"
 
 local realm_utils = require "game.entities.realm".Realm
 local province_utils = require "game.entities.province".Province
+local warband_utils = require "game.entities.warband"
 
 local politics_values = require "game.raws.values.politics"
 local economy_values = require "game.raws.values.economy"
@@ -254,13 +255,11 @@ function tb.draw(gam)
 	uit.data_entry_icon("minions.png", tostring(math.floor(amount)), tr, trs)
 
 	-- Army size
-	local amount = realm_utils.get_realm_military(LOCAL_REALM(character))
-	local target = realm_utils.get_realm_military_target(LOCAL_REALM(character))+
-		realm_utils.get_realm_active_army_size(LOCAL_REALM(character))
+	local amount = warband_utils.size(LEADER_OF_WARBAND(character))
 
 	local tr = layout:next(uit.BASE_HEIGHT * 3, uit.BASE_HEIGHT)
 	local trs = "Size of our realms armies."
-	uit.data_entry_icon("barbute.png", tostring(math.floor(amount)) .. " / " .. tostring(math.floor(target)), tr, trs)
+	uit.data_entry_icon("barbute.png", tostring(math.floor(amount)), tr, trs)
 
 
 	-- ALERTS

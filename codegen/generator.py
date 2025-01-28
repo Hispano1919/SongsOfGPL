@@ -884,8 +884,13 @@ class EntityDescription:
         result += f"\n---{self.name}: LSP types---\n"
         #id
         result += f"\n---Unique identificator for {self.name} entity\n"
-        result += f'---@class (exact) {prefix_to_id_name(self.name)} : number\n'
-        result += f'---@field is_{self.name} nil\n\n'
+        result += f'---@class (exact) {prefix_to_id_name(self.name)} : table\n'
+        result += f'---@field is_{self.name} number\n'
+        # for id_name in REGISTERED_ID_NAMES:
+            # if id_name == prefix_to_id_name(self.name):
+                # result += f'---@field is_{self.name} table\n'
+            # else:
+                # result += f'---@field is_{id_name} number\n'
 
         #fat id
         result += f'---@class (exact) fat_{prefix_to_id_name(self.name)}\n'
@@ -1447,6 +1452,7 @@ ForageResource = StaticEntityDescription("forage_resource")
 BudgetCategory = StaticEntityDescription("budget_category")
 EconomyReason = StaticEntityDescription("economy_reason")
 PoliticsReason = StaticEntityDescription("politics_reason")
+UnitType = StaticEntityDescription("unit_type")
 
 LawTrade = StaticEntityDescription("law_trade")
 LawBuilding = StaticEntityDescription("law_building")
@@ -1473,8 +1479,6 @@ ResourcesLocation = StructDescription("resource_location")
 Plate = EntityDescription("plate", 50, False)
 PlateTiles = EntityDescription("plate_tiles", TILES_MAX_COUNT + 20, False)
 PlateTiles.index_storage = "std_vector"
-
-UnitType = EntityDescription("unit_type", 20, True)
 
 Satisfaction = StructDescription("need_satisfaction")
 NeedDefinition = StructDescription("need_definition")
@@ -1508,7 +1512,6 @@ Subreligion = EntityDescription("subreligion", 10000, False)
 
 Pop = EntityDescription("pop", POPS_MAX_COUNT, False)
 Province = EntityDescription("province", 20000, False)
-Army = EntityDescription("army", 50000, False)
 Warband = EntityDescription("warband", 50000, False)
 Realm = EntityDescription("realm", REALMS_MAX_COUNT, False)
 
@@ -1519,7 +1522,6 @@ BuildingOwnership = EntityDescription("ownership", 200000, False)
 Employment = EntityDescription("employment", 300000, False)
 BuildingLocation = EntityDescription("building_location", 200000, False)
 
-ArmyMembership = EntityDescription("army_membership", 50000, False)
 WarbandLeader = EntityDescription("warband_leader", 50000, False)
 WarbandRecruiter = EntityDescription("warband_recruiter", 50000, False)
 WarbandCommander = EntityDescription("warband_commander", 50000, False)
@@ -1538,7 +1540,6 @@ ParentChild = EntityDescription("parent_child_relation", 900000, False)
 Loyalty = EntityDescription("loyalty", 200000, False)
 Succession = EntityDescription("succession", 200000, False)
 
-RealmArmies = EntityDescription("realm_armies", REALMS_MAX_COUNT, False)
 RealmGuard = EntityDescription("realm_guard", REALMS_MAX_COUNT, False)
 RealmOverseer = EntityDescription("realm_overseer", REALMS_MAX_COUNT, False)
 RealmLeader = EntityDescription("realm_leadership", REALMS_MAX_COUNT, False)

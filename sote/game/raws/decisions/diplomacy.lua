@@ -4,6 +4,7 @@ local economical = require "game.raws.values.economy"
 
 local realm_utils = require "game.entities.realm".Realm
 local province_utils = require "game.entities.province".Province
+local migration_effects = require "game.raws.effects.migration"
 
 local retrieve_use_case = require "game.raws.raws-utils".trade_good_use_case
 local retrieve_trade_good = require "game.raws.raws-utils".trade_good
@@ -45,14 +46,26 @@ local function load()
 	Decision.Character:new {
 		name = 'request-tribute',
 		ui_name = "Request tribute",
-		tooltip = function(root, primary_target)
+		tooltip = function(root, _)
 			if DATA.pop_get_busy(root) then
 				return "You are busy."
 			end
-			return "Suggest " .. NAME(primary_target) .. " to become your tributary."
+
+			local warband = LEADER_OF_WARBAND(root)
+			if warband == INVALID_ID then
+				return "You have to lead a warband to demand tribute"
+			end
+			local warband_location = WARBAND_TILE(warband)
+			local warband_province = TILE_PROVINCE(warband_location)
+			local province_center = DATA.province_get_center(warband_province)
+			if province_center ~= warband_location then
+				return "You have to be at the province capital to demand tribute"
+			end
+
+			return "Suggest local tribe to become your tributary."
 		end,
 		sorting = 1,
-		primary_target = 'character',
+		primary_target = 'none',
 		secondary_target = 'none',
 		base_probability = 1 / 12, -- Once every year on average
 		pretrigger = function(root)
@@ -67,65 +80,65 @@ local function load()
 
 			return true
 		end,
-		clickable = function(root, primary_target)
+		clickable = function(root, _)
+			local warband = LEADER_OF_WARBAND(root)
+			if warband == INVALID_ID then
+				return false
+			end
+			local warband_location = WARBAND_TILE(warband)
+			local warband_province = TILE_PROVINCE(warband_location)
+			local province_center = DATA.province_get_center(warband_province)
+			if province_center ~= warband_location then
+				return false
+			end
+
+			local realm = PROVINCE_REALM(warband_province)
+
+			if realm == INVALID_ID then
+				return false
+			end
+
 			---@type Character
-			local primary_target = primary_target
+			local target = LEADER(realm)
+			if not dt.valid_negotiators(root, target) then return false end
+			if dt.pays_tribute_to(REALM(target), REALM(root)) then return false end
+
+			return true
+		end,
+		available = function(root, _)
+			local warband = LEADER_OF_WARBAND(root)
+			if warband == INVALID_ID then
+				return false
+			end
+			local warband_location = WARBAND_TILE(warband)
+			local warband_province = TILE_PROVINCE(warband_location)
+			local province_center = DATA.province_get_center(warband_province)
+			if province_center ~= warband_location then
+				return false
+			end
+
+			local realm = PROVINCE_REALM(warband_province)
+
+			if realm == INVALID_ID then
+				return false
+			end
+
+			---@type Character
+			local primary_target = LEADER(realm)
 			if not dt.valid_negotiators(root, primary_target) then return false end
 			if dt.pays_tribute_to(REALM(primary_target), REALM(root)) then return false end
 
 			return true
 		end,
-		available = function(root, primary_target)
-			if not dt.valid_negotiators(root, primary_target) then return false end
-			if dt.pays_tribute_to(primary_target, REALM(root)) then return false end
-
-			return true
-		end,
-		ai_target = function(root)
-			--print("ait")
-			---@type Realm
-			local realm = REALM(root)
-			if realm == INVALID_ID then
-				return nil, false
-			end
-
-			-- select random province
-			local random_realm_province = realm_utils.get_random_province(realm)
-
-
-			if random_realm_province ~= INVALID_ID then
-				-- Once you target a province, try selecting a random neighbor
-				local neighbor_province = province_utils.get_random_neighbor(random_realm_province)
-
-				if neighbor_province ~= nil then
-					if PROVINCE_REALM(neighbor_province) ~= INVALID_ID then
-						if not dt.province_controlled_by(neighbor_province, realm) then
-							return pv.province_leader(neighbor_province), true
-						end
-					end
-				end
-			end
-
-			-- if that still fails, try targetting a random tributaries neighbor
-
-			local random_tributary = diplomacy_values.sample_tributary(realm)
-			if random_tributary ~= nil then
-				local random_tributary_province = DATA.realm_get_capitol(random_tributary)
-				local neighbor_province = province_utils.get_random_neighbor(random_tributary_province)
-				if neighbor_province ~= nil and PROVINCE_REALM(neighbor_province) ~= INVALID_ID then
-					if not dt.province_controlled_by(neighbor_province, realm) then
-						return pv.province_leader(neighbor_province), true
-					end
-				end
-			end
-			return nil, false
-		end,
-		ai_secondary_target = function(root, primary_target)
+		ai_secondary_target = function(root, _)
 			return nil, true
 		end,
-		ai_will_do = function(root, primary_target, secondary_target)
-			---@type Character
-			primary_target = primary_target
+		ai_will_do = function(root, _, _)
+			local warband = LEADER_OF_WARBAND(root)
+			local warband_location = WARBAND_TILE(warband)
+			local warband_province = TILE_PROVINCE(warband_location)
+
+			local primary_target = LEADER(PROVINCE_REALM(warband_province))
 
 			local _, root_power = pv.military_strength(root)
 			local _, target_power = pv.military_strength(primary_target)
@@ -168,14 +181,21 @@ local function load()
 
 			return base * multiplier
 		end,
-		effect = function(root, primary_target, secondary_target)
+		effect = function(root, _, _)
+			local warband = LEADER_OF_WARBAND(root)
+			local warband_location = WARBAND_TILE(warband)
+			local warband_province = TILE_PROVINCE(warband_location)
+			local realm = PROVINCE_REALM(warband_province)
+			---@type Character
+			local primary_target = LEADER(realm)
+
 			if WORLD.player_character == root then
 				WORLD:emit_notification("I requested " .. NAME(primary_target) .. " to become my tributary.")
 			elseif WORLD:does_player_see_realm_news(REALM(root)) then
 				WORLD:emit_notification("Our chief requested " .. NAME(primary_target) .. " to become his tributary.")
 			end
 
-			WORLD:emit_event('request-tribute', primary_target, root, 10)
+			WORLD:emit_immediate_event('request-tribute', primary_target, root)
 		end
 	}
 
@@ -316,162 +336,74 @@ local function load()
 
 	-- migrate decision
 
-	Decision.CharacterProvince:new {
-		name = 'migrate-realm',
-		ui_name = "Migrate to targeted province",
-		tooltip = function(root, primary_target)
-			if DATA.pop_get_busy(root) then
-				return "You are too busy to consider it."
-			end
-			if not ot.decides_foreign_policy(root, REALM(root)) then
-				return "You have no right to order your tribe to do this"
-			end
-			if PROVINCE(root) ~= DATA.realm_get_capitol(REALM(root)) then
-				return "You has to be with your people during migration"
-			end
-			if province_utils.realm(primary_target) ~= INVALID_ID then
-				return "Migrate to "
-					.. DATA.province_get_name(primary_target)
-					.. " controlled by "
-					.. DATA.realm_get_name(province_utils.realm(primary_target))
-					.. ". Our tribe will be merged into their if they agree."
-			else
-				return "Migrate to "
-					.. DATA.province_get_name(primary_target)
-					.. "."
-			end
+	Decision.CharacterSelf:new_from_trigger_lists (
+		"migrate-realm-start", "Start migration",
+		function (root, _)
+			return "Abandon your lands and start migration"
 		end,
-		path = function(root, primary_target)
-			local realm = REALM(root)
-			return path.pathfind(
-				DATA.realm_get_capitol(realm),
-				primary_target,
-				character_values.travel_speed_race(DATA.realm_get_primary_race(realm)),
-				DATA.realm_get_known_provinces(realm)
-			)
+		0,
+		{
+			pretriggers.not_busy, pretriggers.foreign_policy_decision_maker, pretriggers.at_capitol
+		},
+		{
+			pretriggers.foreign_policy_decision_maker
+		},
+		function (root)
+			migration_effects.start_migration(root)
 		end,
-		sorting = 1,
-		primary_target = "province",
-		secondary_target = 'none',
-		base_probability = 0.9, -- Almost every month
-		pretrigger = function(root)
-			if not ot.decides_foreign_policy(root, REALM(root)) then
-				return false
-			end
-			return true
-		end,
-		clickable = function(root, primary_target)
-			if not DATA.tile_get_is_land(DATA.province_get_center(primary_target)) then
-				return false
-			end
-
-			local capitol = DATA.realm_get_capitol(REALM(root))
-			local is_neighbour = false
-
-			DATA.for_each_province_neighborhood_from_origin(capitol, function (item)
-				local province = DATA.province_neighborhood_get_target(item)
-				if province == primary_target then
-					is_neighbour = true
-				end
-			end)
-
-			return is_neighbour
-		end,
-		available = function(root, primary_target)
-			if DATA.pop_get_busy(root) then
-				return false
-			end
-			if not ot.decides_foreign_policy(root, REALM(root)) then
-				return false
-			end
-			if PROVINCE(root) ~= DATA.realm_get_capitol(REALM(root)) then
-				return false
-			end
-
-			return not dt.province_controlled_by(primary_target, REALM(root))
-		end,
-		ai_target = function(root)
-			local realm = REALM(root)
-			local capitol = DATA.realm_get_capitol(realm)
-			local neighbors = DATA.filter_array_province_neighborhood_from_origin(capitol, ACCEPT_ALL)
-			local neighbor = tabb.random_select_from_array(neighbors)
-			if neighbor == nil then
-				return nil, false
-			end
-			return DATA.province_neighborhood_get_target(neighbor), true
-		end,
-		ai_secondary_target = function(root, primary_target)
-			return nil, true
-		end,
-		ai_will_do = function(root, primary_target, secondary_target)
+		function (root)
 			return 0
-		end,
-		effect = function(root, primary_target, secondary_target)
-			DATA.pop_set_busy(root, true)
-
-			--- we assume that we are at capitol province
-
-			local travel_time, _ = path.hours_to_travel_days(
-				path.pathfind(
-					PROVINCE(root),
-					primary_target,
-					character_values.travel_speed_race(DATA.realm_get_primary_race(REALM(root))),
-					DATA.realm_get_known_provinces(REALM(root))
-				)
-			)
-			if travel_time == math.huge then
-				travel_time = 150
-			end
-
-			local target_realm = province_utils.realm(primary_target)
-
-			if target_realm == INVALID_ID then
-				---@type MigrationData
-				local migration_data = {
-					organizer = root,
-					origin_province = PROVINCE(root),
-					target_province = primary_target,
-					invasion = false
-				}
-				WORLD:emit_immediate_action('migration-merge', root, migration_data)
-			else
-				WORLD:emit_event('migration-request', LEADER(province_utils.realm(primary_target)), root, travel_time)
-			end
 		end
-	}
+	)
 
-	Decision.CharacterProvince:new_from_trigger_lists(
-		"migrate-realm-invasion",
-		"Invade targeted province",
-		function(root, primary_target)
-			return "Migrate to "
-				.. DATA.province_get_name(primary_target)
-				.. " controlled by "
-				.. DATA.realm_get_name(province_utils.realm(primary_target))
-				.. ". Their tribe will be merged into our if we succeed."
+	Decision.CharacterSelf:new_from_trigger_lists (
+		"migrate-realm-invade", "Invade local lands",
+		function (root, primary_target)
+			return "Start invasion"
 		end,
-		0.9,
+		0,
 		{
-			IS_DECISION_MAKER,
-			NOT_BUSY,
-			AT_CAPITOL
+			pretriggers.not_busy, pretriggers.foreign_policy_decision_maker, pretriggers.during_migration,
+			pretriggers.at_province_center
 		},
 		{
-			SETTLED,
-			DIFFERENT_REALM
+			pretriggers.foreign_policy_decision_maker, pretriggers.during_migration
+		},
+		function (root)
+			local local_realm = PROVINCE_REALM(LOCAL_PROVINCE(root))
+			if local_realm == INVALID_ID then
+				migration_effects.settle_down(root, true)
+			else
+				WORLD:emit_immediate_event("migration-invasion-preparation", root, PROVINCE_REALM(LOCAL_PROVINCE(root)))
+			end
+		end,
+		function (root)
+			return 1
+		end
+	)
+	Decision.CharacterSelf:new_from_trigger_lists (
+		"migrate-realm-settle", "Settle local lands",
+		function (root, primary_target)
+			return "Start migration"
+		end,
+		0,
+		{
+			pretriggers.not_busy, pretriggers.foreign_policy_decision_maker, pretriggers.during_migration,
+			pretriggers.at_province_center
 		},
 		{
-			IS_NEIGHBOR
+			pretriggers.foreign_policy_decision_maker, pretriggers.during_migration
 		},
-		function (root, primary_target, secondary_target)
-			DATA.pop_set_busy(root, true)
-			WORLD:emit_immediate_event('migration-invasion-preparation', root, province_utils.realm(primary_target))
+		function (root)
+			local local_realm = PROVINCE_REALM(LOCAL_PROVINCE(root))
+			if local_realm == INVALID_ID then
+				migration_effects.settle_down(root, true)
+			else
+				WORLD:emit_immediate_event("migration-request", LEADER(local_realm), root )
+			end
 		end,
-		function(root, primary_target, secondary_target)
-			return 0
-		end,
-		function(root)
-			return province_utils.get_random_neighbor(DATA.realm_get_capitol(REALM(root))), true
+		function (root)
+			return 1
 		end
 	)
 
@@ -504,8 +436,8 @@ local function load()
 			local valid_family_units, valid_family_count = valid_home_family_units(DATA.realm_get_capitol(REALM(root)))
 			-- colonizing cost calories for travel
 			local travel_time = path.pathfind(
-				PROVINCE(root),
-				primary_target,
+				DATA.province_get_center(PROVINCE(root)),
+				DATA.province_get_center(primary_target),
 				character_values.travel_speed_race(DATA.realm_get_primary_race(REALM(root))),
 				DATA.realm_get_known_provinces(REALM(root))
 			)
@@ -587,8 +519,8 @@ local function load()
 		end,
 		path = function(root, primary_target)
 			return path.pathfind(
-				CAPITOL(REALM(root)),
-				primary_target,
+				DATA.province_get_center(CAPITOL(REALM(root))),
+				DATA.province_get_center(primary_target),
 				character_values.travel_speed_race(MAIN_RACE(REALM(root))),
 				DATA.realm_get_known_provinces(REALM(root))
 			)
@@ -643,8 +575,8 @@ local function load()
 			local _, valid_family_count = valid_home_family_units(CAPITOL(REALM(root)))
 			-- colonizing cost calories for travel
 			local travel_time = path.pathfind(
-				PROVINCE(root),
-				primary_target,
+				DATA.province_get_center(PROVINCE(root)),
+				DATA.province_get_center(primary_target),
 				character_values.travel_speed_race(MAIN_RACE(REALM(root))),
 				DATA.realm_get_known_provinces(REALM(root))
 			)
@@ -789,8 +721,8 @@ local function load()
 
 			-- colonizing cost calories for travel
 			local travel_time = path.pathfind(
-				PROVINCE(root),
-				primary_target,
+				DATA.province_get_center(PROVINCE(root)),
+				DATA.province_get_center(primary_target),
 				character_values.travel_speed_race(MAIN_RACE(REALM(root))),
 				DATA.realm_get_known_provinces(REALM(root))
 			)

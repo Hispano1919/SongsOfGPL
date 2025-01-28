@@ -759,6 +759,9 @@ void pops_produce() {
 	});
 	state.for_each_pop([&](auto ids) {
 		auto province = state.pop_get_location_from_pop_location(ids);
+		if (!province) {
+			province = state.pop_get_location_from_character_location(ids);
+		}
 		state.province_get_foragers(province) += state.pop_get_forage_ratio(ids);
 	});
 
@@ -771,6 +774,18 @@ void pops_produce() {
 
 	state.for_each_pop([&](auto ids) {
 		auto province = state.pop_get_location_from_pop_location(ids);
+		if (!province) {
+			province = state.pop_get_location_from_character_location(ids);
+		}
+
+		if (!province) {
+			auto warband = state.pop_get_warband_from_warband_unit(ids);
+			if (warband) {
+				auto tile = state.warband_get_location_from_warband_location(warband);
+				province = state.tile_get_province_from_tile_province_membership(tile);
+			}
+		}
+
 		auto size = state.province_get_size(province);
 		auto forage_time = state.pop_get_forage_ratio(ids);
 
@@ -1001,7 +1016,6 @@ void building_produce() {
 			auto good = dcon::trade_good_id{dcon::trade_good_id::value_base_t(output.good - 1)};
 			auto inventory = state.building_get_inventory(ids, good);
 
-
 			state.building_set_inventory(ids, good, inventory + output.amount * output_scale * min_input);
 
 			base_types::trade_good_container& stats = state.building_get_amount_of_outputs(ids, i);
@@ -1076,13 +1090,17 @@ void pops_consume() {
 
 void pops_sell() {
 	state.for_each_pop([&](auto pop) {
+		if (state.pop_get_is_player(pop)) {
+			return;
+		}
 		auto province = state.pop_get_location_from_pop_location(pop);
 		if (!province) {
-			province = state.pop_get_location_from_pop_location(pop);
+			province = state.pop_get_location_from_character_location(pop);
 		}
 		auto income = 0.f;
 		state.for_each_trade_good([&](auto trade_good) {
 			auto inventory = state.pop_get_inventory(pop, trade_good);
+			auto sell_ratio = 0.1f + 0.9f * (1.f - state.trade_good_get_decay(trade_good));
 			income += inventory * 0.1f * state.province_get_local_prices(province, trade_good);
 			state.pop_set_inventory(pop, trade_good, inventory * 0.9f);
 			record_production(province, trade_good, inventory * 0.1f);
@@ -1129,7 +1147,7 @@ void pops_demand() {
 	state.for_each_pop([&](auto pop){
 		auto province = state.pop_get_location_from_pop_location(pop);
 		if (!province) {
-			province = state.pop_get_location_from_pop_location(pop);
+			province = state.pop_get_location_from_character_location(pop);
 		}
 
 		auto budget = state.pop_get_savings(pop) * state.pop_get_spend_savings_ratio(pop);
@@ -1251,7 +1269,7 @@ void pops_buy() {
 	state.for_each_pop([&](auto pop){
 		auto province = state.pop_get_location_from_pop_location(pop);
 		if (!province) {
-			province = state.pop_get_location_from_pop_location(pop);
+			province = state.pop_get_location_from_character_location(pop);
 		}
 
 		auto budget = state.pop_get_savings(pop) * state.pop_get_spend_savings_ratio(pop);
@@ -1958,5 +1976,85 @@ void update_map_mode_pointer(uint8_t* map, uint32_t world_size) {
 		map[pixel_index * 4 + 1] = uint8_t(255 * g);
 		map[pixel_index * 4 + 2] = uint8_t(255 * b);
 		map[pixel_index * 4 + 3] = uint8_t(255 * 1);
+	});
+}
+
+void ai_update_price_belief(int32_t trader_raw_id) {
+	auto trader = dcon::pop_id { dcon::pop_id::value_base_t(trader_raw_id - 1)};
+	auto province = state.pop_get_location_from_character_location(trader);
+
+	if (!province) {
+		return;
+	}
+
+	// there is passive decrease of sell price
+	// and passive increase of buy price (up to a certain limit)
+	// to represent reduction of confidence in ability
+	// to sell and buy at current prices you believe in
+
+	// another force is moving your price beliefs toward the local price
+
+	state.for_each_trade_good([&](dcon::trade_good_id tgid) {
+		auto sell = state.pop_get_price_belief_sell(trader, tgid);
+		auto buy = state.pop_get_price_belief_buy(trader, tgid);
+		auto local_price = state.province_get_local_prices(province, tgid);
+
+		if (sell == 0.f) {
+			state.pop_set_price_belief_sell(trader, tgid, local_price * 0.8);
+		}
+		if (buy == 0.f) {
+			state.pop_set_price_belief_buy(trader, tgid, local_price * 1.2);
+		}
+
+		auto belief_sell_gradient = (local_price * 0.9f - sell) * 0.1f - 0.01f;
+		auto belief_buy_gradient = (local_price * 1.1f - buy) * 0.1f + 0.01f;
+
+		state.pop_set_price_belief_sell(trader, tgid, std::max(0.01f, sell + belief_sell_gradient));
+		state.pop_set_price_belief_buy(trader, tgid, std::max(0.01f, buy + belief_buy_gradient));
+	});
+}
+
+void ai_trade(int32_t trader_raw_id) {
+	auto trader = dcon::pop_id { dcon::pop_id::value_base_t(trader_raw_id - 1)};
+	auto province = state.pop_get_location_from_character_location(trader);
+
+	if (!province) {
+		return;
+	}
+
+	if (state.pop_get_is_player(trader)) {
+		return;
+	}
+
+	// buy if you belive you can sell for higher price
+	// sell if you belive you can buy for lower price
+
+	auto& wealth = state.pop_get_savings(trader);
+	auto& local_traders_wealth = state.province_get_local_wealth(province);
+
+	state.for_each_trade_good([&](dcon::trade_good_id tgid) {
+		auto sell = state.pop_get_price_belief_sell(trader, tgid);
+		auto buy = state.pop_get_price_belief_buy(trader, tgid);
+
+		auto local_price = state.province_get_local_prices(province, tgid);
+		auto& local_stockpile = state.province_get_local_storage(province, tgid);
+		auto& trader_stockpile = state.pop_get_inventory(trader, tgid);
+
+		// TODO: move the sell and buy functions to cpp
+		// and figure out a way to store notifications
+
+		if (local_stockpile >= 1 && wealth > local_price && sell > local_price * 1.2f) {
+			wealth -= local_price;
+			local_traders_wealth += local_price;
+			local_stockpile -= 1;
+			trader_stockpile += 1;
+		}
+
+		if (trader_stockpile >= 1 && local_traders_wealth > local_price && buy < local_price * 0.8f) {
+			wealth += local_price;
+			local_traders_wealth -= local_price;
+			local_stockpile += 1;
+			trader_stockpile -= 1;
+		}
 	});
 }

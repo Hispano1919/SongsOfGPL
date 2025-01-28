@@ -15,6 +15,8 @@ Decision.Character.__index = Decision.Character
 Decision.CharacterProvince = {}
 Decision.CharacterProvince.__index = Decision.CharacterProvince
 
+Decision.CharacterSelf = {}
+
 ---@alias DecisionTarget 'none' | 'character' | 'tile' | 'province' | 'realm' | 'building'
 
 --- I wish generics were properly implemented...
@@ -372,24 +374,22 @@ function Decision.CharacterProvince:new_from_trigger_lists(name, ui_name, toolti
 	})
 end
 
----Creates decision from the list of triggers
+---Creates decision without primary target from the list of triggers
 ---@param name string
 ---@param ui_name string
----@param tooltip fun(root: Character, primary_target:Character): string
+---@param tooltip fun(root: Character, _:any): string
 ---@param base_probability number
 ---@param pretriggers Pretrigger[]
----@param visibility TriggerCharacter[]
----@param availability TriggerCharacter[]
----@param effect fun(root:Character, primary_target:Character, secondary_target:any)
----@param ai_will_do fun(root:Character, primary_target:Character, secondary_target:any):number
-function Decision.Character:new_from_trigger_lists(
+---@param visibility Pretrigger[]
+---@param effect fun(root:Character)
+---@param ai_will_do fun(root:Character):number
+function Decision.CharacterSelf:new_from_trigger_lists(
 	name,
 	ui_name,
 	tooltip,
 	base_probability,
 	pretriggers,
 	visibility,
-	availability,
 	effect,
 	ai_will_do
 )
@@ -400,17 +400,10 @@ function Decision.Character:new_from_trigger_lists(
 		ui_name = ui_name,
 		base_probability = base_probability,
 		tooltip = function(root, primary_target)
-			local tooltip_result = tooltip(root, primary_target) .. "\n"
+			local tooltip_result = tooltip(root) .. "\n"
 			for _, pretrigger in ipairs(pretriggers) do
 				if not pretrigger.condition(root) then
 					for _, actual_tooltip in ipairs(pretrigger.tooltip_on_condition_failure(root)) do
-						tooltip_result = tooltip_result .. actual_tooltip .. "\n"
-					end
-				end
-			end
-			for _, trigger in ipairs(availability) do
-				if not trigger.condition(root, primary_target) then
-					for _, actual_tooltip in ipairs(trigger.tooltip_on_condition_failure(root, primary_target)) do
 						tooltip_result = tooltip_result .. actual_tooltip .. "\n"
 					end
 				end
@@ -427,18 +420,13 @@ function Decision.Character:new_from_trigger_lists(
 		end,
 		clickable = function(root, primary_target)
 			for _, trigger in ipairs(visibility) do
-				if not trigger.condition(root, primary_target) then
+				if not trigger.condition(root) then
 					return false
 				end
 			end
 			return true
 		end,
 		available = function(root, primary_target, secondary_target)
-			for _, trigger in ipairs(availability) do
-				if not trigger.condition(root, primary_target) then
-					return false
-				end
-			end
 			return true
 		end,
 		effect = effect,

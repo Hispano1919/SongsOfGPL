@@ -9,7 +9,11 @@ local plate_utils      = require "game.entities.plate"
 local utils            = require "game.ui-utils"
 
 local military_effects = require "game.raws.effects.military"
+local economy_effects  = require "game.raws.effects.economy"
+local travel_effects   = require "game.raws.effects.travel"
+
 local political_values = require "game.raws.values.politics"
+local military_values  = require "game.raws.values.military"
 
 local tabb             = require "engine.table"
 
@@ -21,6 +25,8 @@ local upkeep = require "game.economy.upkeep"
 local infrastructure = require "game.economy.province-infrastructure"
 local research = require "game.society.research"
 local recruit = require "game.society.recruitment"
+
+local pathfinding = require "game.ai.pathfinding"
 
 
 local dbm              = require "game.economy.diet-breadth-model"
@@ -49,8 +55,14 @@ local dbm              = require "game.economy.diet-breadth-model"
 ---@field unique_id number
 ---@field player_character Character
 ---@field sub_hourly_tick number
+---@field sub_daily_tick number
 ---@field current_tick_in_month number
+---@field current_tick_in_year number
 ---@field current_tick_in_decade number
+---@field ticks_per_hour number
+---@field ticks_per_month number
+---@field ticks_per_year number
+---@field ticks_per_decade number
 ---@field hour number
 ---@field day number
 ---@field month number
@@ -139,11 +151,17 @@ function world.World:new()
 	w.world_size = ws
 	w.climate_grid_size = 256
 	w.sub_hourly_tick = 0
+	w.sub_daily_tick = 0
+	w.ticks_per_hour = 120
+	w.ticks_per_month = 30 * 24 * w.ticks_per_hour
+	w.ticks_per_year = w.ticks_per_month * 12
+	w.ticks_per_decade = w.ticks_per_year * 10
 	w.hour = 0
 	w.day = 0
 	w.month = 0
 	w.year = 0
 	w.current_tick_in_month = 0
+	w.current_tick_in_year = 0
 	w.current_tick_in_decade = 0
 	w.pending_player_event_reaction = false
 	w.notification_queue = require "engine.queue":new()
@@ -174,9 +192,7 @@ end
 ---@return number
 function world.World:base_visibility(size)
 	local humans_id = RAWS_MANAGER.races_by_name['human']
-	local raiders = RAWS_MANAGER.unit_types_by_name["raiders"]
-
-	return DATA.race_get_visibility(humans_id) * DATA.unit_type_get_visibility(raiders) * size
+	return DATA.race_get_visibility(humans_id) * size
 end
 
 --- Set province as settled: it enables updates of this province.
@@ -187,7 +203,7 @@ function world.World:set_settled_province(province)
 	lon = lon + math.pi
 	lon = lon / math.pi
 	lon = lon / 2
-	local world_sections = world.ticks_per_hour * 24 * 30
+	local world_sections = WORLD.ticks_per_hour * 24 * 30
 	local timz = math.ceil(math.min(world_sections, math.max(0.001, lon * world_sections)))
 	if self.settled_provinces_by_identifier[timz] == nil then
 		self.settled_provinces_by_identifier[timz] = {}
@@ -203,7 +219,7 @@ function world.World:unset_settled_province(province)
 	lon = lon + math.pi
 	lon = lon / math.pi
 	lon = lon / 2
-	local world_sections = world.ticks_per_hour * 24 * 30
+	local world_sections = WORLD.ticks_per_hour * 24 * 30
 	local timz = math.ceil(math.min(world_sections, math.max(0.001, lon * world_sections)))
 	self.settled_provinces_by_identifier[timz][province] = nil
 end
@@ -423,10 +439,6 @@ function world.World:event_tick(eve, root, unique_id, dat)
 
 		WORLD.events_queue:dequeue()
 		handle_event(eve, root, unique_id, dat)
-
-		if DATA.pop_get_unique_id(root) == unique_id then
-			assert(PROVINCE(root) ~= INVALID_ID, "character is alive but province is nil after event " .. eve)
-		end
 		return false
 	end
 end
@@ -457,8 +469,15 @@ function world.World:tick()
 
 	-- print('current events updated')
 
+
 	WORLD.sub_hourly_tick = WORLD.sub_hourly_tick + 1
+	if WORLD.sub_daily_tick then
+		WORLD.sub_daily_tick = WORLD.sub_daily_tick + 1
+	else
+		WORLD.sub_daily_tick = 0
+	end
 	WORLD.current_tick_in_month = WORLD.current_tick_in_month + 1
+
 
 	if WORLD.current_tick_in_month == 1 then
 		PROFILER:start_timer("vegetation")
@@ -474,8 +493,127 @@ function world.World:tick()
 		PROFILER:end_timer("production")
 	end
 
-	if WORLD.settled_provinces_by_identifier[WORLD.current_tick_in_month] ~= nil then
+	if WORLD.current_tick_in_month == 2 then
+		PROFILER:start_timer("traders")
 
+		DATA.for_each_province(function (province)
+			DATA.for_each_character_location_from_location(province, function (item)
+				local character = DATA.character_location_get_character(item)
+				if (HAS_TRAIT(character, TRAIT.TRADER)) then
+					DCON.ai_update_price_belief(character);
+					DCON.ai_trade(character)
+				end
+			end)
+		end)
+
+		PROFILER:end_timer("traders")
+	end
+
+	if WORLD.current_tick_in_month == 3 then
+		PROFILER:start_timer("warband wages")
+		DATA.for_each_warband(function (warband_id)
+			local treasury = DATA.warband_get_treasury(warband_id)
+			local total_upkeep = DATA.warband_get_total_upkeep(warband_id)
+			if treasury > total_upkeep then
+				DATA.warband_inc_treasury(warband_id, -total_upkeep)
+				DATA.for_each_warband_unit_from_warband(warband_id, function (unit)
+					local unit_upkeep = warband_utils.upkeep_per_unit
+					local pop = DATA.warband_unit_get_unit(unit)
+					economy_effects.add_pop_savings(pop, unit_upkeep, ECONOMY_REASON.UPKEEP)
+				end)
+			end
+		end)
+		PROFILER:end_timer("warband wages")
+	end
+
+	do
+		PROFILER:start_timer("decisions settled")
+		--- start with settled down characters:
+		local index = WORLD.current_tick_in_month
+		while index < DATA.character_location_size do
+			---@type character_location_id
+			local character_location = index + 1
+			if DCON.dcon_character_location_is_valid(index) then
+				local character = DATA.character_location_get_character(character_location)
+				if character ~= WORLD.player_character then
+					if DCON.dcon_pop_is_valid(index) and IS_CHARACTER(character) then
+						decide.run_character(character)
+					end
+				end
+			end
+			index = index + WORLD.ticks_per_month
+		end
+		PROFILER:end_timer("decisions settled")
+	end
+
+	do
+		PROFILER:start_timer("decisions travel")
+		local index = WORLD.current_tick_in_month
+		while index < DATA.warband_size do
+			if DCON.dcon_warband_is_valid(index) then
+				---@type warband_id
+				local warband = index + 1
+				local character = WARBAND_LEADER(warband)
+				if character ~= WORLD.player_character then
+					decide.run_character(character)
+				end
+			end
+			index = index + WORLD.ticks_per_month
+		end
+		PROFILER:end_timer("decisions travel")
+	end
+
+	PROFILER:start_timer("travelling")
+	require "game.ai.travels".run()
+	PROFILER:end_timer("travelling")
+
+	--- daily
+	if WORLD.sub_daily_tick == 1 then
+		PROFILER:start_timer("patrols")
+
+		DATA.for_each_realm(function (item)
+			military_effects.update_patrol(item)
+		end)
+
+		PROFILER:end_timer("patrols")
+	end
+
+	--- daily
+	if WORLD.sub_daily_tick == 2 then
+		PROFILER:start_timer("warband movement")
+		local hours_per_day = 10
+
+		DATA.for_each_warband(function (item)
+			local current_path = DATA.warband_get_current_path(item)
+			if current_path == nil or #current_path == 0 then
+				return
+			end
+			--- counted in hours
+			local progress = DATA.warband_get_movement_progress(item)
+			--- consume day worth of supplies
+			local supplies_availability = economy_effects.consume_supplies(
+				item,
+				1
+			)
+			--- depending on amount of available supplies, move the party
+			progress = progress - hours_per_day * supplies_availability
+			while progress <= 0 and #current_path > 0 do
+				local last_tile = table.remove(current_path, #current_path)
+				travel_effects.move_party(item, last_tile)
+				if #current_path > 0 then
+					progress = progress + pathfinding.tile_distance(last_tile, current_path[#current_path], military_values.warband_speed(item))
+				else
+					progress = 0
+					DATA.warband_set_current_path(item, nil)
+				end
+			end
+			DATA.warband_set_movement_progress(item, math.max(0, progress))
+		end)
+
+		PROFILER:end_timer("warband movement")
+	end
+
+	if WORLD.settled_provinces_by_identifier[WORLD.current_tick_in_month] ~= nil then
 		-- Monthly tick per realm
 		local ta = WORLD.settled_provinces_by_identifier[WORLD.current_tick_in_month]
 
@@ -577,10 +715,8 @@ function world.World:tick()
 				if not WORLD:does_player_control_realm(realm) then
 					local explore = require "game.ai.exploration"
 					local treasury = require "game.ai.treasury"
-					local military = require "game.ai.military"
 					explore.run(realm)
 					treasury.run(realm)
-					military.run(realm)
 				else
 					self:emit_treasury_change_effect(0, ECONOMY_REASON.NEW_MONTH)
 					self:emit_treasury_change_effect(0, ECONOMY_REASON.NEW_MONTH, true)
@@ -604,45 +740,8 @@ function world.World:tick()
 				events.run(realm)
 
 				PROFILER:end_timer("realm")
-
-				PROFILER:start_timer("war")
-				-- launch patrols
-				for target, warbands in pairs(DATA.realm_get_patrols(realm)) do
-					local units = 0
-					if warbands ~= nil then
-						for _, warband in pairs(warbands) do
-							---@type number
-							units = units + warband_utils.size(warband)
-						end
-					end
-					-- launch the patrol
-					if (units > 0) then
-						military_effects.patrol(realm, target)
-					end
-				end
-
-				PROFILER:end_timer("war")
-
-				t = love.timer.getTime()
 			end
 		end
-
-		PROFILER:start_timer("decisions")
-
-
-		for _, settled_province in pairs(ta) do
-			DATA.for_each_character_location_from_location(settled_province, function (item)
-				local character = DATA.character_location_get_character(item)
-				if character ~= WORLD.player_character then
-					decide.run_character(character)
-				end
-			end)
-		end
-
-		---#logging LOGS:write("decisions end\n")
-		---#logging LOGS:flush()
-
-		PROFILER:end_timer("decisions")
 	end
 
 	-- print('simulation update')
@@ -650,7 +749,7 @@ function world.World:tick()
 	---#logging LOGS:write("scripted events updates\n")
 	---#logging LOGS:flush()
 
-	if WORLD.sub_hourly_tick == world.ticks_per_hour then
+	if WORLD.sub_hourly_tick == WORLD.ticks_per_hour then
 		WORLD.sub_hourly_tick = 0
 		WORLD.hour = WORLD.hour + 1
 		-- hourly tick
@@ -658,6 +757,7 @@ function world.World:tick()
 		if WORLD.hour == 24 then
 			WORLD.hour = 0
 			WORLD.day = WORLD.day + 1
+			WORLD.sub_daily_tick = 0
 			-- daily tick
 
 			PROFILER:start_timer("events_queue")
@@ -861,16 +961,11 @@ function world.World:player_realm()
 end
 
 ---comment
----@param realm Realm?
+---@param realm Realm
 ---@return boolean
 function world.World:does_player_see_realm_news(realm)
 	if realm == INVALID_ID then return false end
-	if self.player_character == INVALID_ID then
-		return false
-	end
-	local location = PROVINCE(self.player_character)
-	local local_realm = province_utils.realm(location)
-	return (local_realm == realm)
+	return REALM(self.player_character) == realm
 end
 
 ---comment
@@ -884,7 +979,6 @@ function world.World:does_player_see_province_news(province)
 	return (self:player_province() == province)
 end
 
-world.ticks_per_hour = 120
-world.ticks_per_month = 30 * 24 * world.ticks_per_hour
+
 
 return world

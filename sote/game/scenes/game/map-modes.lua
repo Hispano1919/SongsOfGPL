@@ -66,14 +66,6 @@ function mm.set_up_map_modes(game_thingy)
 			mmut.MAP_MODE_GRANULARITY.PROVINCE,
 			mmut.MAP_MODE_UPDATES_TYPE.DYNAMIC
 		),
-		military_target = new_map_mode(
-			"Military (target)",
-			"barbute.png",
-			"A map mode showing the desired size of the military per province",
-			demographic_map_modes.military_target,
-			mmut.MAP_MODE_GRANULARITY.PROVINCE,
-			mmut.MAP_MODE_UPDATES_TYPE.DYNAMIC
-		),
 		military = new_map_mode(
 			"Military",
 			"barbute.png",
@@ -411,7 +403,7 @@ function mm.set_up_map_modes(game_thingy)
 		"resources", "soil_texture", "soil_depth", "soil_organics", "soil_minerals",
 		"jan_rain", "jul_rain", "jan_temp", "jul_temp", "jan_flow", "jul_flow",
 		"province", "carrying_capacity", "realm_income", "local_income", "coastlines",
-		"races", "cultures", "faiths", "military_target", "military", "diplomacy"
+		"races", "cultures", "faiths", "military", "diplomacy"
 	}
 	table.sort(game_thingy.map_mode_tabs.all, compare_map_modes)
 	game_thingy.map_mode_tabs.political = {
@@ -420,7 +412,7 @@ function mm.set_up_map_modes(game_thingy)
 	table.sort(game_thingy.map_mode_tabs.political, compare_map_modes)
 	game_thingy.map_mode_tabs.demographic = {
 		"population", "population_1000", "population_density", "technologies", "races", "cultures", "faiths",
-		"military_target", "military",
+		"military",
 	}
 	table.sort(game_thingy.map_mode_tabs.demographic, compare_map_modes)
 	game_thingy.map_mode_tabs.debug = {

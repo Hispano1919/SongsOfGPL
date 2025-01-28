@@ -1,5 +1,21 @@
 --- Helper functions to reduce key presses to type names of common wrappers
 
+---@enum AI_GOAL
+AI_GOAL = {
+	RAID = 0,
+	TRADE = 1,
+	ENFORCE_TRIBUTE = 2,
+	COLLECT_TRIBUTE = 3,
+	COLLECT_TAX = 4,
+	EXPLORE = 5,
+	PATROL = 6,
+	IDLE = 7,
+}
+
+---@class AI_DATA
+---@field target_province province_id
+---@field current_goal AI_GOAL
+
 ---@type table<world_tile_id, tile_id>
 TILE_FROM_WORLD_ID = {}
 
@@ -266,6 +282,36 @@ function REALM(pop_id)
 	return DATA.realm_pop_get_realm(pop_realm)
 end
 
+---commenting
+---@param pop_id pop_id
+---@return province_id
+function LOCAL_PROVINCE(pop_id)
+	local province = PROVINCE(pop_id)
+	if province ~= INVALID_ID then
+		return province
+	end
+
+	province = TILE_PROVINCE(WARBAND_TILE(LEADER_OF_WARBAND(pop_id)))
+	if province ~= INVALID_ID then
+		return province
+	end
+
+	province = TILE_PROVINCE(WARBAND_TILE(COMMANDER_OF_WARBAND(pop_id)))
+	if province ~= INVALID_ID then
+		return province
+	end
+
+	province = TILE_PROVINCE(WARBAND_TILE(RECRUITER_OF_WARBAND(pop_id)))
+	if province ~= INVALID_ID then
+		return province
+	end
+
+	province = TILE_PROVINCE(WARBAND_TILE(UNIT_OF(pop_id)))
+	if province ~= INVALID_ID then
+		return province
+	end
+end
+
 ---Returns local realm of a pop
 ---@param pop_id pop_id
 function LOCAL_REALM(pop_id)
@@ -366,12 +412,29 @@ function LEADER_OF_WARBAND(leader)
 	return DATA.warband_leader_get_warband(leadership)
 end
 
+---@param warband warband_id
+function WARBAND_TILE(warband)
+	return DATA.warband_location_get_location(DATA.get_warband_location_from_warband(warband))
+end
+
+---@param tile tile_id
+function TILE_PROVINCE(tile)
+	return DATA.tile_province_membership_get_province(DATA.get_tile_province_membership_from_tile(tile))
+end
+
 ---commenting
 ---@param leader pop_id
 ---@return warband_id
 function RECRUITER_OF_WARBAND(leader)
 	local leadership = DATA.get_warband_recruiter_from_recruiter(leader)
 	return DATA.warband_recruiter_get_warband(leadership)
+end
+
+---@param leader pop_id
+---@return warband_id
+function COMMANDER_OF_WARBAND(leader)
+	local leadership = DATA.get_warband_commander_from_commander(leader)
+	return DATA.warband_commander_get_warband(leadership)
 end
 
 ---commenting
@@ -475,7 +538,7 @@ INVALID_ID = 0
 ---@alias Race race_id
 ---@alias Realm realm_id
 ---@alias Warband warband_id
----@alias Army army_id
+---@alias Army warband_id[]
 
 ---@type table<trade_good_id, table<use_case_id, number>>
 USE_WEIGHT = {}

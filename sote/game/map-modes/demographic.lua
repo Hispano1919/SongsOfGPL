@@ -70,12 +70,6 @@ function dem.military()
 	end)
 end
 
-function dem.military_target()
-	ut.provincial_hue_map_mode(function(province)
-		return math.max(0, province_utils.military_target(province)) / 15
-	end)
-end
-
 function dem.technologies()
 	ut.provincial_hue_map_mode(function(province)
 		local count = 0
