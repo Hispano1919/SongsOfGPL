@@ -11,12 +11,14 @@ local ffi = require("ffi")
 ---@field id employment_id Unique employment id
 ---@field worker_income number 
 ---@field job job_id 
+---@field start_date number 
 ---@field building building_id 
 ---@field worker pop_id 
 
 ---@class struct_employment
 ---@field worker_income number 
 ---@field job job_id 
+---@field start_date number 
 
 
 ffi.cdef[[
@@ -24,6 +26,8 @@ void dcon_employment_set_worker_income(int32_t, float);
 float dcon_employment_get_worker_income(int32_t);
 void dcon_employment_set_job(int32_t, int32_t);
 int32_t dcon_employment_get_job(int32_t);
+void dcon_employment_set_start_date(int32_t, int32_t);
+int32_t dcon_employment_get_start_date(int32_t);
 void dcon_delete_employment(int32_t j);
 int32_t dcon_force_create_employment(int32_t building, int32_t worker);
 void dcon_employment_set_building(int32_t, int32_t);
@@ -103,6 +107,23 @@ end
 ---@param value job_id valid job_id
 function DATA.employment_set_job(employment_id, value)
     DCON.dcon_employment_set_job(employment_id - 1, value - 1)
+end
+---@param employment_id employment_id valid employment id
+---@return number start_date 
+function DATA.employment_get_start_date(employment_id)
+    return DCON.dcon_employment_get_start_date(employment_id - 1)
+end
+---@param employment_id employment_id valid employment id
+---@param value number valid number
+function DATA.employment_set_start_date(employment_id, value)
+    DCON.dcon_employment_set_start_date(employment_id - 1, value)
+end
+---@param employment_id employment_id valid employment id
+---@param value number valid number
+function DATA.employment_inc_start_date(employment_id, value)
+    ---@type number
+    local current = DCON.dcon_employment_get_start_date(employment_id - 1)
+    DCON.dcon_employment_set_start_date(employment_id - 1, current + value)
 end
 ---@param building employment_id valid building_id
 ---@return building_id Data retrieved from employment 
@@ -184,6 +205,7 @@ local fat_employment_id_metatable = {
     __index = function (t,k)
         if (k == "worker_income") then return DATA.employment_get_worker_income(t.id) end
         if (k == "job") then return DATA.employment_get_job(t.id) end
+        if (k == "start_date") then return DATA.employment_get_start_date(t.id) end
         if (k == "building") then return DATA.employment_get_building(t.id) end
         if (k == "worker") then return DATA.employment_get_worker(t.id) end
         return rawget(t, k)
@@ -195,6 +217,10 @@ local fat_employment_id_metatable = {
         end
         if (k == "job") then
             DATA.employment_set_job(t.id, v)
+            return
+        end
+        if (k == "start_date") then
+            DATA.employment_set_start_date(t.id, v)
             return
         end
         if (k == "building") then

@@ -108,7 +108,9 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 	end
 
 	---@type table<tile_id, number>
-	local qq = {} -- maps provinces to their distances
+	local qq = {} -- maps tiles to their distances
+	---@type table<tile_id, number>
+	local qq_adjusted = {} -- maps tiles to their adjusted distances
 	---@type table<tile_id, number>
 	local distance_cache = {}
 	---@type table<tile_id, boolean>
@@ -166,6 +168,7 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 	end
 
 	if path == nil then
+		PROFILER:start_timer("pathfinding")
 		-- Djikstra flood fill thing
 		while q_size > 0 do
 			local tile, dist = get_min(qq)
@@ -227,7 +230,6 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 				if visited[neigh] ~= true then
 					local alt = dist + pa.tile_distance(tile, neigh, speed, true)
 					local old_distance = distance_cache[neigh] or math.huge
-
 					if alt < old_distance then
 						distance_cache[neigh] = alt
 						prev[neigh] = tile
@@ -244,7 +246,9 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 				::continue::
 			end
 		end
+		PROFILER:end_timer("pathfinding")
 		-- Get the path
+		PROFILER:start_timer("path cost calculation")
 		path = {}
 		local u = target
 		local total_cost = 0
@@ -254,6 +258,7 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 			total_cost = total_cost + pa.tile_distance(u, prev[u], speed)
 			u = prev[u]
 		end
+		PROFILER:end_timer("path cost calculation")
 		--total_cost = total_cost - 0.5 * (origin.movement_cost + target.movement_cost)
 
 		if connects_centers then
@@ -270,6 +275,7 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 
 		return total_cost, path
 	else
+		PROFILER:start_timer("path cost calculation")
 		local current = origin
 		local next_index = #path
 		local total_cost = 0
@@ -278,7 +284,7 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 			total_cost = total_cost + pa.tile_distance(current, next, speed)
 			next_index = next_index - 1
 		end
-
+		PROFILER:end_timer("path cost calculation")
 		return total_cost, tabb.copy(path)
 	end
 end

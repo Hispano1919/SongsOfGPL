@@ -708,46 +708,48 @@ function DATA.test_set_get_0()
     for j = 1, 100 do
         DATA.province_set_local_storage(id, j --[[@as trade_good_id]],  15)    end
     for j = 1, 100 do
-        DATA.province_set_local_prices(id, j --[[@as trade_good_id]],  -14)    end
-    fat_id.local_wealth = 2
-    fat_id.trade_wealth = 7
-    fat_id.local_income = 0
-    fat_id.local_building_upkeep = 19
-    fat_id.foragers = 20
-    fat_id.foragers_water = -7
-    fat_id.foragers_limit = 15
-    fat_id.forage_efficiency = 10
+        DATA.province_set_local_merchants_demand(id, j --[[@as trade_good_id]],  -14)    end
+    for j = 1, 100 do
+        DATA.province_set_local_prices(id, j --[[@as trade_good_id]],  2)    end
+    fat_id.local_wealth = 7
+    fat_id.trade_wealth = 0
+    fat_id.local_income = 19
+    fat_id.local_building_upkeep = 20
+    fat_id.foragers = -7
+    fat_id.foragers_water = 15
+    fat_id.foragers_limit = 10
+    fat_id.forage_efficiency = 8
     for j = 1, 25 do
-        DATA.province_set_foragers_targets_output_good(id, j, 8)
+        DATA.province_set_foragers_targets_output_good(id, j, 13)
     end
     for j = 1, 25 do
-        DATA.province_set_foragers_targets_output_value(id, j, 13)
+        DATA.province_set_foragers_targets_output_value(id, j, -4)
     end
     for j = 1, 25 do
-        DATA.province_set_foragers_targets_amount(id, j, -4)
+        DATA.province_set_foragers_targets_amount(id, j, -17)
     end
     for j = 1, 25 do
-        DATA.province_set_foragers_targets_forage(id, j, 0)
+        DATA.province_set_foragers_targets_forage(id, j, 8)
     end
     for j = 1, 25 do
-        DATA.province_set_local_resources_resource(id, j, 15)
+        DATA.province_set_local_resources_resource(id, j, -20)
     end
     for j = 1, 25 do
-        DATA.province_set_local_resources_location(id, j, -20)
+        DATA.province_set_local_resources_location(id, j, -15)
     end
-    fat_id.mood = -15
+    fat_id.mood = 5
     for j = 1, 4 do
-        DATA.province_set_unit_types(id, j --[[@as unit_type_id]],  12)    end
+        DATA.province_set_unit_types(id, j --[[@as unit_type_id]],  20)    end
     for j = 1, 250 do
-        DATA.province_set_throughput_boosts(id, j --[[@as production_method_id]],  20)    end
+        DATA.province_set_throughput_boosts(id, j --[[@as production_method_id]],  -20)    end
     for j = 1, 250 do
-        DATA.province_set_input_efficiency_boosts(id, j --[[@as production_method_id]],  -20)    end
+        DATA.province_set_input_efficiency_boosts(id, j --[[@as production_method_id]],  19)    end
     for j = 1, 250 do
-        DATA.province_set_local_efficiency_boosts(id, j --[[@as production_method_id]],  19)    end
+        DATA.province_set_local_efficiency_boosts(id, j --[[@as production_method_id]],  11)    end
     for j = 1, 250 do
-        DATA.province_set_output_efficiency_boosts(id, j --[[@as production_method_id]],  11)    end
-    fat_id.on_a_river = false
-    fat_id.on_a_forest = true
+        DATA.province_set_output_efficiency_boosts(id, j --[[@as production_method_id]],  1)    end
+    fat_id.on_a_river = true
+    fat_id.on_a_forest = false
     local test_passed = true
     test_passed = test_passed and fat_id.r == 4
     if not test_passed then print("r", 4, fat_id.r) end
@@ -836,75 +838,79 @@ function DATA.test_set_get_0()
     end
     if not test_passed then print("local_storage", 15, DATA.province[id].local_storage[0]) end
     for j = 1, 100 do
-        test_passed = test_passed and DATA.province_get_local_prices(id, j --[[@as trade_good_id]]) == -14
+        test_passed = test_passed and DATA.province_get_local_merchants_demand(id, j --[[@as trade_good_id]]) == -14
     end
-    if not test_passed then print("local_prices", -14, DATA.province[id].local_prices[0]) end
-    test_passed = test_passed and fat_id.local_wealth == 2
-    if not test_passed then print("local_wealth", 2, fat_id.local_wealth) end
-    test_passed = test_passed and fat_id.trade_wealth == 7
-    if not test_passed then print("trade_wealth", 7, fat_id.trade_wealth) end
-    test_passed = test_passed and fat_id.local_income == 0
-    if not test_passed then print("local_income", 0, fat_id.local_income) end
-    test_passed = test_passed and fat_id.local_building_upkeep == 19
-    if not test_passed then print("local_building_upkeep", 19, fat_id.local_building_upkeep) end
-    test_passed = test_passed and fat_id.foragers == 20
-    if not test_passed then print("foragers", 20, fat_id.foragers) end
-    test_passed = test_passed and fat_id.foragers_water == -7
-    if not test_passed then print("foragers_water", -7, fat_id.foragers_water) end
-    test_passed = test_passed and fat_id.foragers_limit == 15
-    if not test_passed then print("foragers_limit", 15, fat_id.foragers_limit) end
-    test_passed = test_passed and fat_id.forage_efficiency == 10
-    if not test_passed then print("forage_efficiency", 10, fat_id.forage_efficiency) end
+    if not test_passed then print("local_merchants_demand", -14, DATA.province[id].local_merchants_demand[0]) end
+    for j = 1, 100 do
+        test_passed = test_passed and DATA.province_get_local_prices(id, j --[[@as trade_good_id]]) == 2
+    end
+    if not test_passed then print("local_prices", 2, DATA.province[id].local_prices[0]) end
+    test_passed = test_passed and fat_id.local_wealth == 7
+    if not test_passed then print("local_wealth", 7, fat_id.local_wealth) end
+    test_passed = test_passed and fat_id.trade_wealth == 0
+    if not test_passed then print("trade_wealth", 0, fat_id.trade_wealth) end
+    test_passed = test_passed and fat_id.local_income == 19
+    if not test_passed then print("local_income", 19, fat_id.local_income) end
+    test_passed = test_passed and fat_id.local_building_upkeep == 20
+    if not test_passed then print("local_building_upkeep", 20, fat_id.local_building_upkeep) end
+    test_passed = test_passed and fat_id.foragers == -7
+    if not test_passed then print("foragers", -7, fat_id.foragers) end
+    test_passed = test_passed and fat_id.foragers_water == 15
+    if not test_passed then print("foragers_water", 15, fat_id.foragers_water) end
+    test_passed = test_passed and fat_id.foragers_limit == 10
+    if not test_passed then print("foragers_limit", 10, fat_id.foragers_limit) end
+    test_passed = test_passed and fat_id.forage_efficiency == 8
+    if not test_passed then print("forage_efficiency", 8, fat_id.forage_efficiency) end
     for j = 1, 25 do
-        test_passed = test_passed and DATA.province_get_foragers_targets_output_good(id, j) == 8
+        test_passed = test_passed and DATA.province_get_foragers_targets_output_good(id, j) == 13
     end
-    if not test_passed then print("foragers_targets.output_good", 8, DATA.province[id].foragers_targets[0].output_good) end
+    if not test_passed then print("foragers_targets.output_good", 13, DATA.province[id].foragers_targets[0].output_good) end
     for j = 1, 25 do
-        test_passed = test_passed and DATA.province_get_foragers_targets_output_value(id, j) == 13
+        test_passed = test_passed and DATA.province_get_foragers_targets_output_value(id, j) == -4
     end
-    if not test_passed then print("foragers_targets.output_value", 13, DATA.province[id].foragers_targets[0].output_value) end
+    if not test_passed then print("foragers_targets.output_value", -4, DATA.province[id].foragers_targets[0].output_value) end
     for j = 1, 25 do
-        test_passed = test_passed and DATA.province_get_foragers_targets_amount(id, j) == -4
+        test_passed = test_passed and DATA.province_get_foragers_targets_amount(id, j) == -17
     end
-    if not test_passed then print("foragers_targets.amount", -4, DATA.province[id].foragers_targets[0].amount) end
+    if not test_passed then print("foragers_targets.amount", -17, DATA.province[id].foragers_targets[0].amount) end
     for j = 1, 25 do
-        test_passed = test_passed and DATA.province_get_foragers_targets_forage(id, j) == 0
+        test_passed = test_passed and DATA.province_get_foragers_targets_forage(id, j) == 8
     end
-    if not test_passed then print("foragers_targets.forage", 0, DATA.province[id].foragers_targets[0].forage) end
+    if not test_passed then print("foragers_targets.forage", 8, DATA.province[id].foragers_targets[0].forage) end
     for j = 1, 25 do
-        test_passed = test_passed and DATA.province_get_local_resources_resource(id, j) == 15
+        test_passed = test_passed and DATA.province_get_local_resources_resource(id, j) == -20
     end
-    if not test_passed then print("local_resources.resource", 15, DATA.province[id].local_resources[0].resource) end
+    if not test_passed then print("local_resources.resource", -20, DATA.province[id].local_resources[0].resource) end
     for j = 1, 25 do
-        test_passed = test_passed and DATA.province_get_local_resources_location(id, j) == -20
+        test_passed = test_passed and DATA.province_get_local_resources_location(id, j) == -15
     end
-    if not test_passed then print("local_resources.location", -20, DATA.province[id].local_resources[0].location) end
-    test_passed = test_passed and fat_id.mood == -15
-    if not test_passed then print("mood", -15, fat_id.mood) end
+    if not test_passed then print("local_resources.location", -15, DATA.province[id].local_resources[0].location) end
+    test_passed = test_passed and fat_id.mood == 5
+    if not test_passed then print("mood", 5, fat_id.mood) end
     for j = 1, 4 do
-        test_passed = test_passed and DATA.province_get_unit_types(id, j --[[@as unit_type_id]]) == 12
+        test_passed = test_passed and DATA.province_get_unit_types(id, j --[[@as unit_type_id]]) == 20
     end
-    if not test_passed then print("unit_types", 12, DATA.province[id].unit_types[0]) end
+    if not test_passed then print("unit_types", 20, DATA.province[id].unit_types[0]) end
     for j = 1, 250 do
-        test_passed = test_passed and DATA.province_get_throughput_boosts(id, j --[[@as production_method_id]]) == 20
+        test_passed = test_passed and DATA.province_get_throughput_boosts(id, j --[[@as production_method_id]]) == -20
     end
-    if not test_passed then print("throughput_boosts", 20, DATA.province[id].throughput_boosts[0]) end
+    if not test_passed then print("throughput_boosts", -20, DATA.province[id].throughput_boosts[0]) end
     for j = 1, 250 do
-        test_passed = test_passed and DATA.province_get_input_efficiency_boosts(id, j --[[@as production_method_id]]) == -20
+        test_passed = test_passed and DATA.province_get_input_efficiency_boosts(id, j --[[@as production_method_id]]) == 19
     end
-    if not test_passed then print("input_efficiency_boosts", -20, DATA.province[id].input_efficiency_boosts[0]) end
+    if not test_passed then print("input_efficiency_boosts", 19, DATA.province[id].input_efficiency_boosts[0]) end
     for j = 1, 250 do
-        test_passed = test_passed and DATA.province_get_local_efficiency_boosts(id, j --[[@as production_method_id]]) == 19
+        test_passed = test_passed and DATA.province_get_local_efficiency_boosts(id, j --[[@as production_method_id]]) == 11
     end
-    if not test_passed then print("local_efficiency_boosts", 19, DATA.province[id].local_efficiency_boosts[0]) end
+    if not test_passed then print("local_efficiency_boosts", 11, DATA.province[id].local_efficiency_boosts[0]) end
     for j = 1, 250 do
-        test_passed = test_passed and DATA.province_get_output_efficiency_boosts(id, j --[[@as production_method_id]]) == 11
+        test_passed = test_passed and DATA.province_get_output_efficiency_boosts(id, j --[[@as production_method_id]]) == 1
     end
-    if not test_passed then print("output_efficiency_boosts", 11, DATA.province[id].output_efficiency_boosts[0]) end
-    test_passed = test_passed and fat_id.on_a_river == false
-    if not test_passed then print("on_a_river", false, fat_id.on_a_river) end
-    test_passed = test_passed and fat_id.on_a_forest == true
-    if not test_passed then print("on_a_forest", true, fat_id.on_a_forest) end
+    if not test_passed then print("output_efficiency_boosts", 1, DATA.province[id].output_efficiency_boosts[0]) end
+    test_passed = test_passed and fat_id.on_a_river == true
+    if not test_passed then print("on_a_river", true, fat_id.on_a_river) end
+    test_passed = test_passed and fat_id.on_a_forest == false
+    if not test_passed then print("on_a_forest", false, fat_id.on_a_forest) end
     print("SET_GET_TEST_0_province:")
     if test_passed then print("PASSED") else print("ERROR") end
     local id = DATA.create_warband()

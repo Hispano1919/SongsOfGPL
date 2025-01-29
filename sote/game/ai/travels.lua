@@ -9,6 +9,7 @@ local politics_values = require "game.raws.values.politics"
 local ai_values = require "game.raws.values.ai"
 local realm_utils = require "game.entities.realm".Realm
 local province_utils = require "game.entities.province".Province
+local travel_effects = require "game.raws.effects.travel"
 
 local travelling = {}
 
@@ -135,6 +136,8 @@ function travelling.run()
 
 			--- find path and start following it
 			if final_target ~= INVALID_ID and final_target ~= nil then
+				travel_effects.exit_settlement(leader)
+
 				local hours, path = pathfinding.pathfind(
 					WARBAND_TILE(warband),
 					DATA.province_get_center(final_target),

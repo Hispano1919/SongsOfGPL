@@ -18,6 +18,7 @@ local military_values  = require "game.raws.values.military"
 local tabb             = require "engine.table"
 
 local employ = require "game.economy.employment"
+local employ_ai = require "game.ai.employment"
 local building_update = require "game.economy.buildings-updates"
 local production = require "game.economy.production-and-consumption"
 local wealth_decay = require "game.economy.wealth-decay"
@@ -567,6 +568,20 @@ function world.World:tick()
 	require "game.ai.travels".run()
 	PROFILER:end_timer("travelling")
 
+	do
+		local index = WORLD.current_tick_in_month
+		while index < DATA.province_size do
+			if DCON.dcon_province_is_valid(index) then
+				---@type province_id
+				local province = index + 1
+				employ_ai(province)
+			end
+			index = index + WORLD.ticks_per_month
+		end
+	end
+
+
+
 	--- daily
 	if WORLD.sub_daily_tick == 1 then
 		PROFILER:start_timer("patrols")
@@ -667,7 +682,6 @@ function world.World:tick()
 			PROFILER:start_timer("employ")
 			employ.run(settled_province)
 			PROFILER:end_timer("employ")
-
 			PROFILER:start_timer("buildings")
 			building_update.run(settled_province)
 			PROFILER:end_timer("buildings")

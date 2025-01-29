@@ -17,7 +17,9 @@ prov.Province.__index = prov.Province
 function prov.Province.new(fake_flag)
 	local o = DATA.fatten_province(DATA.create_province())
 
-
+	DATA.for_each_trade_good(function (item)
+		DATA.province_set_local_prices(o.id, item, 1.0)
+	end)
 	-- print("add province:", o.id)
 
 	o.name = "<uninhabited>"
@@ -348,73 +350,6 @@ function prov.Province.return_pop_from_army(province, pop)
 	prov.Province.add_pop(province, pop)
 end
 
-
----Employs a pop and handles its removal from relevant data structures...
----@param province province_id
----@param pop pop_id
----@param building building_id
-function prov.Province.employ_pop(province, pop, building)
-	local potential_job = prov.Province.potential_job(province, building)
-	if potential_job == nil then
-		return
-	end
-	-- Now that we know that the job is needed, employ the pop!
-
-	DATA.pop_set_forage_ratio(pop, 0.5)
-	DATA.pop_set_work_ratio(pop, 0.5)
-
-	-- ... but fire them first to update the previous building if needed
-	local employment = DATA.get_employment_from_worker(pop)
-	if DATA.employment_get_building(employment) == INVALID_ID then
-		-- no need to update stuff: just create new employment
-		local new_employment = DATA.fatten_employment(DATA.force_create_employment(building, pop))
-		new_employment.job = potential_job
-	else
-		local fat = DATA.fatten_employment(employment)
-
-		local old_building = fat.building
-		-- clean up data if it was the last worker
-		if tabb.size(DATA.get_employment_from_building(old_building)) == 0 then
-			local fat_building = DATA.fatten_building(old_building)
-			fat_building.last_income = 0
-			fat_building.last_donation_to_owner = 0
-			fat_building.subsidy_last = 0
-		end
-
-		fat.building = building
-		fat.job = potential_job
-	end
-end
-
----Returns a potential job, if a pop was to be employed by this building.
----@param province province_id
----@param building building_id
----@return job_id?
-function prov.Province.potential_job(province, building)
-	local btype = DATA.building_get_current_type(building)
-	local method = DATA.building_type_get_production_method(btype)
-
-	for i = 1, MAX_SIZE_ARRAYS_PRODUCTION_METHOD - 1 do
-		local job = DATA.production_method_get_jobs_job(method, i)
-		if job == INVALID_ID then
-			break
-		end
-
-		local workers_with_this_job = 0
-		for _, employment in ipairs(DATA.get_employment_from_building(building)) do
-			if DATA.employment_get_job(employment) == job then
-				workers_with_this_job = workers_with_this_job + 1
-			end
-		end
-
-		local max_amount = DATA.production_method_get_jobs_amount(method, i)
-		if max_amount > workers_with_this_job then
-			return job
-		end
-	end
-
-	return nil
-end
 
 ---@param province province_id
 ---@param researched_technology Technology

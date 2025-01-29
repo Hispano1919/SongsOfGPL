@@ -64,6 +64,7 @@ local ffi = require("ffi")
 ---@field local_use_buffer_supply table<use_case_id, number> 
 ---@field local_use_buffer_cost table<use_case_id, number> 
 ---@field local_storage table<trade_good_id, number> 
+---@field local_merchants_demand table<trade_good_id, number> 
 ---@field local_prices table<trade_good_id, number> 
 ---@field local_wealth number 
 ---@field trade_wealth number 
@@ -157,6 +158,9 @@ float dcon_province_get_local_use_buffer_cost(int32_t, int32_t);
 void dcon_province_resize_local_storage(uint32_t);
 void dcon_province_set_local_storage(int32_t, int32_t, float);
 float dcon_province_get_local_storage(int32_t, int32_t);
+void dcon_province_resize_local_merchants_demand(uint32_t);
+void dcon_province_set_local_merchants_demand(int32_t, int32_t, float);
+float dcon_province_get_local_merchants_demand(int32_t, int32_t);
 void dcon_province_resize_local_prices(uint32_t);
 void dcon_province_set_local_prices(int32_t, int32_t, float);
 float dcon_province_get_local_prices(int32_t, int32_t);
@@ -230,6 +234,7 @@ DCON.dcon_province_resize_local_use_buffer_demand(101)
 DCON.dcon_province_resize_local_use_buffer_supply(101)
 DCON.dcon_province_resize_local_use_buffer_cost(101)
 DCON.dcon_province_resize_local_storage(101)
+DCON.dcon_province_resize_local_merchants_demand(101)
 DCON.dcon_province_resize_local_prices(101)
 DCON.dcon_province_resize_foragers_targets(26)
 DCON.dcon_province_resize_local_resources(26)
@@ -801,6 +806,27 @@ function DATA.province_inc_local_storage(province_id, index, value)
     ---@type number
     local current = DCON.dcon_province_get_local_storage(province_id - 1, index - 1)
     DCON.dcon_province_set_local_storage(province_id - 1, index - 1, current + value)
+end
+---@param province_id province_id valid province id
+---@param index trade_good_id valid
+---@return number local_merchants_demand 
+function DATA.province_get_local_merchants_demand(province_id, index)
+    assert(index ~= 0)
+    return DCON.dcon_province_get_local_merchants_demand(province_id - 1, index - 1)
+end
+---@param province_id province_id valid province id
+---@param index trade_good_id valid index
+---@param value number valid number
+function DATA.province_set_local_merchants_demand(province_id, index, value)
+    DCON.dcon_province_set_local_merchants_demand(province_id - 1, index - 1, value)
+end
+---@param province_id province_id valid province id
+---@param index trade_good_id valid index
+---@param value number valid number
+function DATA.province_inc_local_merchants_demand(province_id, index, value)
+    ---@type number
+    local current = DCON.dcon_province_get_local_merchants_demand(province_id - 1, index - 1)
+    DCON.dcon_province_set_local_merchants_demand(province_id - 1, index - 1, current + value)
 end
 ---@param province_id province_id valid province id
 ---@param index trade_good_id valid

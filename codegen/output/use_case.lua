@@ -12,11 +12,13 @@ local ffi = require("ffi")
 ---@field name string 
 ---@field icon string 
 ---@field description string 
+---@field good_consumption number 
 ---@field r number 
 ---@field g number 
 ---@field b number 
 
 ---@class struct_use_case
+---@field good_consumption number 
 ---@field r number 
 ---@field g number 
 ---@field b number 
@@ -25,6 +27,7 @@ local ffi = require("ffi")
 ---@field name string 
 ---@field icon string 
 ---@field description string 
+---@field good_consumption number 
 ---@field r number 
 ---@field g number 
 ---@field b number 
@@ -35,12 +38,15 @@ function DATA.setup_use_case(id, data)
     DATA.use_case_set_name(id, data.name)
     DATA.use_case_set_icon(id, data.icon)
     DATA.use_case_set_description(id, data.description)
+    DATA.use_case_set_good_consumption(id, data.good_consumption)
     DATA.use_case_set_r(id, data.r)
     DATA.use_case_set_g(id, data.g)
     DATA.use_case_set_b(id, data.b)
 end
 
 ffi.cdef[[
+void dcon_use_case_set_good_consumption(int32_t, float);
+float dcon_use_case_get_good_consumption(int32_t);
 void dcon_use_case_set_r(int32_t, float);
 float dcon_use_case_get_r(int32_t);
 void dcon_use_case_set_g(int32_t, float);
@@ -122,6 +128,23 @@ function DATA.use_case_set_description(use_case_id, value)
     DATA.use_case_description[use_case_id] = value
 end
 ---@param use_case_id use_case_id valid use_case id
+---@return number good_consumption 
+function DATA.use_case_get_good_consumption(use_case_id)
+    return DCON.dcon_use_case_get_good_consumption(use_case_id - 1)
+end
+---@param use_case_id use_case_id valid use_case id
+---@param value number valid number
+function DATA.use_case_set_good_consumption(use_case_id, value)
+    DCON.dcon_use_case_set_good_consumption(use_case_id - 1, value)
+end
+---@param use_case_id use_case_id valid use_case id
+---@param value number valid number
+function DATA.use_case_inc_good_consumption(use_case_id, value)
+    ---@type number
+    local current = DCON.dcon_use_case_get_good_consumption(use_case_id - 1)
+    DCON.dcon_use_case_set_good_consumption(use_case_id - 1, current + value)
+end
+---@param use_case_id use_case_id valid use_case id
 ---@return number r 
 function DATA.use_case_get_r(use_case_id)
     return DCON.dcon_use_case_get_r(use_case_id - 1)
@@ -178,6 +201,7 @@ local fat_use_case_id_metatable = {
         if (k == "name") then return DATA.use_case_get_name(t.id) end
         if (k == "icon") then return DATA.use_case_get_icon(t.id) end
         if (k == "description") then return DATA.use_case_get_description(t.id) end
+        if (k == "good_consumption") then return DATA.use_case_get_good_consumption(t.id) end
         if (k == "r") then return DATA.use_case_get_r(t.id) end
         if (k == "g") then return DATA.use_case_get_g(t.id) end
         if (k == "b") then return DATA.use_case_get_b(t.id) end
@@ -194,6 +218,10 @@ local fat_use_case_id_metatable = {
         end
         if (k == "description") then
             DATA.use_case_set_description(t.id, v)
+            return
+        end
+        if (k == "good_consumption") then
+            DATA.use_case_set_good_consumption(t.id, v)
             return
         end
         if (k == "r") then

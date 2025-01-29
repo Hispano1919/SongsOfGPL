@@ -27,6 +27,7 @@ local_use_buffer_demand float[use_case_id]
 local_use_buffer_supply float[use_case_id]
 local_use_buffer_cost float[use_case_id]
 local_storage float[trade_good_id]
+local_merchants_demand float[trade_good_id]
 local_prices float[trade_good_id]
 local_wealth float
 trade_wealth float

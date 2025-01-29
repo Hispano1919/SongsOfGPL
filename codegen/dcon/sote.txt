@@ -660,6 +660,11 @@ object {
         tag { scenario }
     }
     property{
+        name { local_merchants_demand }
+        type { array{trade_good_id}{float} }
+        tag { scenario }
+    }
+    property{
         name { local_prices }
         type { array{trade_good_id}{float} }
         tag { scenario }
@@ -1182,6 +1187,11 @@ relationship {
     property{
         name { job }
         type { job_id }
+        tag { scenario }
+    }
+    property{
+        name { start_date }
+        type { int32_t }
         tag { scenario }
     }
 }
@@ -1828,6 +1838,11 @@ object {
     storage_type { contiguous }
     size { 100 }
     tag {scenario}
+    property{
+        name { good_consumption }
+        type { float }
+        tag { scenario }
+    }
     property{
         name { r }
         type { float }

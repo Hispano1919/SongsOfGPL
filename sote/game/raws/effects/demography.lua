@@ -1,4 +1,5 @@
 local warband_utils = require "game.entities.warband"
+local demography_values = require "game.raws.values.demography"
 
 local demo = {}
 
@@ -120,6 +121,45 @@ function demo.kill_off_army(army, ratio)
 		losses = losses + demo.kill_off_warband(warband, ratio)
 	end
 	return losses
+end
+
+---Employs a pop and handles its removal from relevant data structures...
+---@param pop pop_id
+---@param building building_id
+function demo.employ_pop(pop, building)
+	local potential_job = demography_values.potential_job(building)
+	if potential_job == nil then
+		return
+	end
+	-- Now that we know that the job is needed, employ the pop!
+
+	DATA.pop_set_forage_ratio(pop, 0.5)
+	DATA.pop_set_work_ratio(pop, 0.5)
+
+	-- ... but fire them first to update the previous building if needed
+	local employment = DATA.get_employment_from_worker(pop)
+	if DATA.employment_get_building(employment) == INVALID_ID then
+		-- no need to update stuff: just create new employment
+		local new_employment = DATA.fatten_employment(DATA.force_create_employment(building, pop))
+		new_employment.job = potential_job
+		new_employment.start_date = WORLD.year * 30 * 12 + WORLD.day + WORLD.month * 30
+	else
+		local fat = DATA.fatten_employment(employment)
+
+		local old_building = fat.building
+
+		-- clean up data if it was the last worker
+		if #DATA.get_employment_from_building(old_building) == 0 then
+			local fat_building = DATA.fatten_building(old_building)
+			fat_building.last_income = 0
+			fat_building.last_donation_to_owner = 0
+			fat_building.subsidy_last = 0
+		end
+
+		fat.building = building
+		fat.job = potential_job
+		fat.start_date = WORLD.year * 30 * 12 + WORLD.day + WORLD.month * 30
+	end
 end
 
 return demo
