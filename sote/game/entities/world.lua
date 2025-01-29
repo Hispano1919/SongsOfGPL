@@ -537,7 +537,7 @@ function world.World:tick()
 			if DCON.dcon_character_location_is_valid(index) then
 				local character = DATA.character_location_get_character(character_location)
 				if character ~= WORLD.player_character then
-					if DCON.dcon_pop_is_valid(index) and IS_CHARACTER(character) then
+					if DCON.dcon_pop_is_valid(character - 1) and IS_CHARACTER(character) then
 						decide.run_character(character)
 					end
 				end
