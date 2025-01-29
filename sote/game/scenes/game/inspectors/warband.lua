@@ -4,6 +4,7 @@ local ui = require "engine.ui";
 local ut = require "game.ui-utils"
 
 local ib = require "game.scenes.game.widgets.inspector-redirect-buttons"
+local pui = require "game.scenes.game.widgets.pop-ui-widgets"
 local list_widget = require "game.scenes.game.widgets.list-widget"
 
 local pop_utils = require "game.entities.pop".POP
@@ -20,200 +21,6 @@ local window = {}
 local unit_panel_tab = "RECRUIT"
 local type_list_state = nil
 local unit_list_state = nil
-
----@param rect Rect
----@param icon string
----@param r number
----@param g number
----@param b number
----@param a number
-local function render_icon_panel(rect, icon, r , g, b , a)
-	ui.panel(rect)
-	ut.render_icon(rect, icon, 1, 1, 1, 1)
-	rect:shrink(1)
-	ut.render_icon(rect, icon, r, g, b, 1)
-end
-
----@param rect Rect
----@param k POP
----@param v unit_type_id
-local function render_unit_icon (rect, k, v)
-	if v ~= INVALID_ID then
-		local fat = DATA.fatten_unit_type(v)
-		render_icon_panel(rect, fat.icon, fat.r, fat.g, fat.b, 1)
-	else
-		local fat = F_RACE(k)
-		render_icon_panel(rect, fat.icon, fat.r, fat.g, fat.b, 1)
-	end
-end
-
----@param rect Rect
----@param k POP
----@param v unit_type_id
-local function render_unit_health (rect, k, v)
-	local base = DATA.unit_type_get_base_health(v)
-	local stat = pop_utils.get_health(k, v)
-	local female, her = "male", "his"
-	if DATA.pop_get_female(k) then
-		female, her = "female", "her"
-	end
-	ut.generic_number_field(
-		"plus.png",
-		stat,
-		rect,
-		NAME(k)
-		.. " has "
-		.. ut.to_fixed_point2(stat)
-		.. " health."
-		.. "\n - As a "  ..  DATA.unit_type_get_name(v) .. ", "
-		.. NAME(k) .. " has a base health of " .. ut.to_fixed_point2(base) .. "."
-		.. "\n - Being a " .. female.. " " .. DATA.race_get_name(RACE(k))
-		.. " modifies this by " .. her .." size of " .. ut.to_fixed_point2(pop_utils.size(k)) .. ".",
-		ut.NUMBER_MODE.NUMBER,
-		ut.NAME_MODE.ICON)
-end
-
----@param rect Rect
----@param k POP
----@param v unit_type_id
-local function render_unit_attack (rect, k, v)
-	local base = DATA.unit_type_get_base_attack(v)
-	local stat = pop_utils.get_attack(k, v)
-	local job = pop_utils.job_efficiency(k, JOBTYPE.WARRIOR)
-	local female, her = "male", "his"
-	if DATA.pop_get_female(k) then
-		female, her = "female", "her"
-	end
-	ut.generic_number_field(
-		"stone-axe.png",
-		stat,
-		rect,
-		NAME(k) .. " has " .. ut.to_fixed_point2(stat) .. " attack."
-			.. "\n - As a " ..  DATA.unit_type_get_name(v) .. ", " .. NAME(k) .. " has a base attack of " .. ut.to_fixed_point2(base) .. "."
-			.. "\n - Being a " .. female.. " " .. DATA.race_get_name(RACE(k)) .. " modifies this by " .. her .." racial warrior efficiency of " .. ut.to_fixed_point2(job * 100) .. "%.",
-		ut.NUMBER_MODE.NUMBER,
-		ut.NAME_MODE.ICON)
-end
-
----@param rect Rect
----@param k POP
----@param v unit_type_id
-local function render_unit_armor (rect, k, v)
-	local base, stat = DATA.unit_type_get_base_armor(v), pop_utils.get_armor(k, v)
-	local female, her = "male", "his"
-	if DATA.pop_get_female(k) then
-		female, her = "female", "her"
-	end
-	ut.generic_number_field(
-		"round-shield.png",
-		stat,
-		rect,
-		NAME(k) .. " has " .. ut.to_fixed_point2(stat) .. " armor."
-			.. "\n - As a " ..  DATA.unit_type_get_name(v) .. ", " .. NAME(k) .. " has a base armor of " .. ut.to_fixed_point2(base) .. ".",
-		ut.NUMBER_MODE.NUMBER,
-		ut.NAME_MODE.ICON)
-end
-
----@param rect Rect
----@param k POP
----@param v unit_type_id
-local function render_unit_speed (rect, k, v)
-	local base, stat = ((v ~= INVALID_ID) and DATA.unit_type_get_speed(v) or 1), pop_utils.get_speed(k, v)
-	ut.generic_number_field(
-		"fast-forward-button.png",
-		stat,
-		rect,
-		NAME(k) .. " has a speed of " .. ut.to_fixed_point2(stat) .. "."
-		.. "\n - As a " ..  ((v ~= INVALID_ID) and DATA.unit_type_get_name(v) or "noncombatant") .. ", " .. NAME(k) .. " has a base speed of " .. ut.to_fixed_point2(base) .. ".",
-		ut.NUMBER_MODE.PERCENTAGE,
-		ut.NAME_MODE.ICON)
-end
-
----@param rect Rect
----@param k POP
----@param v unit_type_id
-local function render_unit_spotting (rect, k, v)
-	local base, stat = ((v ~= INVALID_ID) and DATA.unit_type_get_spotting(v) or 1), pop_utils.get_spotting(k, v)
-	local female, her = "male", "his"
-	if DATA.pop_get_female(k) then
-		female, her = "female", "her"
-	end
-	ut.generic_number_field(
-		"magnifying-glass.png",
-		stat,
-		rect,
-		NAME(k) .. " has a spotting bonus of " .. ut.to_fixed_point2(stat) .. "."
-			.. "\n - As a " .. ((v ~= INVALID_ID) and DATA.unit_type_get_name(v) or "noncombatant") .. ", " .. NAME(k) .. " has a base spotting bonus of " .. ut.to_fixed_point2(base) .. "."
-			.. "\n - Being a " .. female.. " " .. DATA.race_get_name(RACE(k)) .. " modifies this by " .. her .." racial spotting of " .. ut.to_fixed_point2(F_RACE(k).spotting * 100)
-			.. "%.",
-		ut.NUMBER_MODE.NUMBER,
-		ut.NAME_MODE.ICON)
-end
-
----@param rect Rect
----@param k POP
----@param v unit_type_id
-local function render_unit_visibility (rect, k, v)
-	local base, stat = ((v ~= INVALID_ID) and DATA.unit_type_get_visibility(v) or 1), pop_utils.get_visibility(k, v)
-	local female, her = "male", "his"
-	if DATA.pop_get_female(k) then
-		female, her = "female", "her"
-	end
-	ut.generic_number_field(
-		"high-grass.png",
-		stat,
-		rect,
-		NAME(k) .. " has a visibility of " .. ut.to_fixed_point2(stat) .. "."
-			.. "\n - As a " ..  ((v ~= INVALID_ID) and DATA.unit_type_get_name(v) or "noncombatant") .. ", " .. NAME(k) .. " has a base visibility of " .. ut.to_fixed_point2(base) .. "."
-			.. "\n - Being a " .. female.. " " .. DATA.race_get_name(RACE(k)) .. " modifies this by " .. her .." racial visibility of " .. ut.to_fixed_point2(F_RACE(k).visibility * 100)
-			.. "% and a size of " .. ut.to_fixed_point2(pop_utils.size(k)) ..".",
-		ut.NUMBER_MODE.NUMBER,
-		ut.NAME_MODE.ICON)
-end
-
----@param rect Rect
----@param k POP
----@param v unit_type_id
-local function render_unit_supply_use (rect, k, v)
-	local base, stat = ((v ~= INVALID_ID) and DATA.unit_type_get_supply_used(v) or 0) / 30, pop_utils.get_supply_use(k, v)
-	local food_need = pop_values.calories_food_need(k)
-	local female, her = "male", "his"
-	if DATA.pop_get_female(k) then
-		female, her = "female", "her"
-	end
-	ut.generic_number_field(
-		"sliced-bread.png",
-		stat,
-		rect,
-		NAME(k) .. " uses " .. ut.to_fixed_point2(stat) .. " units of food per day of traveling."
-			.. "\n - As a " ..  ((v ~= INVALID_ID) and DATA.unit_type_get_name(v) or "noncombatant") .. ", " .. NAME(k) .. " has a base daily supply use of " .. ut.to_fixed_point2(base) .. "."
-			.. "\n - Being a " .. female.. " " .. DATA.race_get_name(RACE(k)) .. " adds " .. her .. " daily racial food consumption of "
-			.. ut.to_fixed_point2(food_need / 30).. " units per day.",
-		ut.NUMBER_MODE.NUMBER,
-		ut.NAME_MODE.ICON)
-end
-
----@param rect Rect
----@param k POP
----@param v unit_type_id
-local function render_unit_hauling (rect, k, v)
-	local base, stat = ((v ~= INVALID_ID) and DATA.unit_type_get_supply_capacity(v) or 0) / 4, pop_utils.get_supply_capacity(k, v)
-	local job = pop_utils.job_efficiency(k, JOBTYPE.HAULING)
-	local female, her = "male", "his"
-	if DATA.pop_get_female(k) then
-		female, her = "female", "her"
-	end
-	ut.generic_number_field(
-		"cardboard-box.png",
-		stat,
-		rect,
-		NAME(k) .. " has a hauling capacity of " .. ut.to_fixed_point2(stat) .. "."
-			.. "\n - As a " ..  ((v ~= INVALID_ID) and DATA.unit_type_get_name(v) or "noncombatant") .. ", " .. NAME(k) .. " has a base of " .. ut.to_fixed_point2(base) .. "."
-			.. "\n - Being a " .. female.. " " .. DATA.race_get_name(RACE(k)) .. " adds " .. her .." racial hauling job efficiency of " .. ut.to_fixed_point2(job) .. ".",
-		ut.NUMBER_MODE.NUMBER,
-		ut.NAME_MODE.ICON)
-end
-
 
 ---@return Rect
 function window.rect()
@@ -328,11 +135,11 @@ function window.draw(gamescene)
 		if character ~= INVALID_ID and character ~= nil then
 			ib.icon_button_to_realm(gam, REALM(character), realm_rect)
 			ib.icon_button_to_character(gam, character, portrait_rect)
-			ib.text_button_to_character(gam, character, button_rect,
-				NAME(character), NAME(character) .. " is currently " .. office_action .. " this warband.")
+			ui.text(NAME(character),button_rect)
+			ui.tooltip(NAME(character) .. " is currently " .. office_action .. " this warband.",button_rect)
 
 		else
-			render_icon_panel(portrait_rect, "uncertainty.png", 1, 1, 1, 1)
+			ut.render_icon(portrait_rect, "uncertainty.png",.8,.8,.8,1,true)
 			ut.text_button("empty", button_rect, nil, false)
 		end
 	end
@@ -348,10 +155,10 @@ function window.draw(gamescene)
 			local unit_type = DATA.warband_unit_get_type(DATA.get_warband_unit_from_unit(character))
 			if unit_type ~= INVALID_ID then
 				unit_name = DATA.unit_type_get_name(unit_type)
-				render_unit_icon(icon_rect, character, unit_type)
+				pui.render_unit_icon(icon_rect, character)
 			else
 				local race = F_RACE(character)
-				render_icon_panel(icon_rect, race.icon, race.r, race.g, race.b, 1)
+				ut.render_icon(icon_rect, race.icon, race.r, race.g, race.b, 1,true)
 			end
 			ui.text_panel(unit_name, text_rect)
 		else
@@ -369,17 +176,16 @@ function window.draw(gamescene)
 				:position(rect.x, rect.y)
 				:build()
 			-- draw using functions if a unit
-			local unit = DATA.warband_unit_get_type(DATA.get_warband_unit_from_unit(character))
 			-- declare variables and intialize as a male noncombatant character
-			render_unit_speed(layout:next(width_fraction, rect.height), character, unit)
-			render_unit_spotting(layout:next(width_fraction, rect.height), character, unit)
-			render_unit_visibility(layout:next(width_fraction, rect.height), character, unit)
-			render_unit_supply_use(layout:next(width_fraction, rect.height), character, unit)
-			render_unit_hauling(layout:next(width_fraction, rect.height), character, unit)
+			pui.render_speed(layout:next(width_fraction, rect.height), character)
+			pui.render_spotting(layout:next(width_fraction, rect.height), character)
+			pui.render_visibility(layout:next(width_fraction, rect.height), character)
+			pui.render_supply_use(layout:next(width_fraction, rect.height), character)
+			pui.render_supply_capacity(layout:next(width_fraction, rect.height), character)
 			-- actually draw stats in rect
 		else
 			ui.panel(rect)
-			render_icon_panel(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
+			ut.render_icon(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
 		end
 	end
 
@@ -418,9 +224,10 @@ function window.draw(gamescene)
 		leader_rect:shrink(spacing)
 		ui.text("Capitol Guard", leader_rect:subrect(0, 0, leader_rect.width, ut.BASE_HEIGHT, "left", "up"), "center", "center")
 		ib.icon_button_to_realm(gamescene, guarding_realm, leader_rect:subrect(0, 0, ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT * 2, "left", "down"))
-		ib.text_button_to_realm(gamescene, guarding_realm, leader_rect:subrect(ut.BASE_HEIGHT * 2, 0, leader_rect.width - ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT, "left", "center"), REALM_NAME(guarding_realm),
-			"This warband is the capitol guard of " .. REALM_NAME(guarding_realm) .. ".")
-		ib.text_button_to_province(gamescene, province, leader_rect:subrect(ut.BASE_HEIGHT * 2, 0,leader_rect.width - ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT, "left", "down"), PROVINCE_NAME(province),
+		local realm_rect = leader_rect:subrect(ut.BASE_HEIGHT*2,0,leader_rect.width-ut.BASE_HEIGHT*2,ut.BASE_HEIGHT,"left","center")
+		ui.text(REALM_NAME(guarding_realm),realm_rect)
+		ui.tooltip("This warband is the capitol guard of " .. REALM_NAME(guarding_realm) .. ".",realm_rect)
+		ib.text_button_to_province(gamescene, province, leader_rect:subrect(ut.BASE_HEIGHT * 2, 0,leader_rect.width - ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT, "left", "down"),
 			"This warband guards the province of " .. PROVINCE_NAME(province) .. ".")
 	end
 
@@ -618,16 +425,15 @@ function window.draw(gamescene)
 		local realm_text_rect = rect:subrect(0, 0, rect.width - ut.BASE_HEIGHT, ut.BASE_HEIGHT, "right", "center")
 		local province_name_rect = rect:subrect(0, 0, rect.width, ut.BASE_HEIGHT, "right", "down")
 		local province_realm = nil
-		ib.text_button_to_province(gamescene, location, province_name_rect,
-			PROVINCE_NAME(location), "The warband is currently in the province of " .. PROVINCE_NAME(location) .. ".")
+		ib.text_button_to_province(gamescene, location, province_name_rect, "The warband is currently in the province of " .. PROVINCE_NAME(location) .. ".")
 		province_realm = PROVINCE_REALM(location)
 		if province_realm ~= INVALID_ID then
 			ib.icon_button_to_realm(gamescene, province_realm, realm_icon_rect)
-			ib.text_button_to_realm(gamescene, province_realm, realm_text_rect,
-				REALM_NAME(province_realm), "The warband is currently in a province belonging " .. REALM_NAME(province_realm) .. ".")
+			ui.text(REALM_NAME(province_realm), realm_text_rect)
+			ui.tooltip("The warband is currently in a province belonging " .. REALM_NAME(province_realm) .. ".",realm_text_rect)
 		else
 			ut.render_icon_panel(realm_icon_rect, "uncertainty.png", 1, 1, 1, 1)
-			ut.text_button("no realm", realm_text_rect, "The provincec the warband is currently in is claimed by no one.")
+			ut.text_button("no realm", realm_text_rect, "The province the warband is currently in is claimed by no one.")
 		end
 	end
 
@@ -663,14 +469,14 @@ function window.draw(gamescene)
 					:spacing(0)
 					:build()
 
-				render_unit_health(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_attack(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_armor(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_speed(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_spotting(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_visibility(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_supply_use(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_hauling(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
+				pui.render_health(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_attack(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_armor(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_speed(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_spotting(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_visibility(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_supply_use(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_hauling(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
 
 				-- check if player is eligable to control the warband and draw button to fire
 				local control_warband = false
@@ -697,7 +503,7 @@ function window.draw(gamescene)
 						warband_utils.unset_commander(warband)
 					end
 				else
-					render_icon_panel(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
+					ut.render_icon(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
 				end
 			else
 				ui.panel(rect, 1, true)
@@ -723,7 +529,7 @@ function window.draw(gamescene)
 						WORLD:emit_immediate_event('pick-commander-unit', player_character, warband)
 					end
 				else
-					render_icon_panel(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
+					ut.render_icon(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
 				end
 			end
 		end)
@@ -867,7 +673,7 @@ function window.draw(gamescene)
 		DATA.for_each_warband_unit_from_warband(warband, function (item)
 			local unit_type = DATA.warband_unit_get_type(item)
 			local pop = DATA.warband_unit_get_unit(item)
-			unit_spotting = unit_spotting + pop_utils.get_spotting(pop, unit_type)
+			unit_spotting = unit_spotting + pop_utils.get_spotting(pop)
 		end)
 		if recruiter ~= INVALID_ID and recruiter ~= commander then
 			unit_spotting = unit_spotting + F_RACE(recruiter).spotting
@@ -955,7 +761,15 @@ function window.draw(gamescene)
 			{
 				{
 					header = ".",
-					render_closure = render_unit_icon,
+					render_closure = function (rect, k, v)
+						ut.render_icon(rect,
+						DATA.unit_type_get_icon(v),
+						DATA.unit_type_get_r(v),
+						DATA.unit_type_get_g(v),
+						DATA.unit_type_get_b(v),
+						1,
+						true)
+					end,
 					width = icon_width,
 					---@param v unit_type_id
 					value = function (k, v)
@@ -1231,7 +1045,9 @@ function window.draw(gamescene)
 			{
 				{
 					header = ".",
-					render_closure = render_unit_icon,
+					render_closure = function (rect,k,v)
+						pui.render_unit_icon(rect,k,NAME(k) .. " is a " .. DATA.unit_type_get_name(pop_utils.get_unit_type_of(k)) .. ".")
+					end,
 					width = icon_width,
 					---@param k POP
 					---@param v unit_type_id
@@ -1325,87 +1141,87 @@ function window.draw(gamescene)
 				},
 				{
 					header = "health",
-					render_closure = render_unit_health,
+					render_closure = pui.render_health,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_health(k, v)
+						return pop_utils.get_health(k)
 					end
 				},
 				{
 					header = "attack",
-					render_closure = render_unit_attack,
+					render_closure = pui.render_attack,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_attack(k, v)
+						return pop_utils.get_attack(k)
 					end
 				},
 				{
 					header = "armor",
-					render_closure = render_unit_armor,
+					render_closure = pui.render_armor,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_armor(k, v)
+						return pop_utils.get_armor(k)
 					end
 				},
 				{
 					header = "speed",
-					render_closure = render_unit_speed,
+					render_closure = pui.render_speed,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_speed(k, v)
+						return pop_utils.get_speed(k)
 					end
 				},
 				{
 					header = "spotting",
-					render_closure = render_unit_spotting,
+					render_closure = pui.render_spotting,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_spotting(k, v)
+						return pop_utils.get_spotting(k)
 					end
 				},
 				{
 					header = "visibility",
-					render_closure = render_unit_visibility,
+					render_closure = pui.render_visibility,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_visibility(k, v)
+						return pop_utils.get_visibility(k)
 					end
 				},
 				{
 					header = "supply",
-					render_closure = render_unit_supply_use,
+					render_closure = pui.render_supply_use,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return pop_utils.get_supply_use(k, v) / 30
+						return pop_utils.get_supply_use(k) / 30
 					end
 				},
 				{
 					header = "hauling",
-					render_closure = render_unit_hauling,
+					render_closure = pui.render_supply_capacity,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return  pop_utils.get_supply_capacity(k, v)
+						return  pop_utils.get_supply_capacity(k)
 					end
 				},
 				{
 					header = "satisfac.",
-					render_closure = ut.render_pop_satsifaction,
+					render_closure = pui.render_pop_satsifaction,
 					width = end_width - icon_width,
 					---@param k POP
 					---@param v unit_type_id

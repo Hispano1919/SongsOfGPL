@@ -64,7 +64,7 @@ function window.draw(game)
         rect.x = rect.x + rect.height
         rect.width = rect.width - rect.height
         rect.width = rect.width / 2
-        name(rect, character)
+        ui.text(NAME(character) .. "\n" .. name(character), rect, "left", "up")
 
         rect.x = rect.x + rect.width
         ui.left_text(AGE(character) .. " year old " .. F_RACE(character).name, rect)

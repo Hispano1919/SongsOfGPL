@@ -778,7 +778,7 @@ function ll.load()
 		child_age = 1,
 		teen_age = 3,
 		adult_age = 4,
-		middle_age = 1,
+		middle_age = 10,
 		elder_age = 15,
 		max_age = 21,
 		minimum_comfortable_temperature = -5,

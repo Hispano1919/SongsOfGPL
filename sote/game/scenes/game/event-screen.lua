@@ -36,7 +36,7 @@ function ev.draw(gam)
 			wealth:shrink(0)
 			ui.panel(wealth)
 
-			require "game.scenes.game.widgets.character-name"(name, character)
+			ui.text(require "game.scenes.game.widgets.character-name"(character), name, "left", "up")
 			uit.money_entry_icon(SAVINGS(character), wealth, "My savings")
 
 

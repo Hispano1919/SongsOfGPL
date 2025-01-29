@@ -112,6 +112,34 @@ function rtab.POP.get_age_multiplier(pop_id)
 	return age_multiplier
 end
 
+---@param pop_id pop_id
+---@return string age_range
+function rtab.POP.get_age_string(pop_id)
+	local age = DATA.pop_get_age(pop_id)
+	local race = DATA.pop_get_race(pop_id)
+
+	local child_age = DATA.race_get_child_age(race)
+	local teen_age = DATA.race_get_teen_age(race)
+	local adult_age = DATA.race_get_adult_age(race)
+	local middle_age = DATA.race_get_middle_age(race)
+	local elder_age = DATA.race_get_elder_age(race)
+	local max_age = DATA.race_get_max_age(race)
+
+	if age < child_age then
+		return "baby"
+	elseif age < teen_age then
+		return "child"
+	elseif age < adult_age then
+		return "teen"
+	elseif age < middle_age then
+		return "adult"
+	elseif age < elder_age then
+		return "middle age"
+	else
+		return "elder"
+	end
+end
+
 --- Recalculate and return satisfaction percentage
 ---comment
 ---@param pop_id pop_id
@@ -153,13 +181,34 @@ end
 ---Returns age adjusted size of pop
 ---@param pop pop_id
 ---@return number size
-function rtab.POP.size(pop)
-	local race = DATA.pop_get_race(pop)
+function rtab.POP.get_size(pop)
+	local race = RACE(pop)
 	local age_multiplier = rtab.POP.get_age_multiplier(pop)
 	if DATA.pop_get_female(pop) then
 		return DATA.race_get_female_body_size(race) * age_multiplier
 	end
 	return DATA.race_get_male_body_size(race) * age_multiplier
+end
+
+---Returns age adjusted size of pop
+---@param pop pop_id
+---@return number size
+function rtab.POP.get_carry_capacity_weight(pop)
+	local race = RACE(pop)
+	local age_multiplier = rtab.POP.get_age_multiplier(pop)
+	return DATA.race_get_carrying_capacity_weight(race) * age_multiplier
+end
+
+---Returns age adjusted size of pop
+---@param pop pop_id
+---@return number infrastructure_need
+function rtab.POP.get_infrastructure_need(pop)
+	local race = RACE(pop)
+	local age_multiplier = rtab.POP.get_age_multiplier(pop)
+	if DATA.pop_get_female(pop) then
+		return DATA.race_get_female_infrastructure_needs(race) * age_multiplier
+	end
+	return DATA.race_get_male_infrastructure_needs(race) * age_multiplier
 end
 
 ---Returns age adjust racial efficiency
@@ -168,12 +217,49 @@ end
 ---@return number
 function rtab.POP.job_efficiency(pop, jobtype)
 	local female = DATA.pop_get_female(pop)
-	local race = DATA.pop_get_race(pop)
+	local race = RACE(pop)
 	local age_multiplier = rtab.POP.get_age_multiplier(pop)
 	if female then
 		return DATA.race_get_female_efficiency(race, jobtype) * age_multiplier
 	end
 	return DATA.race_get_male_efficiency(race, jobtype) * age_multiplier
+end
+
+---returns division of time for a given pop_id base on age, forage_ratio, employment and warband 
+---@param pop_id pop_id
+---@return number forage_time
+---@return number warband_time
+---@return number work_time
+---@return number learning_time
+function rtab.POP.get_time_allocation(pop_id)
+	local free_time, forage_time, warband_time, learning_time = 1, 0, 0, 0
+	-- first remove time spend growing and learning
+	local age = AGE(pop_id)
+	local teen_age = DATA.race_get_teen_age(RACE(pop_id))
+	if age < teen_age then
+		free_time = age / teen_age
+		learning_time = 1 - free_time
+	end
+	-- then work for warband if part of one
+	local warband_id = rtab.POP.get_warband_of(pop_id)
+	if warband_id ~= INVALID_ID then
+		if DATA.warband_get_current_status == WARBAND_STATUS.IDLE and DATA.warband_get_idle_stance == WARBAND_STANCE.FORAGE then
+			local unit_type_id = rtab.POP.get_unit_type_of(pop_id)
+			if unit_type_id ~= INVALID_ID then
+				warband_time = math.min(free_time, DATA.unit_type_get_foraging(unit_type_id))
+			else -- officers use a quarter time to forage
+				warband_time = 0.25
+			end
+		else
+			warband_time = DATA.warband_get_current_free_time_ratio(warband_id)
+		end
+		free_time = math.max(0,free_time - warband_time)
+	end
+	-- remaining time is used to forage for life needs
+	forage_time = math.min(free_time, DATA.pop_get_forage_ratio(pop_id))
+	free_time = math.max(0, free_time - forage_time)
+	-- finally any remaining free time can be used to work
+	return forage_time, warband_time, free_time, learning_time
 end
 
 ---Returns age adjust demand for a (need, use case) pair
@@ -197,86 +283,97 @@ end
 
 ---Returns the adjusted health value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number attack health modified by pop race and sex
-function rtab.POP.get_health(pop, unit)
-	return DATA.unit_type_get_base_health(unit) * rtab.POP.size(pop)
+function rtab.POP.get_health(pop)
+	local unit_type = rtab.POP.get_unit_type_of(pop)
+	if unit_type ~= INVALID_ID then
+		return DATA.unit_type_get_base_health(unit_type) * rtab.POP.get_size(pop)
+	end
+	return rtab.POP.get_size(pop)
 end
 
 ---Returns the adjusted attack value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted attack modified by pop race and sex
-function rtab.POP.get_attack(pop, unit)
-	return DATA.unit_type_get_base_attack(unit) * rtab.POP.job_efficiency(pop, JOBTYPE.WARRIOR)
+function rtab.POP.get_attack(pop)
+	local unit_type = rtab.POP.get_unit_type_of(pop)
+	if unit_type ~= INVALID_ID then
+		return DATA.unit_type_get_base_attack(unit_type) * rtab.POP.job_efficiency(pop, JOBTYPE.WARRIOR)
+	end
+	return rtab.POP.job_efficiency(pop, JOBTYPE.WARRIOR)
 end
 
 ---Returns the adjusted armor value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted armor modified by pop race and sex
-function rtab.POP.get_armor(pop, unit)
-	return DATA.unit_type_get_base_armor(unit)
+function rtab.POP.get_armor(pop)
+	local unit_type = rtab.POP.get_unit_type_of(pop)
+	if unit_type ~= INVALID_ID then
+		return DATA.unit_type_get_base_armor(unit_type)
+	end
+	return 0
 end
 
 ---Returns the adjusted speed value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted speed modified by pop race and sex
-function rtab.POP.get_speed(pop, unit)
-	if unit ~= INVALID_ID then
-		return DATA.unit_type_get_speed(unit)
+function rtab.POP.get_speed(pop)
+	-- TODO add racial speeds
+	local age_multiplier = rtab.POP.get_age_multiplier(pop)
+	local unit_type = rtab.POP.get_unit_type_of(pop)
+	if unit_type ~= INVALID_ID then
+		return DATA.unit_type_get_speed(unit_type) * age_multiplier
 	end
-	return 1
+	return age_multiplier
 end
 
 ---Returns the adjusted combat strength values for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number health
 ---@return number attack
 ---@return number armor
 ---@return number speed
-function rtab.POP.get_strength(pop, unit)
-	return rtab.POP.get_health(pop, unit), rtab.POP.get_attack(pop, unit), rtab.POP.get_armor(pop, unit), rtab.POP.get_speed(pop, unit)
+function rtab.POP.get_strength(pop)
+	return rtab.POP.get_health(pop), rtab.POP.get_attack(pop), rtab.POP.get_armor(pop), rtab.POP.get_speed(pop)
 end
 
 ---Returns the adjusted spotting value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted spotting modified by pop race and sex
-function rtab.POP.get_spotting(pop, unit)
+function rtab.POP.get_spotting(pop)
+	local age_multiplier = rtab.POP.get_age_multiplier(pop)
 	local race = DATA.pop_get_race(pop)
-	local spotting = DATA.race_get_spotting(race)
-	if unit ~= INVALID_ID then
-		return DATA.unit_type_get_spotting(unit) * spotting
+	local spotting = DATA.race_get_spotting(race) * age_multiplier
+	local unit_type = rtab.POP.get_unit_type_of(pop)
+	if unit_type ~= INVALID_ID then
+		return DATA.unit_type_get_spotting(unit_type) * spotting
 	end
 	return spotting
 end
 
 ---Returns the adjusted visibility value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted visibility modified by pop race and sex
-function rtab.POP.get_visibility(pop, unit)
+function rtab.POP.get_visibility(pop)
 	local race = DATA.pop_get_race(pop)
 	local visibility = DATA.race_get_visibility(race)
-	local mod = visibility * rtab.POP.size(pop)
-	if unit ~= INVALID_ID then
-		return DATA.unit_type_get_visibility(unit) * mod
+	local mod = visibility * rtab.POP.get_size(pop)
+	local unit_type = rtab.POP.get_unit_type_of(pop)
+	if unit_type ~= INVALID_ID then
+		return DATA.unit_type_get_visibility(unit_type) * mod
 	end
 	return mod
 end
 
 ---Returns the adjusted travel day cost value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted food need modified by pop race and sex
-function rtab.POP.get_supply_use(pop, unit)
+function rtab.POP.get_supply_use(pop)
 	local pop_food = rtab.POP.calculate_need_use_case_satisfaction(pop, NEED.FOOD, CALORIES_USE_CASE)
 	local base = 0
-	if unit ~= INVALID_ID then
-		base = base + DATA.unit_type_get_supply_used(unit)
+	local unit_type = rtab.POP.get_unit_type_of(pop)
+	if unit_type ~= INVALID_ID then
+		base = base + DATA.unit_type_get_supply_used(unit_type) * rtab.POP.get_size(pop)
 	end
 
 	return (base + pop_food) / 30
@@ -284,21 +381,16 @@ end
 
 ---Returns the adjusted hauling capacity value for the provided pop.
 ---@param pop pop_id
----@param unit unit_type_id
 ---@return number pop_adjusted hauling modified by pop race and sex
-function rtab.POP.get_supply_capacity(pop, unit)
-	local race = DATA.pop_get_race(pop)
-	local job = DATA.race_get_male_efficiency(race, JOBTYPE.HAULING)
-	if DATA.pop_get_female(pop) then
-		job = DATA.race_get_female_efficiency(race, JOBTYPE.HAULING)
-	end
-
+function rtab.POP.get_supply_capacity(pop)
+	local hauling = rtab.POP.job_efficiency(pop, JOBTYPE.HAULING)
+	local unit_type = rtab.POP.get_unit_type_of(pop)
 	local base = 0
-	if unit ~= INVALID_ID then
-		base = base + DATA.unit_type_get_supply_capacity(unit)
+	if unit_type ~= INVALID_ID then
+		base = base + DATA.unit_type_get_supply_capacity(unit_type)
 	end
 
-	return base + job
+	return base + hauling
 end
 
 
@@ -321,5 +413,173 @@ end
 function rtab.POP.has_trait(pop, trait)
 	return HAS_TRAIT(pop, trait)
 end
+
+--fetch/check helper functions
+
+---returns building_id if pop is employed or INVALID_ID if not
+---@param pop_id pop_id
+---@return building_id
+function rtab.POP.get_employer_of(pop_id)
+	if pop_id ~= INVALID_ID then
+		local occupation = DATA.get_employment_from_worker(pop_id)
+		if occupation and DCON.dcon_employment_is_valid(occupation-1) then
+			local employer_id = DATA.employment_get_building(occupation)
+			if occupation and DCON.dcon_building_is_valid(employer_id-1) then
+				return employer_id
+			end
+		end
+	end
+	return INVALID_ID
+end
+---returns job_id if pop is employed or INVALID_ID if not
+---@param pop_id pop_id
+---@return job_id
+function rtab.POP.get_job_of(pop_id)
+	if pop_id ~= INVALID_ID then
+		local occupation = DATA.get_employment_from_worker(pop_id)
+		if occupation and DCON.dcon_employment_is_valid(occupation-1) then
+			local job_id = DATA.employment_get_job(occupation)
+			if job_id and DCON.dcon_job_is_valid(job_id-1) then
+				return job_id
+			end
+		end
+	end
+	return INVALID_ID
+end
+
+---returns warband_id if pop is in one or INVALID_ID if not
+---@param pop_id pop_id
+---@return warband_id
+function rtab.POP.get_warband_of(pop_id)
+	-- a little heavy on the if checks
+	if pop_id ~= INVALID_ID then
+		local warband_id = rtab.POP.get_warband_of_leader(pop_id)
+		if warband_id ~= INVALID_ID then
+			return warband_id
+		end
+		local warband_id = rtab.POP.get_warband_of_recruiter(pop_id)
+		if warband_id ~= INVALID_ID then
+			return warband_id
+		end
+		local warband_id = rtab.POP.get_warband_of_commander(pop_id)
+		if warband_id ~= INVALID_ID then
+			return warband_id
+		end
+		local warband_id = rtab.POP.get_warband_of_unit(pop_id)
+		if warband_id ~= INVALID_ID then
+			return warband_id
+		end
+	end
+	return INVALID_ID
+end
+---returns warband_id if a pop is a leader of one or INVALID_ID
+---@param pop_id pop_id
+---@return warband_id
+function rtab.POP.get_warband_of_leader(pop_id)
+	if pop_id ~= INVALID_ID then
+		local leadership = DATA.get_warband_leader_from_leader(pop_id)
+		if leadership and DCON.dcon_warband_leader_is_valid(leadership-1) then
+			local warband_id = DATA.warband_leader_get_warband(leadership)
+			if warband_id and DCON.dcon_warband_is_valid(warband_id-1) then
+				return warband_id
+			end
+		end
+	end
+	return INVALID_ID
+end
+---returns warband_id if a pop is a recruiter of one or INVALID_ID
+---@param pop_id pop_id
+---@return warband_id
+function rtab.POP.get_warband_of_recruiter(pop_id)
+	if pop_id ~= INVALID_ID then
+		local leadership = DATA.get_warband_recruiter_from_recruiter(pop_id)
+		if leadership and DCON.dcon_warband_recruiter_is_valid(leadership-1) then
+			local warband_id = DATA.warband_recruiter_get_warband(leadership)
+			if warband_id and DCON.dcon_warband_is_valid(warband_id-1) then
+				return warband_id
+			end
+		end
+	end
+	return INVALID_ID
+end
+---returns warband_id if a pop is a commander of one or INVALID_ID
+---@param pop_id pop_id
+---@return warband_id
+function rtab.POP.get_warband_of_commander(pop_id)
+	if pop_id ~= INVALID_ID then
+		local leadership = DATA.get_warband_commander_from_commander(pop_id)
+		if leadership and DCON.dcon_warband_commander_is_valid(leadership-1) then
+			local warband_id = DATA.warband_commander_get_warband(leadership)
+			if warband_id and DCON.dcon_warband_is_valid(warband_id-1) then
+				return warband_id
+			end
+		end
+	end
+	return INVALID_ID
+end
+---returns warband_id if a pop is a unit of one or INVALID_ID
+---@param pop_id pop_id
+---@return warband_id
+function rtab.POP.get_warband_of_unit(pop_id)
+	if pop_id ~= INVALID_ID then
+		local unit = DATA.get_warband_unit_from_unit(pop_id)
+		if unit and DCON.dcon_warband_unit_is_valid(unit-1) then
+			local warband_id = DATA.warband_unit_get_warband(unit)
+			if warband_id and DCON.dcon_warband_is_valid(warband_id-1) then
+				return warband_id
+			end
+		end
+	end
+	return INVALID_ID
+end
+---returns unit_type_d if pop is a unit in a warband or INVALID_ID
+---@param pop_id pop_id
+---@return unit_type_id
+function rtab.POP.get_unit_type_of(pop_id)
+	if pop_id ~= INVALID_ID then
+		local unit = DATA.get_warband_unit_from_unit(pop_id)
+		if unit and DCON.dcon_warband_unit_is_valid(unit-1) then
+			local unit_type_id = DATA.warband_unit_get_type(unit)
+			if unit_type_id and DCON.dcon_unit_type_is_valid(unit_type_id-1) then
+				return unit_type_id
+			end
+		end
+	end
+	return INVALID_ID
+end
+
+---returns sucessor if pop has one or INVALID_ID
+---@param pop_id pop_id
+---@return pop_id
+function rtab.POP.get_successor_of(pop_id)
+	if pop_id ~= INVALID_ID then
+		local succession = DATA.get_succession_from_successor_of(pop_id)
+		if succession and DCON.dcon_succession_is_valid(succession-1) then
+			local successor_id = DATA.succession_get_successor(succession)
+			if successor_id and DCON.dcon_pop_is_valid(successor_id-1) then
+				return successor_id
+			end
+		end
+	end
+	return INVALID_ID
+end
+
+---returns loyal_to if pop has one or INVALID_ID
+---@param pop_id pop_id
+---@return pop_id
+function rtab.POP.get_loyal_to_of(pop_id)
+	if pop_id ~= INVALID_ID then
+		local loyalty = DATA.get_loyalty_from_bottom(pop_id)
+		if loyalty and DCON.dcon_loyalty_is_valid(loyalty-1) then
+			local loyal_to_id = DATA.loyalty_get_top(loyalty)
+			if loyal_to_id and DCON.dcon_pop_is_valid(loyal_to_id-1) then
+				return loyal_to_id
+			end
+		end
+	end
+	return INVALID_ID
+end
+
+
 
 return rtab

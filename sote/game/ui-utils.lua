@@ -207,9 +207,15 @@ end
 ---@param g number
 ---@param b number
 ---@param a number
-function ut.render_icon(rect, icon_name, r, g, b, a)
+---@param white boolean?
+function ut.render_icon(rect, icon_name, r, g, b, a, white)
 	local _r, _g, _b, _a = love.graphics.getColor()
 	local subrect = rect:centered_square()
+
+	if white then
+		love.graphics.setColor(1, 1, 1, 1)
+		ui.image(ASSETS.icons[icon_name], subrect:copy():shrink(1))
+	end
 
 	love.graphics.setColor(r, g, b, a)
 	ui.image(ASSETS.icons[icon_name], subrect)
@@ -499,7 +505,11 @@ end
 ---Draws a coat of arms of a realm. Returns true if clicked.
 ---@param realm_id Realm
 ---@param rect Rect
-function ut.coa(realm_id, rect)
+---@param active? boolean default true
+function ut.coa(realm_id, rect, active)
+	if active == nil then
+		active = true
+	end
 	if realm_id == INVALID_ID then
 		return
 	end
@@ -526,7 +536,10 @@ function ut.coa(realm_id, rect)
 		love.graphics.setColor(realm.coa_emblem_r, realm.coa_emblem_g, realm.coa_emblem_b, 1)
 		ui.image(ASSETS.emblems[realm.coa_emblem_image], rect)
 	end
-	local rr = ui.invisible_button(rect)
+	local rr
+	if active then
+		rr = ui.invisible_button(rect)
+	end
 	-- Write colors back...
 	ui.style.panel_inside.r = r
 	ui.style.panel_inside.g = g
@@ -946,40 +959,163 @@ function ut.named_slider(slider_name, rect, current_value, min_value, max_value,
 	return ui.named_slider(slider_name, rect, current_value, min_value, max_value, height, true, ASSETS.slider_images)
 end
 
----Draw a generic percentage for a pop need sasifcation with tooltip
----@param rect Rect
----@param pop POP
-function ut.render_pop_satsifaction(rect, pop)
-	local needs_tooltip = "Forage Ratio: " .. ut.to_fixed_point2(DATA.pop_get_forage_ratio(pop)) .. "%, Work Ratio: " .. ut.to_fixed_point2(DATA.pop_get_work_ratio(pop)) .. "%"
+--- TODO MOVE NON POP SPECIFIC CALLS OUT OF FILE
 
-	for index = 1, MAX_NEED_SATISFACTION_POSITIONS_INDEX do
-		local use_case = DATA.pop_get_need_satisfaction_use_case(pop, index)
-		if use_case == 0 then
-			break
-		end
-		local need = DATA.pop_get_need_satisfaction_need(pop, index)
-		local demanded = DATA.pop_get_need_satisfaction_demanded(pop, index)
-		local consumed = DATA.pop_get_need_satisfaction_consumed(pop, index)
-		---@type string
-		needs_tooltip = needs_tooltip
-			.. "\n  "
-			.. DATA.use_case_get_name(use_case)
-			.. "(" .. DATA.need_get_name(need) .. ")"
-			.. ": "
-			.. ut.to_fixed_point2(consumed)
-			.. " / "
-			.. ut.to_fixed_point2(demanded)
-			.. " (" .. ut.to_fixed_point2(consumed / demanded * 100) .. "%)"
+---@param race_id race_id
+---@return string tooltip
+function ui.race_tooltip(race_id)
+	local race = DATA.fatten_race(race_id)
+
+	local male_infra, female_infra, male_size, female_size =
+		race.male_infrastructure_needs, race.female_infrastructure_needs, race.male_body_size, race.female_body_size
+	local infra_text, size_text =
+		"\n  Infrastructure\t" .. ut.to_fixed_point2(male_infra),
+		"\n  Size \t" .. ut.to_fixed_point2(male_size)
+	if male_infra ~= female_infra then
+		infra_text = infra_text .. " (male)\t" .. ut.to_fixed_point2(female_infra) .. " (female)"
+	end
+	if male_size ~= female_size then
+		size_text = size_text .. " (male)\t" .. ut.to_fixed_point2(female_size) .. " (female)"
 	end
 
-	ut.generic_number_field(
-		"inner-self.png",
-		DATA.pop_get_basic_needs_satisfaction(pop),
-		rect,
-		"Satisfaction of needs of this character. \n" .. needs_tooltip,
-		ut.NUMBER_MODE.PERCENTAGE,
-		ut.NAME_MODE.ICON
-	)
+	local tooltip = race.name .. "\n  " .. race.description
+		.. "\n Car: " .. ut.to_fixed_point2(race.carrying_capacity_weight)
+		.. "\n Attributes"
+		.. "\n  Spotting\t" .. ut.to_fixed_point2(race.spotting) .. "\tVisibility\t" .. ut.to_fixed_point2(race.visibility)
+		.. size_text
+	-- race efficiences
+	tooltip = tooltip .. "\n Efficiencies"
+	for i=1, require "engine.table".size(JOBTYPE)-1 do
+		local male = DATA.race_get_male_efficiency(race_id, i)
+		local female = DATA.race_get_female_efficiency(race_id, i)
+		tooltip = tooltip .. "\n  " .. require "engine.string".title(DATA.jobtype_get_name(i))
+			.. "\t" .. ut.to_fixed_point2(male*100) .. "%"
+		if male ~= female then
+			tooltip = tooltip .." (male)\t" .. ut.to_fixed_point2(female*100) .. "% (female)"
+		end
+	end
+		-- aging and growth values
+	tooltip = tooltip
+		.. "\n Aging and Birth"
+		.. "\n  Grow\t" .. race.child_age .. " (child)\t" .. race.teen_age .. " (teen)\t" .. race.adult_age .. " (adult)"
+		.. "\n  Age \t" .. race.middle_age .. " (middle)\t" .. race.elder_age .. " (elder)\t" .. race.max_age .. " (max)"
+		.. "\n  Males-to-Females(100)\t" .. ut.to_fixed_point2(race.males_per_hundred_females / (100 + race.males_per_hundred_females) * 100)
+			.. "% (" .. ut.to_fixed_point2(race.males_per_hundred_females) .. ")"
+		.. "\n  Fecundity\t" .. ut.to_fixed_point2(race.fecundity)
+	-- racial specific requirements
+	tooltip = tooltip .. "\n Requirements" .. infra_text
+		.. "\n  Temperature(absolute)\t" .. ut.to_fixed_point2(race.minimum_comfortable_temperature) .. "°C ("
+			.. ut.to_fixed_point2(race.minimum_absolute_temperature) .. "°C)"
+	if race.minimum_comfortable_elevation > 0 then
+		tooltip = tooltip .. "\n  Min. Elevation\t" .. ut.to_fixed_point2(race.minimum_comfortable_elevation) .. "m"
+	end
+	-- lastly mention if the race is specialized
+	if race.requires_large_river then
+		tooltip = tooltip .. "\n  Specialized river race."
+	end
+	if race.requires_large_forest then
+		tooltip = tooltip .. "\n  Specialized forest race."
+	end
+
+	return tooltip
+end
+
+---draws culture name with tooltip
+---@param rect Rect
+---@param race_id race_id
+---@param horizontal_align love.AlignMode
+---@param vertical_align VerticalAlignMode
+---@param tooltip string?
+function ui.render_race_text(rect, race_id,horizontal_align,vertical_align,tooltip)
+	ui.text(DATA.race_get_name(race_id),rect,horizontal_align,vertical_align)
+	if tooltip then
+		ui.tooltip(tooltip, rect)
+	end
+end
+
+---draws colored race icon with tooltip
+---@param rect Rect
+---@param race_id race_id
+---@param tooltip string?
+function ui.render_race_icon(rect, race_id,tooltip)
+	local square = rect:centered_square()
+	ut.render_icon(square, DATA.race_get_icon(race_id), DATA.race_get_r(race_id), DATA.race_get_g(race_id), DATA.race_get_b(race_id), 1, true)
+	if tooltip then
+		ui.tooltip(tooltip, rect)
+	end
+end
+
+---@param culture_id culture_id
+---@return string tooltip
+function ui.culture_tooltip(culture_id)
+	local culture = DATA.fatten_culture(culture_id)
+	local union_id = DATA.get_cultural_union_from_culture(culture_id)
+	local union = DATA.fatten_cultural_union(union_id)
+	local group = DATA.culture_group_get_name(union.culture_group)
+	local tooltip = culture.name .. " (" .. group .. ")"
+		.. "\n  Militarization\t" .. ut.to_fixed_point2(culture.traditional_militarization*100) .. "%"
+		.. require "game.economy.diet-breadth-model".culture_target_tooltip(culture_id)
+	return tooltip
+end
+
+---draws culture name with tooltip
+---@param rect Rect
+---@param culture_id culture_id
+---@param horizontal_align love.AlignMode
+---@param vertical_align VerticalAlignMode
+---@param tooltip string?
+function ui.render_culture_text(rect, culture_id,horizontal_align,vertical_align,tooltip)
+	ui.text(DATA.culture_get_name(culture_id),rect,horizontal_align,vertical_align)
+	if tooltip then
+		ui.tooltip(tooltip, rect)
+	end
+end
+
+---draws colored culture icon with tooltip
+---@param rect Rect
+---@param culture_id culture_id
+---@param tooltip string?
+function ui.render_culture_icon(rect, culture_id, tooltip)
+	local square = rect:centered_square()
+	-- TODO give cultures an icon
+	ut.render_icon(square, "musical-notes.png", DATA.culture_get_r(culture_id), DATA.culture_get_g(culture_id), DATA.culture_get_b(culture_id), 1, true)
+	if tooltip then
+		ui.tooltip(tooltip, rect)
+	end
+end
+
+---@param faith_id faith_id
+---@return string tooltip
+function ui.faith_tooltip(faith_id)
+	local faith = DATA.fatten_faith(faith_id)
+	local tooltip = faith.name .."\n  Burial Rites\t" .. BURIAL_NAMES[faith.burial_rites]
+	return tooltip
+end
+
+---draws faith name with tooltip
+---@param rect Rect
+---@param faith_id faith_id
+---@param horizontal_align love.AlignMode
+---@param vertical_align VerticalAlignMode
+---@param tooltip string?
+function ui.render_faith_text(rect, faith_id, horizontal_align, vertical_align, tooltip)
+	ui.text(DATA.faith_get_name(faith_id),rect,horizontal_align,vertical_align)
+	if tooltip then
+		ui.tooltip(tooltip, rect)
+	end
+end
+
+---draws colored faith icon with tooltip
+---@param rect Rect
+---@param faith_id faith_id
+---@param tooltip string?
+function ui.render_faith_icon(rect, faith_id, tooltip)
+	local square = rect:centered_square()
+	-- TODO give faiths an icon
+	ut.render_icon(square, "star-swirl.png", DATA.faith_get_r(faith_id), DATA.faith_get_g(faith_id), DATA.faith_get_b(faith_id), 1, true)
+	if tooltip then
+		ui.tooltip(tooltip, rect)
+	end
 end
 
 return ut
