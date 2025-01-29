@@ -965,6 +965,31 @@ function EconomicEffects.gift_to_warband(warband, character, amount)
 	DATA.warband_inc_treasury(warband, amount)
 end
 
+---comment
+---@param gifter Character
+---@param receiver Character
+---@param amount number
+function EconomicEffects.gift_to_pop(gifter, receiver, amount)
+	assert(gifter ~= INVALID_ID)
+	assert(receiver ~= INVALID_ID)
+
+	local savings_origin = DATA.pop_get_savings(gifter)
+	local savings_target = DATA.pop_get_savings(receiver)
+
+	if amount > 0 then
+		if savings_origin < amount then
+			amount = savings_origin
+		end
+	else
+		if savings_target < -amount then
+			amount = -savings_target
+		end
+	end
+
+	EconomicEffects.add_pop_savings(gifter, -amount, ECONOMY_REASON.LOYALTY_GIFT)
+	EconomicEffects.add_pop_savings(receiver, amount, ECONOMY_REASON.LOYALTY_GIFT)
+end
+
 ---commenting
 ---@param character Character
 ---@return number

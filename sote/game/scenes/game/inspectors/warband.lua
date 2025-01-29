@@ -14,6 +14,11 @@ local economy_values = require "game.raws.values.economy"
 
 local economic_effects = require "game.raws.effects.economy"
 
+local demography_values = require "game.raws.values.demography"
+local demography_effects = require "game.raws.effects.demography"
+
+local portrait = require "game.scenes.game.widgets.portrait"
+
 local window = {}
 
 ---@type "RECRUIT" | "WARRIOR"
@@ -222,7 +227,7 @@ local spacing = 5
 ---actually draw the inspector panel
 ---@param gamescene GameScene
 function window.draw(gamescene)
-
+	---@type pop_id
 	local player_character = WORLD.player_character
 
 	--- combining key presses for increments of 1, 5, 10, and 50
@@ -1157,6 +1162,71 @@ function window.draw(gamescene)
 			tooltip = "Show all warriors in this warband.",
 			closure = function ()
 				draw_warrior_panel(unit_panel)
+			end
+		},
+		{
+			text = "HIRE",
+			tooltip = "Hire local warriors",
+			closure = function ()
+				if recruiter ~= player_character or recruiter == INVALID_ID then
+					ui.text("No permission to hire units for this warband", unit_panel, "center", "center")
+					return
+				end
+				local province = PROVINCE(WARBAND_LEADER(warband))
+				if province == INVALID_ID then
+					ui.text("Can't hire units outside of settlement", unit_panel, "center", "center")
+					return
+				end
+				local unemployed_pops = demography_values.unemployed_pops(PROVINCE(recruiter))
+				local rows = 4
+				local columns = math.floor((#unemployed_pops - 1) / rows + 1)
+				local width = unit_panel.width / columns
+				local height = unit_panel.height / rows
+				local rect_for_item = ui.rect(0, 0, width, height)
+
+				local index = 1
+
+				for column = 1, columns do
+					if unemployed_pops[index] == nil then
+						break
+					end
+					for row = 1, rows do
+						if unemployed_pops[index] == nil then
+							break
+						end
+						rect_for_item.x = unit_panel.x + (column - 1) * width
+						rect_for_item.y = unit_panel.y + (row - 1) * height
+						ui.panel(rect_for_item)
+						local portrait_rect = rect_for_item:copy():shrink(2)
+						portrait_rect.width = portrait_rect.height
+						portrait(portrait_rect, unemployed_pops[index])
+
+						local info_rect = rect_for_item:copy():shrink(2)
+						info_rect.x = portrait_rect.x + portrait_rect.width
+						info_rect.width = info_rect.width - portrait_rect.width
+						info_rect.height = info_rect.height / 2
+
+						if ut.text_button(
+							tostring(warband_utils.base_unit_price) .. MONEY_SYMBOL,
+							info_rect,
+							"Cost: " .. tostring(warband_utils.base_unit_price),
+							SAVINGS(player_character) > warband_utils.base_unit_price
+						) then
+							demography_effects.recruit(unemployed_pops[index], warband, UNIT_TYPE.WARRIOR)
+							economic_effects.gift_to_pop(
+								player_character,
+								unemployed_pops[index],
+								warband_utils.base_unit_price
+							)
+						end
+
+						info_rect.y = info_rect.y + info_rect.height
+
+						ui.text_panel("W", info_rect)
+
+						index = index + 1
+					end
+				end
 			end
 		}
 	}, 1.25, ut.BASE_HEIGHT * 3)
