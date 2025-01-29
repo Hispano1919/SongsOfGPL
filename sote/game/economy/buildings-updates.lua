@@ -26,7 +26,7 @@ function bld.run(province)
 		local building_type = DATA.building_get_current_type(building_id)
 		local production_method = DATA.building_type_get_production_method(building_type)
 		local workers = building_utils.amount_of_workers(building_id)
-		local max_amount_of_workers = method_utils.total_jobs(production_method)
+		local max_amount_of_workers = 1
 
 
 		if (workers == 0) and (max_amount_of_workers > 0) then

@@ -213,9 +213,4 @@ enum class LAW_BUILDING : uint8_t {
         float required;
     };
 
-    struct job_container {
-        int32_t job;
-        uint32_t amount;
-    };
-
 }

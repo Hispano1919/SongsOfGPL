@@ -1486,8 +1486,6 @@ NeedDefinition = StructDescription("need_definition")
 
 Job = EntityDescription("job", 250, True)
 
-JobContainer = StructDescription("job_container")
-
 ProductionMethod = EntityDescription("production_method", 250, True)
 Technology = EntityDescription("technology", 400, True)
 TechnologyUnlock = EntityDescription("technology_unlock", 800, True)

@@ -268,7 +268,7 @@ function inspector.draw(gamescene)
             render_closure = function(rect, k, v)
 
                 local employed = #DATA.get_employment_from_building(v)
-                local total_needed =  production_method_utils.total_jobs(DATA.building_type_get_production_method(DATA.building_get_current_type(v)))
+                local total_needed = 1
 
                 ut.data_entry(
                     "",

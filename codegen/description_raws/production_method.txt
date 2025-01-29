@@ -5,7 +5,7 @@ r float
 g float
 b float
 job_type JOBTYPE
-jobs job_container[8]
+job job_id
 inputs use_case_container[8]
 outputs trade_good_container[8]
 foraging bool=false If true, worktime counts towards the foragers count

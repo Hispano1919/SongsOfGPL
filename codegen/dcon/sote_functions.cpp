@@ -914,7 +914,6 @@ void update_building_scale() {
 			input_scale += worktime * efficiency;
 		});
 
-
 		state.building_set_production_scale(ids, scale * state.province_get_throughput_boosts(province, production_method));
 		state.building_set_output_scale(ids,
 			output_scale

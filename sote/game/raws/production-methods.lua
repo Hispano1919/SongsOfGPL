@@ -7,7 +7,7 @@ local ProductionMethod = {}
 ---@class production_method_id_data_blob_definition_extended : production_method_id_data_blob_definition
 ---@field inputs table<use_case_id, number>
 ---@field outputs table<trade_good_id, number>
----@field jobs table<jobtype_id, number>
+---@field job job_id
 
 ---Creates a new production method
 ---@param o production_method_id_data_blob_definition_extended
@@ -19,16 +19,6 @@ function ProductionMethod:new(o)
 
 	local new_id = DATA.create_production_method()
 	DATA.setup_production_method(new_id, o)
-
-	local job_index = 1
-	DATA.for_each_job(function (item)
-		if o.jobs[item] == nil then
-			return
-		end
-		DATA.production_method_set_jobs_job(new_id, job_index, item)
-		DATA.production_method_set_jobs_amount(new_id, job_index, o.jobs[item])
-		job_index = job_index + 1
-	end)
 
 	local input_index = 1
 	for use_case, amount in pairs(o.inputs) do
@@ -51,21 +41,6 @@ function ProductionMethod:new(o)
 	end
 	RAWS_MANAGER.production_methods_by_name[o.name] = new_id
 	return new_id
-end
-
----@param method production_method_id
----@return number
-function ProductionMethod.total_jobs(method)
-	local amount = 0
-	for i = 1, MAX_SIZE_ARRAYS_PRODUCTION_METHOD do
-		local job = DATA.production_method_get_jobs_job(method, i)
-		if job == INVALID_ID then
-			break
-		end
-		local job_amount = DATA.production_method_get_jobs_amount(method, i)
-		amount = amount + job_amount
-	end
-	return amount
 end
 
 ---@param method production_method_id

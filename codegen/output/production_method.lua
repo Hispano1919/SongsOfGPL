@@ -16,6 +16,7 @@ local ffi = require("ffi")
 ---@field g number 
 ---@field b number 
 ---@field job_type JOBTYPE 
+---@field job job_id 
 ---@field foraging boolean If true, worktime counts towards the foragers count
 ---@field hydration boolean If true, worktime counts towards the foragers_water count
 ---@field nature_yield_dependence number How much does the local flora and fauna impact this buildings yield? Defaults to 0
@@ -39,7 +40,7 @@ local ffi = require("ffi")
 ---@field g number 
 ---@field b number 
 ---@field job_type JOBTYPE 
----@field jobs table<number, struct_job_container> 
+---@field job job_id 
 ---@field inputs table<number, struct_use_case_container> 
 ---@field outputs table<number, struct_trade_good_container> 
 ---@field foraging boolean If true, worktime counts towards the foragers count
@@ -68,6 +69,7 @@ local ffi = require("ffi")
 ---@field g number 
 ---@field b number 
 ---@field job_type JOBTYPE 
+---@field job job_id 
 ---@field foraging boolean? If true, worktime counts towards the foragers count
 ---@field hydration boolean? If true, worktime counts towards the foragers_water count
 ---@field nature_yield_dependence number? How much does the local flora and fauna impact this buildings yield? Defaults to 0
@@ -113,6 +115,7 @@ function DATA.setup_production_method(id, data)
     DATA.production_method_set_g(id, data.g)
     DATA.production_method_set_b(id, data.b)
     DATA.production_method_set_job_type(id, data.job_type)
+    DATA.production_method_set_job(id, data.job)
     if data.foraging ~= nil then
         DATA.production_method_set_foraging(id, data.foraging)
     end
@@ -175,8 +178,8 @@ void dcon_production_method_set_b(int32_t, float);
 float dcon_production_method_get_b(int32_t);
 void dcon_production_method_set_job_type(int32_t, uint8_t);
 uint8_t dcon_production_method_get_job_type(int32_t);
-void dcon_production_method_resize_jobs(uint32_t);
-job_container* dcon_production_method_get_jobs(int32_t, int32_t);
+void dcon_production_method_set_job(int32_t, int32_t);
+int32_t dcon_production_method_get_job(int32_t);
 void dcon_production_method_resize_inputs(uint32_t);
 use_case_container* dcon_production_method_get_inputs(int32_t, int32_t);
 void dcon_production_method_resize_outputs(uint32_t);
@@ -232,7 +235,6 @@ DATA.production_method_description= {}
 ---production_method: LUA bindings---
 
 DATA.production_method_size = 250
-DCON.dcon_production_method_resize_jobs(9)
 DCON.dcon_production_method_resize_inputs(9)
 DCON.dcon_production_method_resize_outputs(9)
 ---@return production_method_id
@@ -354,38 +356,14 @@ function DATA.production_method_set_job_type(production_method_id, value)
     DCON.dcon_production_method_set_job_type(production_method_id - 1, value)
 end
 ---@param production_method_id production_method_id valid production_method id
----@param index number valid
----@return job_id jobs 
-function DATA.production_method_get_jobs_job(production_method_id, index)
-    assert(index ~= 0)
-    return DCON.dcon_production_method_get_jobs(production_method_id - 1, index - 1)[0].job
+---@return job_id job 
+function DATA.production_method_get_job(production_method_id)
+    return DCON.dcon_production_method_get_job(production_method_id - 1) + 1
 end
 ---@param production_method_id production_method_id valid production_method id
----@param index number valid
----@return number jobs 
-function DATA.production_method_get_jobs_amount(production_method_id, index)
-    assert(index ~= 0)
-    return DCON.dcon_production_method_get_jobs(production_method_id - 1, index - 1)[0].amount
-end
----@param production_method_id production_method_id valid production_method id
----@param index number valid index
 ---@param value job_id valid job_id
-function DATA.production_method_set_jobs_job(production_method_id, index, value)
-    DCON.dcon_production_method_get_jobs(production_method_id - 1, index - 1)[0].job = value
-end
----@param production_method_id production_method_id valid production_method id
----@param index number valid index
----@param value number valid number
-function DATA.production_method_set_jobs_amount(production_method_id, index, value)
-    DCON.dcon_production_method_get_jobs(production_method_id - 1, index - 1)[0].amount = value
-end
----@param production_method_id production_method_id valid production_method id
----@param index number valid index
----@param value number valid number
-function DATA.production_method_inc_jobs_amount(production_method_id, index, value)
-    ---@type number
-    local current = DCON.dcon_production_method_get_jobs(production_method_id - 1, index - 1)[0].amount
-    DCON.dcon_production_method_get_jobs(production_method_id - 1, index - 1)[0].amount = current + value
+function DATA.production_method_set_job(production_method_id, value)
+    DCON.dcon_production_method_set_job(production_method_id - 1, value - 1)
 end
 ---@param production_method_id production_method_id valid production_method id
 ---@param index number valid
@@ -733,6 +711,7 @@ local fat_production_method_id_metatable = {
         if (k == "g") then return DATA.production_method_get_g(t.id) end
         if (k == "b") then return DATA.production_method_get_b(t.id) end
         if (k == "job_type") then return DATA.production_method_get_job_type(t.id) end
+        if (k == "job") then return DATA.production_method_get_job(t.id) end
         if (k == "foraging") then return DATA.production_method_get_foraging(t.id) end
         if (k == "hydration") then return DATA.production_method_get_hydration(t.id) end
         if (k == "nature_yield_dependence") then return DATA.production_method_get_nature_yield_dependence(t.id) end
@@ -779,6 +758,10 @@ local fat_production_method_id_metatable = {
         end
         if (k == "job_type") then
             DATA.production_method_set_job_type(t.id, v)
+            return
+        end
+        if (k == "job") then
+            DATA.production_method_set_job(t.id, v)
             return
         end
         if (k == "foraging") then

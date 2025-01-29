@@ -13,25 +13,6 @@ function d.load()
 	local res = require "game.raws.raws-utils".resource
 
 	BuildingType:new {
-		name = "communal-fire",
-		description = "communal fire",
-		icon = 'celebration-fire.png',
-		r = 1,
-		g = 0.1,
-		b = 0.1,
-		unlocked_by = tec('paleolithic-knowledge'),
-		production_method = prod('communal-fire'),
-		unique = true,
-		government = true,
-		construction_cost = 50,
-		upkeep = 0.05,
-		needed_infrastructure = 3,
-		ai_weight = 2,
-		archetype = BUILDING_ARCHETYPE.GROUNDS,
-		required_biome = {},
-		required_resource = {}
-	}
-	BuildingType:new {
 		name = "witch-doctor-garden",
 		description = "witch-doctor's garden",
 		icon = "hut.png",
@@ -367,26 +348,6 @@ function d.load()
 		required_biome = {},
 		required_resource = {},
 		archetype = BUILDING_ARCHETYPE.WORKSHOP
-	}
-	BuildingType:new {
-		name = 'watchtower',
-		description = 'watchtower',
-		icon = 'watchtower.png',
-		r = 0.36,
-		g = 0.73,
-		b = 0.32,
-		unlocked_by = tec('watchtowers'),
-		production_method = prod('none'),
-		required_resource = {},
-		required_biome = {},
-		unique = true,
-		government = true,
-		needed_infrastructure = 10,
-		ai_weight = 50,
-		spotting = 500,
-		construction_cost = 150,
-		upkeep = 0.15,
-		archetype = BUILDING_ARCHETYPE.DEFENSE
 	}
 	BuildingType:new {
 		name = 'clay-pit',

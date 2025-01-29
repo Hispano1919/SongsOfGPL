@@ -11,32 +11,6 @@ function d.load()
 
 	-- Keep in mind that outputs are per worker already!
 	ProductionMethod:new {
-		name = "none",
-		description = "nothing at all!",
-		icon = "triangle-target.png",
-		r = 0.1,
-		g = 0.1,
-		b = 0.1,
-		inputs = {},
-		outputs = {},
-		jobs = {},
-		self_sourcing_fraction = 1,
-		job_type = JOBTYPE.CLERK
-	}
-	ProductionMethod:new {
-		name = "communal-fire",
-		description = "communal fire",
-		icon = "celebration-fire.png",
-		r = 1,
-		g = 0.1,
-		b = 0.1,
-		inputs = {},
-		outputs = { [retrieve_good("administration")] = 10 },
-		jobs = {},
-		self_sourcing_fraction = 0,
-		job_type = JOBTYPE.CLERK
-	}
-	ProductionMethod:new {
 		name = "witch-doctor",
 		description = "witch doctor",
 		icon = "hut.png",
@@ -45,7 +19,7 @@ function d.load()
 		b = 1,
 		inputs = { [retrieve_use_case("tools-like")] = 0.125 },
 		outputs = { [retrieve_good("healthcare")] = 1 },
-		jobs = { [job("shamans")] = 1 },
+		job = job("shamans"),
 		job_type = JOBTYPE.CLERK,
 		foraging = true,
 		self_sourcing_fraction = 0.05,
@@ -65,7 +39,7 @@ function d.load()
 		b = 1,
 		inputs = { [retrieve_use_case("containers")] = 0.125 },
 		outputs = { [retrieve_good("water")] = 3 },
-		jobs = { [job("water-carriers")] = 1 },
+		job = job("water-carriers"),
 		job_type = JOBTYPE.HAULING,
 		hydration = true,
 		self_sourcing_fraction = 0.05,
@@ -80,7 +54,7 @@ function d.load()
 		b = 0.1,
 		inputs = {},
 		outputs = { [retrieve_good("berries")] = 0.6, [retrieve_good("grain")] = 0.75, [retrieve_good("timber")] = 0.25 },
-		jobs = { [job("gatherers")] = 1 },
+		job = job("gatherers"),
 		job_type = JOBTYPE.FORAGER,
 		self_sourcing_fraction = 0.05,
 		foraging = true,
@@ -96,7 +70,7 @@ function d.load()
 		b = 0.1,
 		inputs = { [retrieve_use_case("tools-like")] = 0.125 },
 		outputs = { [retrieve_good("berries")] = 0.9, [retrieve_good("grain")] = 1.125, [retrieve_good("timber")] = 0.375 },
-		jobs = { [job("gatherers")] = 1 },
+		job = job("gatherers"),
 		job_type = JOBTYPE.FORAGER,
 		self_sourcing_fraction = 0.05,
 		foraging = true,
@@ -112,7 +86,7 @@ function d.load()
 		b = 0.1,
 		inputs = { [retrieve_use_case("tools")] = 0.125 },
 		outputs = { [retrieve_good("berries")] = 1.2, [retrieve_good("grain")] = 1.5, [retrieve_good("timber")] = 0.5 },
-		jobs = { [job("gatherers")] = 1 },
+		job = job("gatherers"),
 		job_type = JOBTYPE.FORAGER,
 		self_sourcing_fraction = 0.05,
 		foraging = true,
@@ -128,7 +102,7 @@ function d.load()
 		b = 0.3,
 		inputs = {},
 		outputs = { [retrieve_good("meat")] = 1, [retrieve_good("hide")] = 0.25 },
-		jobs = { [job("hunters")] = 1 },
+		job = job("hunters"),
 		job_type = JOBTYPE.HUNTING,
 		self_sourcing_fraction = 0.05,
 		foraging = true,
@@ -144,7 +118,7 @@ function d.load()
 		b = 0.3,
 		inputs = { [retrieve_use_case("tools-like")] = 0.125 },
 		outputs = { [retrieve_good("meat")] = 1.5, [retrieve_good("hide")] = 0.375 },
-		jobs = { [job("hunters")] = 1 },
+		job = job("hunters"),
 		job_type = JOBTYPE.HUNTING,
 		self_sourcing_fraction = 0.05,
 		foraging = true,
@@ -160,7 +134,7 @@ function d.load()
 		b = 0.3,
 		inputs = { [retrieve_use_case("tools")] = 0.125 },
 		outputs = { [retrieve_good("meat")] = 2, [retrieve_good("hide")] = 0.5 },
-		jobs = { [job("hunters")] = 1 },
+		job = job("hunters"),
 		job_type = JOBTYPE.HUNTING,
 		self_sourcing_fraction = 0.05,
 		foraging = true,
@@ -176,7 +150,7 @@ function d.load()
 		b = 0.1,
 		inputs = {},
 		outputs = { [retrieve_good("blanks-flint")] = 1 },
-		jobs = { [job("knappers")] = 2 },
+		job = job("knappers"),
 		job_type = JOBTYPE.LABOURER,
 		self_sourcing_fraction = 0,
 	}
@@ -189,7 +163,7 @@ function d.load()
 		b = 0.1,
 		inputs = { [retrieve_use_case("blanks-core")] = 1 }, -- one blank can make 1 tool - made up value
 		outputs = { [retrieve_good("tools-blanks")] = 1 },
-		jobs = { [job("knappers")] = 1 },
+		job = job("knappers"),
 		job_type = JOBTYPE.ARTISAN,
 		self_sourcing_fraction = 0.8,
 	}
@@ -202,7 +176,7 @@ function d.load()
 		b = 0.1,
 		inputs = {},
 		outputs = { [retrieve_good("blanks-obsidian")] = 1 },
-		jobs = { [job("knappers")] = 2 },
+		job = job("knappers"),
 		job_type = JOBTYPE.LABOURER,
 		self_sourcing_fraction = 0,
 	}
@@ -216,7 +190,7 @@ function d.load()
 		b = 0.9,
 		inputs = { [retrieve_use_case("grain")] = 4 },
 		outputs = { [retrieve_good("liquors")] = 4 },
-		jobs = { [job("brewers")] = 2 },
+		job = job("brewers"),
 		job_type = JOBTYPE.ARTISAN,
 		self_sourcing_fraction = 0.2,
 	}
@@ -229,7 +203,7 @@ function d.load()
 		b = 0.9,
 		inputs = { [retrieve_use_case("fruit")] = 4 },
 		outputs = { [retrieve_good("liquors")] = 4 },
-		jobs = { [job("brewers")] = 2 },
+		job = job("brewers"),
 		job_type = JOBTYPE.ARTISAN,
 		self_sourcing_fraction = 0.2,
 	}
@@ -245,7 +219,7 @@ function d.load()
 		b = 0.65,
 		inputs = { [retrieve_use_case("tools")] = 0.25 },
 		outputs = { [retrieve_good("copper-native")] = 1 },
-		jobs = { [job("miners")] = 1 },
+		job = job("miners"),
 		job_type = JOBTYPE.LABOURER,
 	}
 	ProductionMethod:new {
@@ -257,7 +231,7 @@ function d.load()
 		b = 0.65,
 		inputs = { [retrieve_use_case("tools")] = 0.5 },
 		outputs = { [retrieve_good("copper-ore")] = 1 },
-		jobs = { [job("miners")] = 1 },
+		job = job("miners"),
 		job_type = JOBTYPE.LABOURER,
 	}
 	ProductionMethod:new {
@@ -269,7 +243,7 @@ function d.load()
 		b = 0.65,
 		inputs = { [retrieve_use_case("tools")] = 1, [retrieve_use_case("fuel")] = 1 },
 		outputs = { [retrieve_good("copper-ore")] = 1 },
-		jobs = { [job("miners")] = 1 },
+		job = job("miners"),
 		job_type = JOBTYPE.LABOURER,
 	}
 	ProductionMethod:new {
@@ -281,7 +255,7 @@ function d.load()
 		b = 0.65,
 		inputs = { [retrieve_use_case("copper-source")] = 1, [retrieve_use_case("structural-material")] = 0.1, [retrieve_use_case("fuel")] = 5 },
 		outputs = { [retrieve_good("copper-bars")] = 1 },
-		jobs = { [job("smelters")] = 1 },
+		job = job("smelters"),
 		job_type = JOBTYPE.ARTISAN,
 	}
 	ProductionMethod:new {
@@ -293,7 +267,7 @@ function d.load()
 		b = 0.65,
 		inputs = { [retrieve_use_case("copper-native")] = 1, [retrieve_use_case("tools")] = 1 },
 		outputs = { [retrieve_good("tools-native-copper")] = 1 },
-		jobs = { [job("blacksmiths")] = 1 },
+		job = job("blacksmiths"),
 		job_type = JOBTYPE.ARTISAN,
 		self_sourcing_fraction = 0.75
 	}
@@ -306,7 +280,7 @@ function d.load()
 		b = 0.65,
 		inputs = { [retrieve_use_case("copper-bars")] = 1, [retrieve_use_case("tools")] = 0.1, [retrieve_use_case("fuel")] = 5 },
 		outputs = { [retrieve_good("tools-cast-copper")] = 1 },
-		jobs = { [job("blacksmiths")] = 1 },
+		job = job("blacksmiths"),
 		job_type = JOBTYPE.ARTISAN,
 		self_sourcing_fraction = 0.75
 	}
@@ -320,7 +294,7 @@ function d.load()
 		b = 0.25,
 		inputs = { [retrieve_use_case("containers")] = 0.1 },
 		outputs = { [retrieve_good("clay")] = 1 },
-		jobs = { [job("gatherers")] = 1, },
+		job = job("gatherers"),
 		job_type = JOBTYPE.LABOURER,
 		self_sourcing_fraction = 0.1,
 		clay_extreme_max = 1,
@@ -338,7 +312,7 @@ function d.load()
 		b = 0.25,
 		inputs = { [retrieve_use_case("clay")] = 1 },
 		outputs = { [retrieve_good("containers")] = 1 },
-		jobs = { [job("potterers")] = 1, },
+		job = job("potterers"),
 		job_type = JOBTYPE.ARTISAN,
 		self_sourcing_fraction = 0.5,
 	}
@@ -352,7 +326,7 @@ function d.load()
 		b = 0.65,
 		inputs = { [retrieve_use_case("tools-advanced")] = 1 },
 		outputs = { [retrieve_good("timber")] = 2 },
-		jobs = { [job("woodcutters")] = 1, },
+		job = job("woodcutters"),
 		job_type = JOBTYPE.LABOURER,
 		self_sourcing_fraction = 0.5,
 		forest_dependence = 1,
@@ -367,7 +341,7 @@ function d.load()
 		b = 0.8,
 		inputs = { [retrieve_use_case("tools-advanced")] = 1 },
 		outputs = { [retrieve_good("stone")] = 2 },
-		jobs = { [job("quarrymen")] = 1, },
+		job = job("quarrymen"),
 		job_type = JOBTYPE.LABOURER,
 		self_sourcing_fraction = 0.5,
 	}
@@ -381,7 +355,7 @@ function d.load()
 		b = 0.55,
 		inputs = { [retrieve_use_case("tannin")] = 1, [retrieve_use_case("water")] = 2, [retrieve_use_case("hide")] = 1 },
 		outputs = { [retrieve_good("leather")] = 1 },
-		jobs = { [job("tanners")] = 1, },
+		job = job("tanners"),
 		job_type = JOBTYPE.ARTISAN,
 		self_sourcing_fraction = 0.7,
 	}
@@ -395,7 +369,7 @@ function d.load()
 		b = 0.45,
 		inputs = { [retrieve_use_case("tools")] = 0.25, [retrieve_use_case("leather")] = 1 },
 		outputs = { [retrieve_good("clothes")] = 1 },
-		jobs = { [job("artisans")] = 1, },
+		job = job("artisans"),
 		job_type = JOBTYPE.ARTISAN,
 		self_sourcing_fraction = 0.75,
 	}
@@ -409,7 +383,7 @@ function d.load()
 		b = 0.65,
 		inputs = { [retrieve_use_case("tools")] = 2, [retrieve_use_case("timber")] = 1 },
 		outputs = { [retrieve_good("furniture")] = 1 },
-		jobs = { [job("artisans")] = 1, },
+		job = job("artisans"),
 		job_type = JOBTYPE.ARTISAN,
 		self_sourcing_fraction = 0.85,
 	}
@@ -423,7 +397,7 @@ function d.load()
 		b = 0,
 		inputs = { [retrieve_use_case("tools")] = 0.25 },
 		outputs = { [retrieve_good("grain")] = 2 },
-		jobs = { [job("farmers")] = 1, },
+		job = job("farmers"),
 		job_type = JOBTYPE.FARMER,
 		self_sourcing_fraction = 0.125,
 		crop = true,
@@ -446,7 +420,7 @@ function d.load()
 		b = 0,
 		inputs = { [retrieve_use_case("tools")] = 0.25 },
 		outputs = { [retrieve_good("honey")] = 1 },
-		jobs = { [job("farmers")] = 1, },
+		job = job("farmers"),
 		job_type = JOBTYPE.FARMER,
 		self_sourcing_fraction = 0.125,
 		crop = true,

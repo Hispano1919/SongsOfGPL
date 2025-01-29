@@ -208,7 +208,7 @@ function re.draw(gam)
 		ut.color_coded_percentage(efficiency_from_infrastructure, middle_value_rect, true, "Production efficiency from province infrastructure.")
 		-- worker count out of max
 		local worker_cur = tabb.size(DATA.get_employment_from_building(building))
-		local worker_max = production_method_utils.total_jobs(method)
+		local worker_max = 1
 		local worker_count = worker_cur .. " / " .. worker_max
 		ui.centered_text("Worker count", right_text_rect)
 		ut.generic_string_field("", worker_count, right_value_rect, "Curently employing "

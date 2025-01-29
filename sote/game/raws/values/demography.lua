@@ -96,26 +96,17 @@ end
 function values.potential_job(building)
 	local btype = DATA.building_get_current_type(building)
 	local method = DATA.building_type_get_production_method(btype)
-
-	for i = 1, MAX_SIZE_ARRAYS_PRODUCTION_METHOD - 1 do
-		local job = DATA.production_method_get_jobs_job(method, i)
-		if job == INVALID_ID then
-			break
-		end
-
-		local workers_with_this_job = 0
-		for _, employment in ipairs(DATA.get_employment_from_building(building)) do
-			if DATA.employment_get_job(employment) == job then
-				workers_with_this_job = workers_with_this_job + 1
-			end
-		end
-
-		local max_amount = DATA.production_method_get_jobs_amount(method, i)
-		if max_amount > workers_with_this_job then
-			return job
+	local job = DATA.production_method_get_job(method)
+	local workers_with_this_job = 0
+	for _, employment in ipairs(DATA.get_employment_from_building(building)) do
+		if DATA.employment_get_job(employment) == job then
+			workers_with_this_job = workers_with_this_job + 1
 		end
 	end
-
+	local max_amount = 1
+	if max_amount > workers_with_this_job then
+		return job
+	end
 	return nil
 end
 

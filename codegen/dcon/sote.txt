@@ -2327,8 +2327,8 @@ object {
         tag { scenario }
     }
     property{
-        name { jobs }
-        type { array{uint32_t}{base_types::job_container} }
+        name { job }
+        type { job_id }
         tag { scenario }
     }
     property{
