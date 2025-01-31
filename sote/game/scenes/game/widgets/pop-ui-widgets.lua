@@ -562,7 +562,8 @@ function pui.pop_tooltip(pop_id)
 		local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 		local unit_type = unit_type_id ~= INVALID_ID and DATA.unit_type_get_name(unit_type_id) or strings.title(rank_name(pop_id))
 		local tooltip = NAME(pop_id)
-			.. "\n " .. AGE(pop_id) .. " y.o." .. (DATA.pop_get_female(pop_id) and " female " or " male ") .. DATA.race_get_name(RACE(pop_id))
+			.. "\n " .. AGE(pop_id) .. " y.o." .. (DATA.pop_get_female(pop_id) and " female " or " male ")
+				.. DATA.race_get_name(RACE(pop_id)) .. " " .. pop_utils.get_age_string(pop_id)
 			.. "\n  Member of " .. strings.title(DATA.culture_get_name(CULTURE(pop_id))) .. " culture"
 			.. "\n  Follower of " .. strings.title(DATA.faith_get_name(DATA.pop_get_faith(pop_id))) .. " faith"
 			.. "\n Size\t" .. ut.to_fixed_point2(pop_utils.get_size(pop_id))
@@ -723,7 +724,7 @@ function pui.render_health(rect,pop_id)
 		end
 	end
 	ut.generic_number_field(
-		"plus.png",
+		"health-normal.png",
 		value,
 		rect,
 		tooltip,

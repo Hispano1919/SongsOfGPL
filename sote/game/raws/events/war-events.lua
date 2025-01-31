@@ -58,11 +58,11 @@ local function load()
 
             for _, unit in pairs(unlocked_unit_types) do
 
-                local health, attack, armor, speed = pop_utils.get_strength(root, unit)
-                local spotting = pop_utils.get_spotting(root, unit)
-                local visibility = pop_utils.get_visibility(root, unit)
-                local supply = pop_utils.get_supply_use(root, unit)
-                local capacity = pop_utils.get_supply_capacity(root, unit)
+                local health, attack, armor, speed = pop_utils.get_strength(root)
+                local spotting = pop_utils.get_spotting(root)
+                local visibility = pop_utils.get_visibility(root)
+                local supply = pop_utils.get_supply_use(root)
+                local capacity = pop_utils.get_supply_capacity(root)
 
                 local fat = DATA.fatten_unit_type(unit)
 

@@ -33,9 +33,9 @@ local relations_loyalty_state = nil
 
 ---@alias InspectorInventoryTabs "INVENTORY"|"BUILDINGS"
 ---@type InspectorInventoryTabs
-local inventory_tab = "INVENTORY"
-local inventory_goods_state = nil
-local inventory_building_state  = nil
+local property_tab = "INVENTORY"
+local property_inventory_state = nil
+local property_buildings_state  = nil
 
 -- TODO GLOBALIZE
 WARBAND_STATUS_ICON = {
@@ -50,34 +50,12 @@ WARBAND_STATUS_ICON = {
     [WARBAND_STATUS.OFF_DUTY] = "shrug.png",
 }
 
-
----@return Rect
-local function get_main_panel()
-	local fs = ui.fullscreen()
-	local panel = fs:subrect(ut.BASE_HEIGHT * 2, 0, ut.BASE_HEIGHT * 16, ut.BASE_HEIGHT * 25, "left", "down")
-	return panel
-end
-
-function window.mask()
-    if ui.trigger(get_main_panel()) then
-		return false
-	else
-		return true
-	end
-end
-
----draws portrait with overlay and some info
----@param game GameScene
----@param rect Rect
+---family name stand in
 ---@param pop_id pop_id
----@param player_id pop_id
-local function draw_top_panel(game,rect,pop_id,player_id)
-
-    local name_panel = rect:subrect(0,0,rect.width,ut.BASE_HEIGHT,"left","up")
-    local title_panel = rect:subrect(0,ut.BASE_HEIGHT,rect.width,ut.BASE_HEIGHT,"left","up")
+---@return string
+local function get_fullname(pop_id)
     local name = NAME(pop_id)
     local parent = PARENT(pop_id)
-    -- family name stand in
     if parent ~= INVALID_ID then
         if DATA.pop_get_female(pop_id) then
             name = name .. ", daughter of "
@@ -86,50 +64,238 @@ local function draw_top_panel(game,rect,pop_id,player_id)
         end
         name = name .. NAME(parent)
     end
-    ui.text(name,name_panel,"left","center")
-    ui.text(character_name_widget(pop_id),title_panel,"left","center")
+    return name
+end
 
-    local portrait_size = math.max(ut.BASE_HEIGHT*3,rect.height-name_panel.height-title_panel.height)
+---draws a ib overlay portrait with title, location, and some basic info
+---, rect.height should be a minimum 4 ut.BASE_HEIGHT!
+---@param game GameScene
+---@param rect Rect
+---@param pop_id pop_id
+---@param player_id pop_id
+---@param title string
+local function render_pop_overview(game,rect,pop_id,player_id, title)
+    local title_rect = rect:subrect(0,0,rect.width,ut.BASE_HEIGHT,"left","up")
+    ui.text(title,title_rect,"left","center")
+
+    local portrait_size = rect.height-ut.BASE_HEIGHT
     local portrait_rect = rect:subrect(0,0,portrait_size,portrait_size,"left","down")
-    ib.render_portrait_with_overlay(game,portrait_rect,pop_id,player_id)
-
-    local line_height = portrait_size/4
-    local line_rect = rect:subrect(0,0,rect.width-portrait_rect.width,portrait_rect.height,"right","down")
-    local line_builder = ui.layout_builder():position(line_rect.x,line_rect.y):vertical():build()
-    local line_next, line_layout
+    ib.render_portrait_with_overlay(game,portrait_rect,pop_id,player_id,pui.pop_tooltip(pop_id))
+    local lines_rect = rect:subrect(0,0,rect.width-portrait_size,ut.BASE_HEIGHT*3,"right","down")
+    local lines_layout = ui.layout_builder():position(lines_rect.x,lines_rect.y):vertical():build()
 
     -- basic info
-    line_next = line_builder:next(line_rect.width,line_height)
-    line_layout = ui.layout_builder():position(line_next.x,line_next.y):horizontal():build()
-    pui.render_age(line_layout:next(line_next.width-ut.BASE_HEIGHT*10,line_height),pop_id,"right")
-    pui.render_female_icon(line_layout:next(ut.BASE_HEIGHT,line_height),pop_id)
-    ui.render_race_icon(line_layout:next(ut.BASE_HEIGHT,line_height),RACE(pop_id),ui.race_tooltip(RACE(pop_id)))
-    ui.render_culture_icon(line_layout:next(ut.BASE_HEIGHT,line_height),CULTURE(pop_id),ui.culture_tooltip(CULTURE(pop_id)))
-    ui.render_faith_icon(line_layout:next(ut.BASE_HEIGHT,line_height),DATA.pop_get_faith(pop_id),ui.faith_tooltip(DATA.pop_get_faith(pop_id)))
-    pui.render_basic_needs_satsifaction(line_layout:next(ut.BASE_HEIGHT*3,line_height),pop_id)
-    pui.render_life_needs_satsifaction(line_layout:next(ut.BASE_HEIGHT*3,line_height),pop_id)
-
-    -- econ info
-    line_next = line_builder:next(line_rect.width,line_height)
-    line_layout = ui.layout_builder():position(line_next.x,line_next.y):horizontal():build()
-    pui.render_occupation_icon(line_layout:next(ut.BASE_HEIGHT,line_height),pop_id,pui.occupation_tooltip(pop_id))
-    pui.render_pending_income(line_layout:next(ut.BASE_HEIGHT*4,line_height),pop_id)
-    pui.render_savings(line_layout:next(line_next.width-ut.BASE_HEIGHT*8,line_height),pop_id)
-    pui.render_spending_ratio(line_layout:next(ut.BASE_HEIGHT*3,line_height),pop_id)
+    local line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
+    local line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
+    pui.render_age(line_layout:next(line_rect.width-ut.BASE_HEIGHT*10,ut.BASE_HEIGHT),pop_id,"right")
+    pui.render_female_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),pop_id)
+    ui.render_race_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),RACE(pop_id),ui.race_tooltip(RACE(pop_id)))
+    ui.render_culture_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),CULTURE(pop_id),ui.culture_tooltip(CULTURE(pop_id)))
+    ui.render_faith_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),DATA.pop_get_faith(pop_id),ui.faith_tooltip(DATA.pop_get_faith(pop_id)))
+    pui.render_basic_needs_satsifaction(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
+    pui.render_life_needs_satsifaction(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
 
     -- location and popularity
-    line_next = line_builder:next(line_rect.width,line_height)
-    line_layout = ui.layout_builder():position(line_next.x,line_next.y):horizontal():build()
-    pui.render_location_buttons(game,line_layout:next(line_next.width-ut.BASE_HEIGHT*3,line_height),pop_id)
-    pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,line_height),pop_id,PROVINCE_REALM(PROVINCE(pop_id)))
+    line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
+    line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
+    pui.render_location_buttons(game,line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
+    pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id,PROVINCE_REALM(PROVINCE(pop_id)))
 
     -- home populatiry
-    line_next = line_builder:next(line_rect.width,line_height)
-    line_layout = ui.layout_builder():position(line_next.x,line_next.y):horizontal():build()
-    pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,line_height),pop_id,REALM(pop_id))
-    -- space for more stuff!
+    line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
+    line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
+    pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id,REALM(pop_id))
+    -- occupation, savings, income
+    pui.render_occupation_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),pop_id,pui.occupation_tooltip(pop_id))
+    pui.render_savings(line_layout:next(line_rect.width-ut.BASE_HEIGHT*7,ut.BASE_HEIGHT),pop_id)
+    pui.render_pending_income(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
 
 end
+
+---draws a ib overlay portrait to building owner/manager with title, location, and some basic info
+---, rect.height should be a minimum 4 ut.BASE_HEIGHT!
+---@param game GameScene
+---@param rect Rect
+---@param pop_id pop_id
+---@param player_id pop_id
+local function render_employer_overview(game,rect,pop_id,player_id)
+    ui.panel(rect,2,true)
+
+    local employer_id = pop_utils.get_employer_of(pop_id)
+
+    local title_rect = rect:subrect(0,0,rect.width-ut.BASE_HEIGHT*4,ut.BASE_HEIGHT,"left","up")
+    local icon_rect = rect:subrect(-ut.BASE_HEIGHT*3,0,ut.BASE_HEIGHT,ut.BASE_HEIGHT,"right","up")
+    local time_rect = rect:subrect(0,0,ut.BASE_HEIGHT*3,ut.BASE_HEIGHT,"right","up")
+    local portrait_size = rect.height-ut.BASE_HEIGHT
+    local portrait_rect = rect:subrect(0,0,portrait_size,portrait_size,"left","down")
+
+    if employer_id ~= INVALID_ID then
+        local building_type_id = DATA.building_get_current_type(employer_id)
+        local employer_name = strings.title(DATA.building_type_get_name(building_type_id))
+        local employer_tooltip = employer_name .. "\n " .. DATA.building_type_get_description(building_type_id)
+        ui.text("Employer: " .. employer_name,title_rect,"left","center")
+        ui.tooltip(employer_tooltip,title_rect)
+        ib.icon_button_to_building(game,employer_id,icon_rect,employer_tooltip)
+        pui.render_work_time(time_rect,pop_id)
+
+        local owner_id = OWNER(employer_id)
+        local owner_name = ""
+        if owner_id ~= INVALID_ID then
+            owner_name = NAME(owner_id) .. "'s "
+            ib.render_portrait_with_overlay(game,portrait_rect,owner_id,player_id,pui.pop_tooltip(pop_id))
+        else -- public buildings controlled by overseer?
+            local realm_id = PROVINCE_REALM(BUILDING_PROVINCE(employer_id))
+            owner_id = require "game.raws.values.politics".overseer(realm_id)
+            if owner_id ~= INVALID_ID then
+               owner_name = NAME(owner_id) .. "'s "
+                ib.render_portrait_with_overlay(game,portrait_rect,owner_id,player_id,pui.pop_tooltip(pop_id))
+            else -- building in a realmless province
+                ut.render_icon(portrait_rect,"horizon-road.png",.8,.8,.8,1,true)
+                ui.tooltip("This building is unclaimed.", portrait_rect)
+            end
+        end
+
+        local lines_rect = rect:subrect(0,0,rect.width-portrait_size,ut.BASE_HEIGHT*3,"right","down")
+        local lines_layout = ui.layout_builder():position(lines_rect.x,lines_rect.y):vertical():build()
+
+        -- basic info
+        local line_rect = rect:subrect(0,0,rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT*3,"right","down")
+        local lines_layout = ui.layout_builder():position(line_rect.x,line_rect.y):vertical():build()
+        local line_rect = lines_layout:next(line_rect.width,ut.BASE_HEIGHT)
+        local line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
+        local method = DATA.building_type_get_production_method(building_type_id)
+        local job_type_id = DATA.production_method_get_job_type(method)
+        local job_id = pop_utils.get_job_of(pop_id)
+        local job_name = strings.title(DATA.job_get_name(job_id))
+        local job_tooltip = job_name .. "\n " .. DATA.job_get_description(job_id)
+        local job_name_rect = line_layout:next(line_rect.width-ut.BASE_HEIGHT*4,ut.BASE_HEIGHT)
+        ui.tooltip(job_tooltip,job_name_rect)
+        ui.text(job_name,job_name_rect)
+        pui.render_job_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),pop_id, job_tooltip)
+        pui.render_job_efficiency(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id,job_type_id)
+
+        -- building location and owner local popularity
+        line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
+        line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
+        pui.render_location_buttons(game,line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
+        if owner_id ~= INVALID_ID then
+            pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),owner_id,PROVINCE_REALM(PROVINCE(owner_id)))
+        end
+
+        -- owner home populatiry
+        line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
+        line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
+        local owner_pop_rect = line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT)
+        if owner_id ~= INVALID_ID then
+            pui.render_realm_popularity(owner_pop_rect,owner_id,REALM(pop_id))
+        end
+        -- building income and savings, pop income
+        local last_income = DATA.building_get_last_income(employer_id)
+        ut.generic_number_field(
+            "two-coins.png",
+            last_income,
+            line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),
+            employer_name .. " gained " .. ut.to_fixed_point2(last_income) .. MONEY_SYMBOL .. " last month.",
+            ut.NUMBER_MODE.BALANCE,
+            ut.NAME_MODE.ICON)
+        local savings = DATA.building_get_savings(employer_id)
+        ut.generic_number_field(
+            "coins.png",
+            savings,
+            line_layout:next(line_rect.width-ut.BASE_HEIGHT*9,ut.BASE_HEIGHT),
+            employer_name .. " has " .. ut.to_fixed_point2(savings) .. MONEY_SYMBOL .. " in savings.",
+            ut.NUMBER_MODE.BALANCE,
+            ut.NAME_MODE.ICON,
+            true)
+        pui.render_worker_income(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
+    else
+    end
+end
+
+---draws a ib overlay portrait to warband leader with title, location, and some basic info
+---, rect.height should be a minimum 4 ut.BASE_HEIGHT!
+---@param game GameScene
+---@param rect Rect
+---@param pop_id pop_id
+---@param player_id pop_id
+---@param title string
+local function render_warband_overview(game,rect,pop_id,player_id,title)
+    ui.panel(rect,2,true)
+
+    local warband_id = pop_utils.get_warband_of(pop_id)
+
+    local title_rect = rect:subrect(0,0,rect.width-ut.BASE_HEIGHT*4,ut.BASE_HEIGHT,"left","up")
+    ui.panel(title_rect,2,true,true)
+    local icon_rect = rect:subrect(-ut.BASE_HEIGHT*3,0,ut.BASE_HEIGHT,ut.BASE_HEIGHT,"right","up")
+    local time_rect = rect:subrect(0,0,ut.BASE_HEIGHT*3,ut.BASE_HEIGHT,"right","up")
+    local portrait_size = rect.height-ut.BASE_HEIGHT
+    local portrait_rect = rect:subrect(0,0,portrait_size,portrait_size,"left","down")
+
+    if warband_id ~= INVALID_ID then
+        local warband_status = DATA.warband_get_current_status(warband_id)
+        local warband_location = warband_utils.location(warband_id)
+        local warband_name = strings.title(DATA.warband_get_name(warband_id))
+        local status_name = DATA.warband_status_get_name(warband_status)
+        local warband_tooltip = warband_name .. " is currently " .. status_name .. " in " .. PROVINCE_NAME(warband_location) .. "."
+        ui.text("Party: " .. warband_name,title_rect)
+        ui.tooltip(warband_tooltip,title_rect)
+        ib.icon_button_to_warband(game,warband_id,icon_rect,warband_tooltip)
+        pui.render_warband_time(time_rect,pop_id)
+
+        local leader_id = warband_utils.active_leader(warband_id)
+        if leader_id ~= INVALID_ID then
+            ib.render_portrait_with_overlay(game,portrait_rect,leader_id,player_id,pui.pop_tooltip(pop_id))
+        else -- public buildings controlled by overseer?
+            local realm_id = warband_utils.realm(warband_id)
+            if realm_id ~= INVALID_ID then
+                ib.icon_button_to_realm(game,realm_id,portrait_rect,REALM_NAME(realm_id))
+            else -- building in a realmless province
+                ut.render_icon(portrait_rect,"uncertainty.png",.8,.8,.8,1,true)
+                ui.tooltip("This building is unclaimed.", portrait_rect)
+            end
+        end
+
+        local lines_rect = rect:subrect(0,0,rect.width-portrait_size,ut.BASE_HEIGHT*3,"right","down")
+        local lines_layout = ui.layout_builder():position(lines_rect.x,lines_rect.y):vertical():build()
+
+        -- basic info
+        local line_rect = rect:subrect(0,0,rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT*3,"right","down")
+        local lines_layout = ui.layout_builder():position(line_rect.x,line_rect.y):vertical():build()
+        local line_rect = lines_layout:next(line_rect.width,ut.BASE_HEIGHT)
+        local line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
+        local unit_type_id = pop_utils.get_unit_type_of(pop_id)
+        local unit_name = unit_type_id ~= INVALID_ID and strings.title(DATA.unit_type_get_name(unit_type_id))
+            or strings.title(require "game.raws.ranks.localisation"(pop_id))
+        local unit_tooltip = pui.unit_tooltip(pop_id)
+        local unit_name_rect = line_layout:next(line_rect.width-ut.BASE_HEIGHT*4,ut.BASE_HEIGHT)
+        ui.tooltip(unit_tooltip,unit_name_rect)
+        ui.text(unit_name,unit_name_rect)
+        pui.render_unit_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),pop_id,unit_tooltip)
+        pui.render_health(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
+
+        -- warband location and leader local popularity
+        line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
+        line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
+        ib.text_button_to_province(game,warband_location,line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),warband_tooltip)
+        if leader_id ~= INVALID_ID then
+            pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),leader_id,PROVINCE_REALM(PROVINCE(leader_id)))
+        end
+
+        -- leader home populatiry
+        line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
+        line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
+        local owner_pop_rect = line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT)
+        if leader_id ~= INVALID_ID then
+            pui.render_realm_popularity(owner_pop_rect,leader_id,REALM(pop_id))
+        end
+        -- warband status and pop income
+        local status_rect = line_layout:next(line_rect.width-ut.BASE_HEIGHT*6,ut.BASE_HEIGHT)
+        ui.text(strings.title(status_name),status_rect)
+        ui.tooltip(warband_tooltip,status_rect)
+        pui.render_warband_income(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
+    end
+end
+
 -- wrap grid in scrollview?
 ---draws grid of trait icons with name tooltip
 ---, has space for upto 22 icons
@@ -152,100 +318,38 @@ local function draw_trait_panel(rect,pop_id)
         ui.tooltip(strings.title(DATA.trait_get_name(trait):lower()),trait_rect)
     end
 end
+
 -- tab drawing calls
+
 ---draws efficiencies and employer link
 ---@param game GameScene
 ---@param rect Rect
 ---@param pop_id pop_id
----@param player_id pop_id
-local function draw_wrk_tab(game,rect,pop_id,player_id)
+local function draw_wrk_tab(game,rect,pop_id)
     local layout = ui.layout_builder():position(rect.x,rect.y):vertical():build()
 
-    local efficiencies_rect = layout:next(rect.width,ut.BASE_HEIGHT*2)
-    local draw_width = ut.BASE_HEIGHT*4
-    local line_count = math.floor(efficiencies_rect.width/draw_width)
-    local offset = math.floor((efficiencies_rect.width - line_count * draw_width)/2)
-    local effic_layout = ui.layout_builder():position(efficiencies_rect.x+offset,efficiencies_rect.y):grid(line_count):build()
+    ui.text("Efficiencies",layout:next(rect.width,ut.BASE_HEIGHT),"left","center")
+    local efficiencies_rect = layout:next(rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT*2)
+    local draw_width = ut.BASE_HEIGHT*3
+    local offset = math.floor((efficiencies_rect.width-draw_width*4)/2)
+    local effic_layout = ui.layout_builder():position(efficiencies_rect.x+offset,efficiencies_rect.y):grid(4):build()
     for i=1, tabb.size(JOBTYPE)-1 do
         pui.render_job_efficiency(effic_layout:next(draw_width,ut.BASE_HEIGHT),pop_id,i)
     end
 
     local employer_id = pop_utils.get_employer_of(pop_id)
     if employer_id ~= INVALID_ID then
-       local employer_rect = layout:next(rect.width,ut.BASE_HEIGHT*4)
-       local building_type_id = DATA.building_get_current_type(employer_id)
-       local employer_name = DATA.building_type_get_name(building_type_id)
-       if employer_id ~= INVALID_ID then
-           ui.text("Employer", employer_rect:subrect(0,0,employer_rect.width - ut.BASE_HEIGHT*3, ut.BASE_HEIGHT,"left", "up"),"left")
-           employer_rect.y, employer_rect.height = employer_rect.y + ut.BASE_HEIGHT, employer_rect.height - ut.BASE_HEIGHT
-
-           local employer_portrait = employer_rect:subrect(0,0,ut.BASE_HEIGHT*3,ut.BASE_HEIGHT*3,"left","down")
-           local owner_id = OWNER(employer_id)
-           local owner_name
-           if owner_id ~= INVALID_ID then
-               owner_name = NAME(owner_id) .. "'s "
-               ib.render_portrait_with_overlay(game,employer_portrait,owner_id,player_id)
-           else -- no owner means empty realm building
-               local location_id = BUILDING_PROVINCE(employer_id)
-               local realm_id = PROVINCE_REALM(location_id)
-               if realm_id ~= INVALID_ID then
-                   owner_name = REALM_NAME(realm_id) .. "'s "
-                   ib.icon_button_to_realm(game,realm_id,employer_portrait,strings.title(REALM_NAME(realm_id)))
-               else
-                   owner_name = "Unowned "
-                   ut.render_icon(employer_portrait, "uncertainty.png",.8,.8,.8,1,true)
-               end
-           end
-
-           local line_rect = employer_rect:subrect(0,0,employer_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT*3,"right","down")
-           local lines_layout = ui.layout_builder():position(line_rect.x,line_rect.y):vertical():build()
-           local line_rect = lines_layout:next(line_rect.width,ut.BASE_HEIGHT)
-           local line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-           local building_icon_rect = line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT)
-           ut.render_icon(building_icon_rect,
-               DATA.building_type_get_icon(building_type_id),
-               DATA.building_type_get_r(building_type_id),
-               DATA.building_type_get_g(building_type_id),
-               DATA.building_type_get_b(building_type_id),
-               1,
-               true)
-           ui.tooltip(strings.title(DATA.building_type_get_name(building_type_id))
-               .. "\n " .. DATA.building_type_get_description(building_type_id)
-               ,building_icon_rect)
-           ib.text_button_to_building(game, employer_id,line_layout:next(line_rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT),
-               NAME(pop_id) .. " works at " .. owner_name .. employer_name .. " in " .. PROVINCE_NAME(BUILDING_PROVINCE(employer_id)) .. ".")
-
-           line_rect = lines_layout:next(line_rect.width,ut.BASE_HEIGHT)
-           line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-           local job_rect = line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT)
-           pui.render_job_icon(job_rect:subrect(0,0,ut.BASE_HEIGHT,ut.BASE_HEIGHT,"left","up"),pop_id)
-           pui.render_job_text(job_rect:subrect(0,0,job_rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT,"right","up"),pop_id)
-           ui.tooltip(strings.title(pui.job_text(pop_id)) .. "\n " .. strings.title(DATA.job_get_description(pop_utils.get_job_of(pop_id))),job_rect)
-           pui.render_worker_income(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
-
-           line_rect = lines_layout:next(line_rect.width,ut.BASE_HEIGHT)
-           line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-           local production_method_id = DATA.building_type_get_production_method(building_type_id)
-           local method_icon_rect = line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT)
-           ut.render_icon(method_icon_rect,
-               DATA.production_method_get_icon(production_method_id),
-               DATA.production_method_get_r(production_method_id),
-               DATA.production_method_get_g(production_method_id),
-               DATA.production_method_get_b(production_method_id),
-               1,
-               true)
-           ui.tooltip(strings.title(DATA.production_method_get_name(production_method_id))
-               .. "\n " .. strings.title(DATA.production_method_get_description(production_method_id))
-               ,method_icon_rect)
-           local jobtype_id = DATA.production_method_get_job_type(production_method_id)
-           pui.render_job_efficiency(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id,jobtype_id)
-           ui.panel(line_layout:next(line_rect.width-ut.BASE_HEIGHT*7,ut.BASE_HEIGHT),0)
-           pui.render_work_time(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
-       end
-       -- draw army information if part of one?
-       -- link to local armies?
+        render_employer_overview(game,layout:next(rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT*4),pop_id)
+    else
+        local empty_rect = layout:next(rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT)
+        local text_rect = empty_rect:subrect(0,0,empty_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT,"left","up")
+        ui.panel(empty_rect,2,true,true)
+        ui.text("Unemployed",text_rect,"left","up")
+        ui.tooltip(NAME(pop_id) .. " is not employed!",text_rect)
+        pui.render_work_time(empty_rect:subrect(0,0,ut.BASE_HEIGHT*3,ut.BASE_HEIGHT,"right","up"),pop_id)
     end
-    local forage_label = layout:next(rect.width,ut.BASE_HEIGHT)
+
+    local forage_label = layout:next(rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT)
     ui.text("Foraging", forage_label:subrect(0,0,forage_label.width - ut.BASE_HEIGHT*4, ut.BASE_HEIGHT,"left", "down"),"left")
     pui.render_forage_time(forage_label:subrect(0,0,ut.BASE_HEIGHT*3,ut.BASE_HEIGHT,"right","down"),pop_id)
 
@@ -328,13 +432,13 @@ end
 ---@param game GameScene
 ---@param rect Rect
 ---@param pop_id pop_id
----@param player_id pop_id
-local function draw_war_tab(game,rect,pop_id,player_id)
+local function draw_war_tab(game,rect,pop_id)
     local layout = ui.layout_builder():position(rect.x,rect.y):vertical():build()
 
-    local attrib_rect = layout:next(rect.width,ut.BASE_HEIGHT*2)
-    local draw_width = ut.BASE_HEIGHT*4
-    local offset = math.floor((attrib_rect.width - draw_width*4)/2)
+    ui.text("Attributes",layout:next(rect.width,ut.BASE_HEIGHT),"left","center")
+    local attrib_rect = layout:next(rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT*2)
+    local draw_width = ut.BASE_HEIGHT*3
+    local offset = math.floor((attrib_rect.width-draw_width*4)/2)
     local attrib_layout = ui.layout_builder():position(attrib_rect.x+offset,attrib_rect.y):grid(4):build()
     -- top row
     pui.render_size(attrib_layout:next(draw_width,ut.BASE_HEIGHT),pop_id)
@@ -349,123 +453,66 @@ local function draw_war_tab(game,rect,pop_id,player_id)
 
     local warband_id = pop_utils.get_warband_of(pop_id)
     if warband_id ~= INVALID_ID then
-        local warband_rect = layout:next(rect.width,ut.BASE_HEIGHT*4)
-        local leader = warband_utils.active_commander(warband_id)
-        local warband_name = strings.title(DATA.warband_get_name(warband_id))
-        local leader_name
-            ui.text("Warband", warband_rect:subrect(0,0,warband_rect.width - ut.BASE_HEIGHT*3, ut.BASE_HEIGHT,"left", "up"),"left")
-            warband_rect.y, warband_rect.height = warband_rect.y + ut.BASE_HEIGHT, warband_rect.height - ut.BASE_HEIGHT
-        local warband_portrait = warband_rect:subrect(0,0,ut.BASE_HEIGHT*3,ut.BASE_HEIGHT*3,"left","down")
-        if leader and leader ~= INVALID_ID then
-            leader_name = NAME(leader) .. "'s "
-            ib.render_portrait_with_overlay(game,warband_portrait,leader,player_id)
-        else -- no leader means 'empty' realm guard
-            local location_id = warband_utils.location(warband_id)
-            local realm_id = PROVINCE_REALM(location_id)
-            local guard_id = GUARD(realm_id)
-            if guard_id == warband_id then -- if a member of the guard without a leader
-                leader_name = REALM_NAME(realm_id) .. "'s "
-                ib.icon_button_to_realm(game,realm_id,warband_portrait,strings.title(REALM_NAME(realm_id)))
-            else -- otherwise a characterless band of pops?
-                leader_name = "Vagabond "
-                ut.render_icon(warband_portrait, "uncertainty.png",.8,.8,.8,1,true)
-            end
-        end
-
-        local lines_rect = warband_rect:subrect(0,0,warband_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT*3,"right","down")
-        local lines_layout = ui.layout_builder():position(lines_rect.x,lines_rect.y):vertical():build()
-        local line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
-        local line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-        local warband_icon_rect = line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT)
-        local guard_of = DATA.warband_get_guard_of(warband_id)
-        if guard_of and guard_of ~= INVALID_ID then
-            ut.render_icon(warband_icon_rect,"guards.png",.8,.8,.8,1,true)
-            ui.tooltip("Guard of " .. REALM_NAME(guard_of),warband_icon_rect)
-        else
-            ut.render_icon(warband_icon_rect,"minions.png",.8,.8,.8,1,true)
-            ui.tooltip("Warband of " .. NAME(WARBAND_LEADER(warband_id)),warband_icon_rect)
-        end
-        ib.text_button_to_warband(game, warband_id,line_layout:next(line_rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT),
-            warband_name, NAME(pop_id) .. " is part of the " .. warband_name .. ".")
-
-        line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
-        line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-        local unit_rect = line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT)
-        pui.render_unit_icon(unit_rect:subrect(0,0,ut.BASE_HEIGHT,ut.BASE_HEIGHT,"left","up"),pop_id)
-        pui.render_unit_text(unit_rect:subrect(0,0,unit_rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT,"right","up"),pop_id)
-        ui.tooltip(pui.unit_tooltip(pop_id),unit_rect)
-        pui.render_warband_income(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
-
-        line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
-        line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-
-        local status = DATA.warband_get_current_status(warband_id)
-        local status_text = DATA.warband_status_get_name(status)
-        local status_rect = line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT)
-        ut.render_icon(status_rect:subrect(0,0,ut.BASE_HEIGHT,ut.BASE_HEIGHT,"left","up"),WARBAND_STATUS_ICON[status],.8,.8,.8,1,true)
-        ui.panel(status_rect,2,true)
-        ui.text(strings.title(status_text),status_rect:subrect(0,0,status_rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT,"right","up"),"center","center")
-        ui.tooltip(warband_name .. " is currently " .. status_text .. ".",status_rect)
-        pui.render_warband_time(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
-
+        render_warband_overview(game,layout:next(rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT*4),pop_id)
+    else
+        local empty_rect = layout:next(rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT)
+        ui.panel(empty_rect,2,true,true)
+        local text_rect = empty_rect:subrect(0,0,empty_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT,"left","up")
+        ui.text("Individual",text_rect,"left","up")
+        ui.tooltip(NAME(pop_id) .. " is not part of a warband!",text_rect)
+        pui.render_warband_time(empty_rect:subrect(0,0,ut.BASE_HEIGHT*3,ut.BASE_HEIGHT,"right","up"),pop_id)
     end
 end
 ---draws pop weight and inventory
 ---@param game GameScene
 ---@param rect Rect
 ---@param pop_id pop_id
----@param player_id pop_id
-local function draw_prp_tab(game,rect,pop_id,player_id)
-    -- ???, cc_weight,   infra_effic,    supply_capacity
-    -- ???, ???,         infra_needs,    supply_used
-    -- inventory goods tab(list)
-        -- 1, 1, 3, 1, 1, 3, 1, 3
-        -- icon, a-, amount, a+, d-, demand, d+, price
-    -- building tab(list)
-        -- 1, 3, 3, 3, 4, 1
-        -- icon, donation, income, subsidy, location, coa
-end
-
----comment
----@param game GameScene
----@param rect Rect
----@param pop_id pop_id
----@param player_id pop_id
----@param title string
-local function draw_character_view(game,rect,pop_id,player_id, title)
-    -- name and title?
-    -- location, coa, popularity
-    -- popularity, money, needs
-    local title_rect = rect:subrect(0,0,rect.width,ut.BASE_HEIGHT,"left","up")
-    ui.text(title,title_rect,"left","center")
-
-    local portrait_size = rect.height-ut.BASE_HEIGHT
-    local portrait_rect = rect:subrect(0,0,portrait_size,portrait_size,"left","down")
-    ib.render_portrait_with_overlay(game,portrait_rect,pop_id,player_id,pui.pop_tooltip(pop_id))
-    local lines_rect = rect:subrect(0,0,rect.width-portrait_size,portrait_size,"right","down")
-    local lines_layout = ui.layout_builder():position(lines_rect.x,lines_rect.y):vertical():build()
-
-    -- basic info
-    local line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
-    local line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-    pui.render_age(line_layout:next(line_rect.width-ut.BASE_HEIGHT*10,ut.BASE_HEIGHT),pop_id,"right")
-    pui.render_female_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),pop_id)
-    ui.render_race_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),RACE(pop_id),ui.race_tooltip(RACE(pop_id)))
-    ui.render_culture_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),CULTURE(pop_id),ui.culture_tooltip(CULTURE(pop_id)))
-    ui.render_faith_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),DATA.pop_get_faith(pop_id),ui.faith_tooltip(DATA.pop_get_faith(pop_id)))
-    pui.render_basic_needs_satsifaction(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
-    pui.render_life_needs_satsifaction(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
-
-    -- location and popularity
-    line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
-    line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-    pui.render_location_buttons(game,line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
-    pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id,PROVINCE_REALM(PROVINCE(pop_id)))
-
-    -- home populatiry
-    line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
-    line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-    pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id,REALM(pop_id))
+local function draw_prp_tab(game,rect,pop_id)
+    local layout = ui.layout_builder():position(rect.x,rect.y):vertical():build()
+    local property_tabs_rect = layout:next(rect.width,ut.BASE_HEIGHT)
+    local property_list_rect = layout:next(rect.width,rect.height-ut.BASE_HEIGHT)
+    local property_layout = ui.layout_builder():position(property_tabs_rect.x,property_tabs_rect.y):horizontal():build()
+    property_tab = ut.tabs(property_tab, property_layout, {
+        {
+            text = "INVENTORY",
+            tooltip = NAME(pop_id) .. "'s inventory.'",
+            closure = function()
+                local inventory_list = {}
+                DATA.for_each_trade_good(function (item)
+                    local amount = DATA.pop_get_inventory(pop_id, item)
+                    if amount > 0 then
+                        inventory_list[item] = amount
+                    end
+                end)
+                property_inventory_state = require "game.scenes.game.widgets.character-inventory-list" (
+                    game,
+                    property_list_rect,
+                    pop_id,
+                    inventory_list,
+                    property_inventory_state
+                )()
+            end
+        },
+        {
+            text = "BUILDINGS",
+            tooltip = NAME(pop_id) .. "'s owned buildings.",
+            closure = function()
+                property_buildings_state = require "game.scenes.game.widgets.buildings-list" (
+                    game,
+                    property_list_rect,
+                    tabb.map_array(
+                        DATA.filter_array_ownership_from_owner(
+                            pop_id,
+                            function (item) return true end
+                        ),
+                        DATA.ownership_get_building
+                    ),
+                    property_buildings_state
+                )()
+            end
+        }
+    }, 1, (rect.width-ut.BASE_HEIGHT)/2)
+        
 end
 
 ---draws successor and tabs for parent-children or loyal_to-loyalty
@@ -475,19 +522,14 @@ end
 ---@param player_id pop_id
 local function draw_rel_tab(game,rect,pop_id,player_id)
     local layout = ui.layout_builder():position(rect.x,rect.y):vertical():build()
-
-    local successor_rect = layout:next(rect.width,ut.BASE_HEIGHT*4)
     local successor_id = pop_utils.get_successor_of(pop_id)
     if successor_id ~= INVALID_ID then
-        draw_character_view(game,successor_rect,successor_id,player_id,"Successor")
+        render_pop_overview(game,layout:next(rect.width,ut.BASE_HEIGHT*4),successor_id,player_id,"Successor: " .. get_fullname(successor_id))
     else
-        ui.text("Successor",successor_rect:subrect(0,0,rect.width,ut.BASE_HEIGHT,"right","up"),"left","center")
-        local portrait_rect = successor_rect:subrect(0,0,ut.BASE_HEIGHT*3,ut.BASE_HEIGHT*3,"left","down")
-        ui.panel(portrait_rect,2,true)
-        ut.render_icon(portrait_rect,"uncertainty.png",.8,.8,.8,1,true)
-        local text_rect = successor_rect:subrect(0,ut.BASE_HEIGHT,rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT,"right","up")
-        ui.panel(text_rect,2,true)
-        ui.text("None",text_rect,"left","center")
+        local empty_rect = layout:next(rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT)
+        ui.panel(empty_rect,2,true,true)
+        ui.text("No successor",empty_rect,"left","up")
+        ui.tooltip(NAME(pop_id) .. " has no successor designated!",empty_rect)
     end
     local relation_tabs_rect = layout:next(rect.width,ut.BASE_HEIGHT)
     local relation_list_rect = layout:next(rect.width,rect.height-layout._pivot_y)
@@ -501,9 +543,15 @@ local function draw_rel_tab(game,rect,pop_id,player_id)
                 local list_rect
                 if parent and parent ~= INVALID_ID then
                     list_rect = relation_list_rect:subrect(0,0,relation_list_rect.width,relation_list_rect.height-ut.BASE_HEIGHT*4,"left","down")
-                    draw_character_view(game,relation_list_rect:subrect(0,0,relation_list_rect.width,ut.BASE_HEIGHT*4,"left","up"),parent,player_id,"Parent")
+                    local parent_rect = relation_list_rect:subrect(0,0,relation_list_rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT*4,"left","up")
+                    ui.panel(parent_rect,2,true)
+                    render_pop_overview(game,parent_rect,parent,player_id,"Parent: " .. get_fullname(parent))
                 else
-                    list_rect = relation_list_rect
+                    list_rect = relation_list_rect:subrect(0,0,relation_list_rect.width,relation_list_rect.height-ut.BASE_HEIGHT,"left","down")
+                    local parent_rect = relation_list_rect:subrect(0,0,relation_list_rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT,"left","up")
+                    ui.panel(parent_rect,2,true,true)
+                    ui.text("No parent",parent_rect,"left","up")
+                    ui.tooltip(NAME(pop_id) .. " has no living parent!",parent_rect)
                 end
                 relations_family_state = require "game.scenes.game.widgets.character-list" (
                     game,
@@ -527,9 +575,15 @@ local function draw_rel_tab(game,rect,pop_id,player_id)
                 local list_rect
                 if loyal_to and loyal_to ~= INVALID_ID then
                     list_rect = relation_list_rect:subrect(0,0,relation_list_rect.width,relation_list_rect.height-ut.BASE_HEIGHT*4,"left","down")
-                    draw_character_view(game,relation_list_rect:subrect(0,0,relation_list_rect.width,ut.BASE_HEIGHT*4,"left","up"),loyal_to,player_id,"Liege")
+                    local loyal_rect = relation_list_rect:subrect(0,0,relation_list_rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT*4,"left","up")
+                    ui.panel(loyal_rect,2,true)
+                    render_pop_overview(game,loyal_rect,loyal_to,player_id,"Liege: " .. get_fullname(loyal_to))
                 else
-                    list_rect = relation_list_rect
+                    list_rect = relation_list_rect:subrect(0,0,relation_list_rect.width,relation_list_rect.height-ut.BASE_HEIGHT,"left","down")
+                    local loyal_rect = relation_list_rect:subrect(0,0,relation_list_rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT,"left","up")
+                    ui.panel(loyal_rect,2,true,true)
+                    ui.text("No allegiance",loyal_rect,"left","up")
+                    ui.tooltip(NAME(pop_id) .. " has not sworn loyalty to anyone!",loyal_rect)
                 end
                 relations_loyalty_state = require "game.scenes.game.widgets.character-list" (
                     game,
@@ -545,9 +599,8 @@ local function draw_rel_tab(game,rect,pop_id,player_id)
                 )()
             end
         }
-    }, 1, ut.BASE_HEIGHT * 7)
+    }, 1, (relation_list_rect.width-ut.BASE_HEIGHT)/2)
 end
-
 
 ---draw actions/decisions panel tab
 ---@param game GameScene
@@ -590,6 +643,23 @@ local function draw_dcs_tab(game, rect, pop_id, player_id)
     end
 end
 
+-- CHARACTER INSPECTOR LAYOUT
+
+---@return Rect
+local function get_main_panel()
+	local fs = ui.fullscreen()
+	local panel = fs:subrect(ut.BASE_HEIGHT * 2, 0, ut.BASE_HEIGHT * 16, ut.BASE_HEIGHT * 25, "left", "down")
+	return panel
+end
+
+function window.mask()
+    if ui.trigger(get_main_panel()) then
+		return false
+	else
+		return true
+	end
+end
+
 ---Draw character window
 ---@param game GameScene
 function window.draw(game)
@@ -624,7 +694,13 @@ function window.draw(game)
     -- header : inspector name and close button
     ib.render_inspector_header(game,layout:next(ui_panel.width,ut.BASE_HEIGHT))
     -- top panel : portrait and general info
-    draw_top_panel(game,layout:next(ui_panel.width,ut.BASE_HEIGHT*6),character_id,player_id)
+    local top_panel_rect = layout:next(ui_panel.width,ut.BASE_HEIGHT*5)
+
+    render_pop_overview(game,top_panel_rect,character_id,player_id,get_fullname(character_id))
+
+    local title_panel = top_panel_rect:subrect(0,ut.BASE_HEIGHT,top_panel_rect.width-ut.BASE_HEIGHT*4,ut.BASE_HEIGHT,"right","up")
+    ui.text(character_name_widget(character_id),title_panel,"left","center")
+
     -- trait panel : grid of trait icons with tooltips
     draw_trait_panel(layout:next(ui_panel.width,ut.BASE_HEIGHT*3.25),character_id)
     -- bot panel : tabs to general, work, warband,, inventory, relationships, decisions
@@ -638,28 +714,28 @@ function window.draw(game)
 			text = "REL",
 			tooltip = "Family and loyalties",
 			closure = function()
-				draw_rel_tab(game,tabs_panel_rect,character_id,player_id)
+				draw_rel_tab(game,tabs_panel_rect,character_id)
 			end
 		},
 		{
 			text = "WRK",
 			tooltip = "Work and foraging",
 			closure = function()
-				draw_wrk_tab(game,tabs_panel_rect,character_id,player_id)
+				draw_wrk_tab(game,tabs_panel_rect,character_id)
 			end
 		},
 		{
 			text = "WAR",
 			tooltip = "Warband",
 			closure = function()
-				draw_war_tab(game,tabs_panel_rect,character_id,player_id)
+				draw_war_tab(game,tabs_panel_rect,character_id)
 			end
 		},
 		{
 			text = "PRP",
 			tooltip = "Property and inventory",
 			closure = function()
-				draw_prp_tab(game,tabs_panel_rect,character_id,player_id)
+				draw_prp_tab(game,tabs_panel_rect,character_id)
 			end
 		},
         {
@@ -670,18 +746,6 @@ function window.draw(game)
 			end
 		}
 	}
---[[
-    -- only add decision tab if playing a character
-    if player_id ~= INVALID_ID then
-        character_tabs[#character_tabs+1] = {
-			text = "DCS",
-			tooltip = "Actions and decisions",
-			closure = function()
-				draw_dcs_tab(game,tabs_panel_rect,character_id,player_id)
-			end
-		}
-    end
---]]
 
     character_tab = ut.tabs(character_tab, tabs_layout, character_tabs, 1, ut.BASE_HEIGHT * 3)
 

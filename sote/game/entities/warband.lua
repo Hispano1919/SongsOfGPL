@@ -105,12 +105,12 @@ function warband_utils.loot_capacity(warband)
 		local pop = DATA.warband_unit_get_unit(membership)
 		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
-		cap = cap + pop_utils.get_supply_capacity(pop, unit_type)
+		cap = cap + pop_utils.get_supply_capacity(pop)
 	end
 	for _, pop in pairs(warband_utils.get_officers(warband)) do
 		local warband_membership = DATA.warband_unit_get_warband(DATA.get_warband_unit_from_unit(pop))
 		if warband_membership == INVALID_ID then
-			cap = cap + pop_utils.get_supply_capacity(pop, 0)
+			cap = cap + pop_utils.get_supply_capacity(pop)
 		end
 	end
 	return cap
@@ -132,12 +132,12 @@ function warband_utils.spotting(warband)
 		local pop = DATA.warband_unit_get_unit(membership)
 		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
-		result = result + pop_utils.get_spotting(pop, unit_type)
+		result = result + pop_utils.get_spotting(pop)
 	end
 	for _, pop in pairs(warband_utils.get_officers(warband)) do
 		local warband_membership = DATA.warband_unit_get_warband(DATA.get_warband_unit_from_unit(pop))
 		if warband_membership == INVALID_ID then
-			result = result + pop_utils.get_spotting(pop, 0)
+			result = result + pop_utils.get_spotting(pop)
 		end
 	end
 
@@ -164,12 +164,12 @@ function warband_utils.visibility(warband)
 		local pop = DATA.warband_unit_get_unit(membership)
 		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
-		result = result + pop_utils.get_visibility(pop, unit_type)
+		result = result + pop_utils.get_visibility(pop)
 	end
 	for _, pop in pairs(warband_utils.get_officers(warband)) do
 		local warband_membership = DATA.warband_unit_get_warband(DATA.get_warband_unit_from_unit(pop))
 		if warband_membership == INVALID_ID then
-			result = result + pop_utils.get_spotting(pop, 0)
+			result = result + pop_utils.get_spotting(pop)
 		end
 	end
 
@@ -188,7 +188,7 @@ function warband_utils.total_strength(warband)
 	for _, membership in ipairs(DATA.get_warband_unit_from_warband(warband)) do
 		local pop = DATA.warband_unit_get_unit(membership)
 		local unit_type = DATA.warband_unit_get_type(membership)
-		local health, attack, armor, speed = pop_utils.get_strength(pop, unit_type)
+		local health, attack, armor, speed = pop_utils.get_strength(pop)
 		total_health = total_health + health
 		total_attack = total_attack + attack
 		total_armor = total_armor + armor
@@ -208,15 +208,15 @@ function warband_utils.speed(warband)
 		local pop = DATA.warband_unit_get_unit(membership)
 		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
-		result = result + pop_utils.get_speed(pop, unit_type)
+		result = result + pop_utils.get_speed(pop)
 	end
 	for _, pop in pairs(warband_utils.get_officers(warband)) do
 		local warband_membership =  DATA.warband_unit_get_warband(DATA.get_warband_unit_from_unit(pop))
 		if warband_membership == INVALID_ID then
-			result = result + pop_utils.get_speed(pop, 0)
+			result = result + pop_utils.get_speed(pop)
 		end
 	end
-	return result, math.max(result / warband_utils.size(warband), 0)
+	return result, math.max(result / warband_utils.size(warband))
 end
 
 ---Total size of warband
@@ -444,12 +444,12 @@ function warband_utils.daily_supply_consumption(warband)
 		local pop = DATA.warband_unit_get_unit(membership)
 		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
-		result = result + pop_utils.get_supply_use(pop, unit_type)
+		result = result + pop_utils.get_supply_use(pop)
 	end
 	for _, pop in pairs(warband_utils.get_officers(warband)) do
 		local warband_membership = DATA.warband_unit_get_warband(DATA.get_warband_unit_from_unit(pop))
 		if warband_membership == INVALID_ID then
-			result = result + pop_utils.get_supply_use(pop, 0)
+			result = result + pop_utils.get_supply_use(pop)
 		end
 	end
 

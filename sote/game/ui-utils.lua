@@ -742,6 +742,33 @@ function ut.icon_button(icon, rect, tooltip, potential, active)
 end
 
 ---comment
+---@param icon string
+---@param rect Rect
+---@param r number red
+---@param g number green
+---@param b number glue
+---@param a number alpha
+---@param tooltip string?
+---@param potential boolean?
+---@param active boolean?
+function ut.color_icon_button(icon, r, g, b, a, rect, tooltip, potential, active)
+	if potential == nil then
+		potential = true
+	end
+
+	local result, rect_icon = ut.button(rect, potential, active)
+
+	local icon_size = math.min(rect_icon.width, rect_icon.height)
+	local icon_subrect = rect_icon:subrect(0, 0, icon_size, icon_size, "center", "center")
+	ut.render_icon(icon_subrect,icon,r,g,b,a,true)
+	if tooltip then
+		ui.tooltip(tooltip, rect)
+	end
+
+	return result
+end
+
+---comment
 ---@param text string
 ---@param rect Rect
 ---@param tooltip string?

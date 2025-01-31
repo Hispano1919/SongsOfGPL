@@ -31,7 +31,7 @@ local function name(character_id)
     end
     -- warband or guard
     local in_warband
-    local warband_leader = warband_utils.get_active_leader(character_id)
+    local warband_leader = warband_utils.active_leader(character_id)
     if warband_leader and warband_leader ~= INVALID_ID then
         in_warband = warband_leader
         if guard and guard == in_warband then
@@ -40,7 +40,7 @@ local function name(character_id)
             title = title .. "Leader"
         end
     else
-        local warband_commander = warband_utils.get_active_commander(character_id)
+        local warband_commander = warband_utils.active_commander(character_id)
         if warband_commander and warband_commander ~= INVALID_ID then
             in_warband = warband_commander
             title = title .. "Commander"

@@ -366,7 +366,7 @@ function re.draw(gam)
 								{
 									header = "satisfac.",
 									render_closure = function (rect, k, v)
-										uit.render_pop_satsifaction(rect, v)
+										require "game.scenes.game.widgets.pop-ui-widgets".render_basic_needs_satsifaction(rect, v)
 									end,
 									width = 2,
 									value = function(k, v)

@@ -25,7 +25,7 @@ end
 ---@param gamescene GameScene
 ---@param rect Rect
 function ib.icon_button_to_close(gamescene, rect)
-    if ut.icon_button(ASSETS.icons["cancel.png"], rect) then
+    if ut.color_icon_button("cancel.png",1,0,0,1,rect) then
         gamescene.inspector = nil
     end
 end
@@ -50,7 +50,7 @@ function ib.icon_button_to_realm(gamescene, realm, rect, tooltip)
             ut.coa(realm, center)
         end
     else
-        ut.icon_button(ASSETS["uncertainty"],center,"Unknown realm!",false)
+        ut.icon_button(ASSETS.icons["uncertainty"],center,"Unknown realm!",false)
     end
     if tooltip then
         ui.tooltip(tooltip,rect)
@@ -62,7 +62,6 @@ end
 ---@param rect Rect
 ---@param tooltip string?
 function ib.icon_button_to_character(gamescene, character, rect, tooltip)
-    ui.panel(rect, 1, true)
     require "game.scenes.game.widgets.portrait"(rect, character)
     if ui.invisible_button(rect) then
         gamescene.selected.character = character
@@ -99,7 +98,7 @@ end
 ---@param building Building
 ---@param rect Rect
 ---@param tooltip string?
-function ib.text_button_to_building(gamescene, building, rect, tooltip)
+function ib.icon_button_to_building(gamescene, building, rect, tooltip)
     local player = WORLD.player_character
     local potential = true
     if building ~= INVALID_ID then
@@ -107,7 +106,14 @@ function ib.text_button_to_building(gamescene, building, rect, tooltip)
         if player ~= INVALID_ID and not ib.is_visible_to_player(province,player) then
             potential = false
         end
-        if ut.text_button(strings.title(DATA.building_get_name(building)), rect, tooltip, potential) then
+        local building_type_id = DATA.building_get_current_type(building)
+        if ut.color_icon_button(
+            DATA.building_type_get_icon(building_type_id),
+            DATA.building_type_get_r(building_type_id),
+            DATA.building_type_get_g(building_type_id),
+            DATA.building_type_get_b(building_type_id),
+            1,rect,tooltip,potential
+        ) then
             gamescene.selected.building = building
             gamescene.inspector = "building"
         end
@@ -117,30 +123,25 @@ function ib.text_button_to_building(gamescene, building, rect, tooltip)
 end
 
 ---@param gamescene GameScene
----@param warband Warband
+---@param warband_id warband_id
 ---@param rect Rect
 ---@param tooltip string?
----@param potential boolean?
----@param active boolean?
-function ib.text_button_to_warband(gamescene, warband, rect, text, tooltip, potential, active)
+function ib.icon_button_to_warband(gamescene, warband_id, rect, tooltip)
+    local warband_utils = require "game.entities.warband"
     local player = WORLD.player_character
     local potential = true
-    if warband ~= INVALID_ID then
-        local province = DATA.warband_location_get_location(DATA.get_warband_location_from_warband(warband))
+    if warband_id ~= INVALID_ID then
+        local province = warband_utils.location(warband_id)
         if player ~= INVALID_ID and not ib.is_visible_to_player(province,player) then
             potential = false
         end
-        if ut.text_button(strings.title(DATA.warband_get_name(warband)), rect, tooltip, potential, active) then
-            gamescene.selected.warband = warband
+        if ut.icon_button(ASSETS.icons["minions.png"],rect,tooltip,potential) then
+            gamescene.selected.warband = warband_id
             gamescene.inspector = "warband"
         end
     else
-        ut.text_button("Unknown", rect,"Unknown!\n" .. tooltip)
+        ut.icon_button(ASSETS.icons["uncertainty.png"],rect,tooltip)
     end
-    local player = WORLD.player_character
-    local player_realm = WORLD:player_realm()
-    local province_visible = true
-
 end
 
 ---renders text and square close button to the right

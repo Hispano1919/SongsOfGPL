@@ -306,7 +306,7 @@ end
 ---@param realm Realm
 ---@return number
 function EconomicEffects.collect_tribute(collector, realm)
-	local hauling = pop_utils.get_supply_capacity(collector, INVALID_ID) * 2
+	local hauling = pop_utils.get_supply_capacity(collector) * 2
 	local max_tribute = DATA.realm_get_budget_budget(realm, BUDGET_CATEGORY.TRIBUTE)
 	local tribute_amount = math.min(hauling, math.floor(max_tribute))
 

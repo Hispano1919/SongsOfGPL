@@ -1221,7 +1221,7 @@ function window.draw(gamescene)
 				},
 				{
 					header = "satisfac.",
-					render_closure = pui.render_pop_satsifaction,
+					render_closure = pui.render_basic_needs_satsifaction,
 					width = end_width - icon_width,
 					---@param k POP
 					---@param v unit_type_id
