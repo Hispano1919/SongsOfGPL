@@ -2,73 +2,71 @@ local wg = {}
 
 ---@enum states
 local STATES = {
-	init = 0,
-	error = 1,
-	constraints_failed = 2,
+	init      = 0,
+	error     = 1,
+	retry     = 2,
 
-	phase_01 = 10,
-	cleanup = 11,
-	post_tectonic = 12,
-	phase_02 = 13,
-	load_maps = 14,
+	world_init = 10,
+	load_maps  = 11,
 
-	completed = 100
+	completed  = 1000
 }
 
-local libsote = require("libsote.libsote")
 local cpml = require "cpml"
-local hex = require("libsote.hex-utils")
+local world_generator = require "libsote.world-generator"
 
-local function run_with_profiling(func, log_text)
-	local start = love.timer.getTime()
-	func()
-	local duration = love.timer.getTime() - start
-	print("[worldgen profiling] " .. log_text .. ": " .. tostring(duration * 1000) .. "ms")
+local debug = require "libsote.debug-control-panel"
+
+local hex = require "libsote.hex-utils"
+local function map_tiles_to_hex()
+	for _, tile_id in pairs(WORLD.tiles) do
+		local lat, lon = tile:latlon()
+		local q, r, face = hex.latlon_to_hex_coords(lat, lon, wg.world.size)
+
+		wg.world:cache_tile_coord(tile_id, q, r, face)
+	end
 end
 
-local function check_constraints()
-	return true
-end
+local function load_mapping_from_file(file)
+	for row in require("game.file-utils").csv_rows(file) do
+		local tile_id = tonumber(row[1])
+		local q = tonumber(row[2])
+		local r = tonumber(row[3])
+		local face = tonumber(row[4])
 
-local function gen_phase_02()
-	run_with_profiling(function() require "libsote.gen-rocks".run(wg.world) end, "gen-rocks")
-	run_with_profiling(function() require "libsote.gen-climate".run(wg.world) end, "gen-climate")
-	run_with_profiling(function() require "libsote.hydrology.gen-initial-waterbodies".run(wg.world) end, "gen-initial-waterbodies")
-	run_with_profiling(function() require "libsote.hydrology.def-prelim-waterbodies".run(wg.world) end, "def-prelim-waterbodies")
-end
-
-local function post_tectonic()
-	run_with_profiling(function() require "libsote.post-tectonic".run(wg.world) end, "post-tectonic")
+		wg.world:cache_tile_coord(tile_id, q, r, face)
+	end
 end
 
 local function cache_tile_coord()
 	print("Caching tile coordinates...")
 
-	for _, tile in pairs(WORLD.tiles) do
-		local lat, lon = tile:latlon()
-		local q, r, face = hex.latlon_to_hex_coords(lat, lon - math.pi, wg.world.size) -- latlon_to_hex_coords expects lon in range [-pi, pi]
-		wg.world:cache_tile_coord(tile.tile_id, q, r, face)
+	if debug.map_tiles_from_file then
+		-- it's faster to load the pre-calculated coordinates from a file than to calculate them on the fly
+		load_mapping_from_file("d:\\temp\\hex_mapping.csv")
+	else
+		map_tiles_to_hex()
 	end
+	-- wg.world:map_hex_coords()
 
 	print("Done caching tile coordinates")
 end
 
 _coroutine_resume = coroutine.resume
 function coroutine.resume(...)
-	local state,result = _coroutine_resume(...)
+	local state, result = _coroutine_resume(...)
 	if not state then
 		error(tostring(result), 2)
 	end
-	return
 end
 
 function wg.init()
 	wg.state = STATES.init
 	wg.message = nil
 
-	if not libsote.init() then
+	if not world_generator.init() then
 		wg.state = STATES.error
-		wg.message = libsote.message
+		wg.message = world_generator.message
 		return
 	end
 
@@ -93,69 +91,50 @@ function wg.init()
 	coroutine.resume(wg.coroutine)
 end
 
-function wg.generate_coro()
-	wg.state = STATES.phase_01
+local prof = require "libsote.profiling-helper"
 
+function wg.generate_coro()
 	math.randomseed(os.time())
 	local seed = math.random(1, 100000)
-	-- seed = 58738 -- climate integration was done on this one
-	-- seed = 53201 -- banding
-	-- seed = 20836 -- north pole cells
-	-- seed = 6618 -- tiny islands?
+	if debug.fixed_seed then
+		seed = debug.fixed_seed
+	end
 
-	local phase01_coro = coroutine.create(libsote.worldgen_phase01_coro)
-	while coroutine.status(phase01_coro) ~= "dead" do
-		coroutine.resume(phase01_coro, seed)
+	local worldgen_coro = coroutine.create(world_generator.get_gen_coro)
+	while coroutine.status(worldgen_coro) ~= "dead" do
+		coroutine.resume(worldgen_coro, seed)
+
+		wg.message = world_generator.message
+
+		if world_generator.state == world_generator.states.constraints_failed then
+			wg.state = STATES.retry
+			return
+		elseif world_generator.state == world_generator.states.phase_02 and wg.state ~= STATES.world_init then
+			wg.state = STATES.world_init
+
+			wg.world = world_generator.world
+
+			require "game.raws.raws"(false) -- no logging
+			require "game.entities.world".empty()
+			coroutine.yield()
+
+			wg.message = "Caching tile coordinates"
+			prof.run_with_profiling(function() cache_tile_coord() end, "[scenes.world-gen]", "cache_tile_coord")
+			coroutine.yield()
+		end
+
 		coroutine.yield()
 	end
-
-	wg.message = libsote.message
-	coroutine.yield()
-
-	wg.world = libsote.generate_world(seed)
-	wg.message = libsote.message
-	if not wg.world then
-		wg.state = STATES.error
-		return
-	end
-
-	wg.state = STATES.cleanup
-
-	local cleanup_coro = coroutine.create(libsote.clean_up_coro)
-	while coroutine.status(cleanup_coro) ~= "dead" do
-		coroutine.resume(cleanup_coro)
-		coroutine.yield()
-	end
-
-	wg.message = libsote.message
-	coroutine.yield()
-
-	wg.state = STATES.post_tectonic
-
-	post_tectonic();
-
-	local constraints_met = check_constraints()
-	if not constraints_met then
-		wg.state = STATES.constraints_failed
-		wg.message = "Constraints not met"
-		return
-	end
-
-	wg.state = STATES.phase_02
-
-	require "game.raws.raws"(false) -- no logging
-	require "game.entities.world".empty()
-
-	wg.message = "Caching tile coordinates"
-	coroutine.yield()
-	run_with_profiling(function() cache_tile_coord() end, "cache_tile_coord")
-
-	gen_phase_02()
 
 	wg.state = STATES.load_maps
 	local wl = require "libsote.world-loader"
 	wl.load_maps_from(wg.world)
-	-- wl.dump_maps_from(wg.world)
+	coroutine.yield()
+
+	if debug.save_maps then
+		wl.dump_maps_from(wg.world)
+		coroutine.yield()
+	end
 
 	local default_map_mode = "elevation"
 	wg.map_mode = default_map_mode
@@ -231,7 +210,7 @@ function wg.handle_camera_controls()
 	if ui.is_key_held('d') then
 		wg.camera_position = wg.camera_position:rotate(camera_speed, up)
 	end
-	if ui.is_key_held('w') then
+	if not (ui.is_key_held('lshift') or ui.is_key_held('rshift')) and ui.is_key_held('w') then
 		local rot = wg.camera_position:cross(up)
 		wg.camera_position = wg.camera_position:rotate(-camera_speed, rot)
 	end
@@ -268,6 +247,7 @@ end
 
 local is_jan_rain = true
 local is_jan_temp = true
+local is_jan_water = true
 
 function wg.handle_keyboard_input()
 	if (ui.is_key_held('lshift') or ui.is_key_held('rshift')) and ui.is_key_pressed('r') then
@@ -282,6 +262,9 @@ function wg.handle_keyboard_input()
 		is_jan_temp = not is_jan_temp
 	elseif ui.is_key_pressed('k') then
 		wg.update_map_mode("koppen")
+	elseif (ui.is_key_held('lshift') or ui.is_key_held('rshift')) and ui.is_key_pressed('w') then
+		wg.update_map_mode(is_jan_water and "jan_flow" or "jul_flow")
+		is_jan_water = not is_jan_water
 	end
 end
 
@@ -289,7 +272,7 @@ function wg.draw()
 	local ui = require "engine.ui"
 	local fs = ui.fullscreen()
 
-	if wg.state == STATES.error or wg.state == STATES.constraints_failed then
+	if wg.state == STATES.error or wg.state == STATES.retry then
 		ui.text_panel(wg.message, ui.fullscreen():subrect(0, 0, 300, 60, "center", "down"))
 
 		local menu_button_width = 380
@@ -307,11 +290,12 @@ function wg.draw()
 
 		local ut = require "game.ui-utils"
 
-		if wg.state == STATES.constraints_failed then
+		if wg.state == STATES.retry then
 			if ut.text_button(
 				"Retry",
 				layout:next(menu_button_width, menu_button_height)
 			) then
+				wg.state = STATES.init
 				wg.coroutine = coroutine.create(wg.generate_coro)
 				coroutine.resume(wg.coroutine)
 			end
@@ -371,41 +355,36 @@ function wg.draw()
 	end
 end
 
+---@type table<string, MapModeEntry
 wg.map_mode_data = {}
 require "game.scenes.game.map-modes".set_up_map_modes(wg)
 
 function wg.refresh_map_mode()
 	print(wg.map_mode)
 	local dat = wg.map_mode_data[wg.map_mode]
-	local func = dat[4]
+	local func = dat.recalculation
 	func() -- set "real color" on tiles
 
 	local pointer_tile_color = require("ffi").cast("uint8_t*", wg.tile_color_image_data:getFFIPointer())
 
 	local dim = wg.world_size * 3
 
-	for _, tile in pairs(WORLD.tiles) do
-		local x, y = wg.tile_id_to_color_coords(tile)
+	DATA.for_each_tile(function (tile_id)
+		local x, y = wg.tile_id_to_color_coords(tile_id)
 		local pixel_index = x + y * dim
 
-		local r = tile.real_r
-		local g = tile.real_g
-		local b = tile.real_b
-
-		local result_pixel = { r, g, b, 1 }
-
-		pointer_tile_color[pixel_index * 4 + 0] = 255 * result_pixel[1]
-		pointer_tile_color[pixel_index * 4 + 1] = 255 * result_pixel[2]
-		pointer_tile_color[pixel_index * 4 + 2] = 255 * result_pixel[3]
-		pointer_tile_color[pixel_index * 4 + 3] = 255 * result_pixel[4]
-	end
+		pointer_tile_color[pixel_index * 4 + 0] = 255 * DATA.tile_get_real_r(tile_id)
+		pointer_tile_color[pixel_index * 4 + 1] = 255 * DATA.tile_get_real_g(tile_id)
+		pointer_tile_color[pixel_index * 4 + 2] = 255 * DATA.tile_get_real_b(tile_id)
+		pointer_tile_color[pixel_index * 4 + 3] = 255 * 1
+	end)
 
 	wg.tile_color_texture = love.graphics.newImage(wg.tile_color_image_data)
 	wg.tile_color_texture:setFilter("nearest", "nearest")
 end
 
-function wg.tile_id_to_color_coords(tile)
-	local tile_id = tile.tile_id
+---@param tile_id tile_id
+function wg.tile_id_to_color_coords(tile_id)
 	local tile_utils = require "game.entities.tile"
 	local x, y, f = tile_utils.index_to_coords(tile_id)
 	local fx = 0

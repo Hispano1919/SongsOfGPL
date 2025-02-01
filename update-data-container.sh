@@ -1,0 +1,2 @@
+rm -rf ./build/DataContainer
+git clone https://github.com/ineveraskedforthis/DataContainer.git ./build/DataContainer --depth 1
