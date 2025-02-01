@@ -70,7 +70,11 @@ function re.draw(gam)
 		local top_line = panel:subrect(0, 0, panel.width, ut.BASE_HEIGHT, "right", "up")
 		ui.panel(top_line)
 
-		ui.text("Estate of " .. NAME(owner) .. " in " .. PROVINCE_NAME(province), top_line, "left", "center")
+		if owner == INVALID_ID then
+			ui.text("Public estate of in " .. PROVINCE_NAME(province), top_line, "left", "center")
+		else
+			ui.text("Estate of " .. NAME(owner) .. " in " .. PROVINCE_NAME(province), top_line, "left", "center")
+		end
 
 		local close_button_rect = panel:subrect(0, 0, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "right", "up")
 		ib.icon_button_to_close(gam, close_button_rect)

@@ -1278,6 +1278,18 @@ def save_state():
     result += "end\n"
     return result
 
+def check_dcon_limits():
+    """
+    Generates routine which displays current dcon state:\n
+    """
+    result = f"function {NAMESPACE}.check_state()\n"
+
+    for entity in ENTITY_LIST:
+        result += f"    print(string.format(\"%.2f %%\", DCON.dcon_{entity.name}_size() / {entity.max_count} * 100), \"{entity.name}\", {entity.max_count})\n"
+
+    result += "end\n"
+    return result
+
 def load_state():
     """
     Generates routine which saves lua state:\n
@@ -1516,12 +1528,12 @@ Realm = EntityDescription("realm", REALMS_MAX_COUNT, False)
 
 Negotiations = EntityDescription("negotiation", 45000, False)
 
-Building = EntityDescription("building", 200000, False)
-Estate = EntityDescription("estate", 200000, False)
-Ownership = EntityDescription("ownership", 200000, False)
-Employment = EntityDescription("employment", 300000, False)
-EstateLocation = EntityDescription("estate_location", 200000, False)
-BuildingEstate = EntityDescription("building_estate", 200000, False)
+Building = EntityDescription("building", POPS_MAX_COUNT * 20, False)
+Estate = EntityDescription("estate", 300000, False)
+Ownership = EntityDescription("ownership", 300000, False)
+Employment = EntityDescription("employment", POPS_MAX_COUNT * 2, False)
+EstateLocation = EntityDescription("estate_location", 300000, False)
+BuildingEstate = EntityDescription("building_estate", POPS_MAX_COUNT * 2, False)
 
 WarbandLeader = EntityDescription("warband_leader", 50000, False)
 WarbandRecruiter = EntityDescription("warband_recruiter", 50000, False)
@@ -1578,6 +1590,7 @@ with open(OUTPUT_PATH, "w", encoding="utf8") as out:
 
     out.write(auxiliary_types())
     out.write(save_state())
+    out.write(check_dcon_limits())
     out.write(load_state())
     out.write(tests())
 

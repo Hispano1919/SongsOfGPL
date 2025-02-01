@@ -34,7 +34,7 @@ uint32_t dcon_ownership_size();
 
 ---ownership: LUA bindings---
 
-DATA.ownership_size = 200000
+DATA.ownership_size = 300000
 ---@param estate estate_id
 ---@param owner pop_id
 ---@return ownership_id

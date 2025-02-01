@@ -236,6 +236,8 @@ function EconomicEffects.set_ownership(estate, pop)
 		else
 			DATA.ownership_set_owner(DATA.get_ownership_from_estate(estate), pop)
 		end
+	else
+		DATA.delete_estate(estate)
 	end
 
 	if pop and WORLD:does_player_see_province_news(province) then

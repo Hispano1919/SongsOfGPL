@@ -833,6 +833,8 @@ function world.World:tick()
 				WORLD.month = WORLD.month + 1
 				-- monthly tick
 				--print("Monthly tick")
+				DATA.check_state()
+
 				if WORLD.month == 12 then
 					WORLD.month = 0
 					WORLD.year = WORLD.year + 1

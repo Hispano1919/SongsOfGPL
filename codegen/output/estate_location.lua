@@ -34,7 +34,7 @@ uint32_t dcon_estate_location_size();
 
 ---estate_location: LUA bindings---
 
-DATA.estate_location_size = 200000
+DATA.estate_location_size = 300000
 ---@param province province_id
 ---@param estate estate_id
 ---@return estate_location_id

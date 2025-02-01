@@ -51,7 +51,7 @@ uint32_t dcon_building_size();
 
 ---building: LUA bindings---
 
-DATA.building_size = 200000
+DATA.building_size = 600000
 DCON.dcon_building_resize_amount_of_inputs(9)
 DCON.dcon_building_resize_amount_of_outputs(9)
 ---@return building_id

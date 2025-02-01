@@ -45,7 +45,7 @@ uint32_t dcon_employment_size();
 
 ---employment: LUA bindings---
 
-DATA.employment_size = 300000
+DATA.employment_size = 600000
 ---@param building building_id
 ---@param worker pop_id
 ---@return employment_id

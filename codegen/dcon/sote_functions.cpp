@@ -807,11 +807,12 @@ void pop_forage_update(dcon::pop_id pop, dcon::province_id province) {
 
 		estimated_profit += output_total * state.province_get_local_prices(province, output);
 
+		assert(output_total > 0);
+
 		state.pop_set_inventory(
 			pop,
 			output,
-			current
-			+ output_total
+			std::max(0.f, current + output_total)
 		);
 	}
 
@@ -1066,7 +1067,7 @@ void pops_consume() {
 				} else {
 					satisfied += can_consume;
 					auto consumed = inventory * actual_consumption_rate;
-					state.pop_set_inventory(pop, trade_good, inventory - consumed);
+					state.pop_set_inventory(pop, trade_good, std::max(0.f, inventory - consumed));
 				}
 			});
 
@@ -1122,7 +1123,9 @@ void estates_sell(dcon::province_id province) {
 			if (state.trade_good_get_belongs_to_category(trade_good) == GOOD_CATEGORY) {
 				sell_ratio = std::min(1.f, 0.5f / (state.trade_good_get_decay(trade_good) + 0.001f));
 			}
-			income += inventory * sell_ratio * state.province_get_local_prices(province, trade_good);
+			auto income_from_good = inventory * sell_ratio * state.province_get_local_prices(province, trade_good);
+			income += income_from_good;
+			state.estate_set_inventory_sold_last_tick(estate, trade_good, inventory * sell_ratio);
 			state.estate_set_inventory(estate, trade_good, inventory * (1.f - sell_ratio));
 			record_production(province, trade_good, inventory * sell_ratio);
 		});

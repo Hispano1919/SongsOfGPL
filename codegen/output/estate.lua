@@ -49,7 +49,7 @@ uint32_t dcon_estate_size();
 
 ---estate: LUA bindings---
 
-DATA.estate_size = 200000
+DATA.estate_size = 300000
 DCON.dcon_estate_resize_inventory(101)
 DCON.dcon_estate_resize_inventory_sold_last_tick(101)
 DCON.dcon_estate_resize_inventory_bought_last_tick(101)

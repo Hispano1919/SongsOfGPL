@@ -14,6 +14,11 @@ local warband_utils = require "game.entities.warband"
 ---@param rect Rect
 ---@param building building_id
 return function (rect, building)
+	if building == INVALID_ID then
+		ui.text("Select any building", rect, "center", "center")
+		return
+	end
+
 	local estate = BUILDING_ESTATE(building)
 	local owner = OWNER(estate)
 	local province = ESTATE_PROVINCE(estate)

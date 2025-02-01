@@ -55,12 +55,16 @@ local function macrobuilder(gam, tile_id, rect, x, y, size)
 
 		local amount = 0
 
-
-		DATA.for_each_building_location_from_location(province, function (item)
-			local building = DATA.building_location_get_building(item)
-			local btype = DATA.building_get_current_type(building)
-			if btype == building_type then
-				amount = amount + 1
+		DATA.for_each_estate_location_from_province(province, function (item)
+			local estate = DATA.estate_location_get_estate(item)
+			if ESTATE_PROVINCE(estate) == province then
+				DATA.for_each_building_estate_from_estate(estate, function (building_location)
+					local building = DATA.building_estate_get_building(building_location)
+					local btype = DATA.building_get_current_type(building)
+					if btype == building_type then
+						amount = amount + 1
+					end
+				end)
 			end
 		end)
 

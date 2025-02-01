@@ -215,7 +215,7 @@ function inspector.draw(gamescene)
     if player ~= INVALID_ID then
         estates = tabb.map_array(DATA.filter_array_ownership_from_owner(player, function (item)
             return true
-        end), DATA.ownership_get_owner)
+        end), DATA.ownership_get_estate)
     end
 
     ut.table(rect, estates, columns, state)

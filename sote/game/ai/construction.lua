@@ -35,7 +35,6 @@ local function construction_in_province(province, funds, excess, owner, overseer
 		public_flag = true
 	end
 
-
 	local random_pop = demography_values.sample_non_character_pop_from_province(province)
 
 	-- if pop is nil, then buildings are the last thing we need
