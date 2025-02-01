@@ -217,6 +217,21 @@ function ut.render_icon(rect, icon_name, r, g, b, a)
 	love.graphics.setColor(_r, _g, _b, _a)
 end
 
+---commenting
+---@param rect Rect
+---@param data number
+---@param ratio number
+function ut.render_number_with_external_ratio(rect, data, ratio)
+	local hue = math.min(ratio * 120, 359)
+	local r, g, b, a = require "game.map-modes._color-space-utils".hsv_to_rgb(hue, 1, 1)
+	local cr, cg, cb, ca = love.graphics.getColor()
+	love.graphics.setColor(r, g, b, a)
+	ut.data_font()
+	ui.right_text(ut.to_fixed_point2(data), rect)
+	ut.main_font()
+	love.graphics.setColor(cr, cg, cb, ca)
+end
+
 ---comment
 ---@param name_or_icon string
 ---@param data number

@@ -594,12 +594,15 @@ end
 ---@return boolean
 function prov.Province.building_type_present(province, target_building_type)
 	local present = false
-	DATA.for_each_building_location_from_location(province, function (item)
-		local bld = DATA.building_location_get_building(item)
-		local local_bld_type = DATA.building_get_current_type(bld)
-		if local_bld_type == target_building_type then
-			present = true
-		end
+	DATA.for_each_estate_location_from_province(province, function (location)
+		local estate = DATA.estate_location_get_estate(location)
+		DATA.for_each_building_estate_from_estate(estate, function (item)
+			local bld = DATA.building_estate_get_building(item)
+			local local_bld_type = DATA.building_get_current_type(bld)
+			if local_bld_type == target_building_type then
+				present = true
+			end
+		end)
 	end)
 	return present
 end
@@ -799,13 +802,9 @@ function prov.Province.get_spotting(province)
 		s = s + DATA.race_get_spotting(race)
 	end)
 
-	DATA.for_each_building_location_from_location(province, function (location)
-		local building = DATA.building_location_get_building(location)
-		local btype = DATA.building_get_current_type(building)
-		local spotting = DATA.building_type_get_spotting(btype)
-		---@type number
-		s = s + spotting
-	end)
+	--- TODO:
+	--- buildings should not provide spotting while unmanned:
+	--- figure out good way to handle it later
 
 	DATA.for_each_warband_location_from_location(DATA.province_get_center(province), function (party)
 		local warband = DATA.warband_location_get_warband(party)

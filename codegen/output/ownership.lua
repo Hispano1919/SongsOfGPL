@@ -9,7 +9,7 @@ local ffi = require("ffi")
 ---@field is_ownership number
 ---@class (exact) fat_ownership_id
 ---@field id ownership_id Unique ownership id
----@field building building_id 
+---@field estate estate_id 
 ---@field owner pop_id 
 
 ---@class struct_ownership
@@ -17,10 +17,10 @@ local ffi = require("ffi")
 
 ffi.cdef[[
 void dcon_delete_ownership(int32_t j);
-int32_t dcon_force_create_ownership(int32_t building, int32_t owner);
-void dcon_ownership_set_building(int32_t, int32_t);
-int32_t dcon_ownership_get_building(int32_t);
-int32_t dcon_building_get_ownership_as_building(int32_t);
+int32_t dcon_force_create_ownership(int32_t estate, int32_t owner);
+void dcon_ownership_set_estate(int32_t, int32_t);
+int32_t dcon_ownership_get_estate(int32_t);
+int32_t dcon_estate_get_ownership_as_estate(int32_t);
 void dcon_ownership_set_owner(int32_t, int32_t);
 int32_t dcon_ownership_get_owner(int32_t);
 int32_t dcon_pop_get_range_ownership_as_owner(int32_t);
@@ -35,12 +35,12 @@ uint32_t dcon_ownership_size();
 ---ownership: LUA bindings---
 
 DATA.ownership_size = 200000
----@param building building_id
+---@param estate estate_id
 ---@param owner pop_id
 ---@return ownership_id
-function DATA.force_create_ownership(building, owner)
+function DATA.force_create_ownership(estate, owner)
     ---@type ownership_id
-    local i = DCON.dcon_force_create_ownership(building - 1, owner - 1) + 1
+    local i = DCON.dcon_force_create_ownership(estate - 1, owner - 1) + 1
     return i --[[@as ownership_id]] 
 end
 ---@param i ownership_id
@@ -69,20 +69,20 @@ function DATA.filter_ownership(func)
     return t
 end
 
----@param building ownership_id valid building_id
----@return building_id Data retrieved from ownership 
-function DATA.ownership_get_building(building)
-    return DCON.dcon_ownership_get_building(building - 1) + 1
+---@param estate ownership_id valid estate_id
+---@return estate_id Data retrieved from ownership 
+function DATA.ownership_get_estate(estate)
+    return DCON.dcon_ownership_get_estate(estate - 1) + 1
 end
----@param building building_id valid building_id
+---@param estate estate_id valid estate_id
 ---@return ownership_id ownership 
-function DATA.get_ownership_from_building(building)
-    return DCON.dcon_building_get_ownership_as_building(building - 1) + 1
+function DATA.get_ownership_from_estate(estate)
+    return DCON.dcon_estate_get_ownership_as_estate(estate - 1) + 1
 end
 ---@param ownership_id ownership_id valid ownership id
----@param value building_id valid building_id
-function DATA.ownership_set_building(ownership_id, value)
-    DCON.dcon_ownership_set_building(ownership_id - 1, value - 1)
+---@param value estate_id valid estate_id
+function DATA.ownership_set_estate(ownership_id, value)
+    DCON.dcon_ownership_set_estate(ownership_id - 1, value - 1)
 end
 ---@param owner ownership_id valid pop_id
 ---@return pop_id Data retrieved from ownership 
@@ -147,13 +147,13 @@ end
 
 local fat_ownership_id_metatable = {
     __index = function (t,k)
-        if (k == "building") then return DATA.ownership_get_building(t.id) end
+        if (k == "estate") then return DATA.ownership_get_estate(t.id) end
         if (k == "owner") then return DATA.ownership_get_owner(t.id) end
         return rawget(t, k)
     end,
     __newindex = function (t,k,v)
-        if (k == "building") then
-            DATA.ownership_set_building(t.id, v)
+        if (k == "estate") then
+            DATA.ownership_set_estate(t.id, v)
             return
         end
         if (k == "owner") then

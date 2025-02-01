@@ -259,6 +259,7 @@ local profiler_state = {
 ---@field province Province?
 ---@field realm Realm?
 ---@field building_type BuildingType?
+---@field estate estate_id
 ---@field building Building?
 ---@field macrobuilder_building_type BuildingType
 ---@field war War?
@@ -273,6 +274,7 @@ gam.selected = {
 	character = INVALID_ID,
 	tile = INVALID_ID,
 	macrobuilder_building_type = INVALID_ID,
+	estate = INVALID_ID,
 	current_path_time = 0
 }
 

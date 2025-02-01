@@ -20,13 +20,24 @@ end
 ---@param province province_id
 ---@return building_id[]
 function values.vacant_buildings_owned_by_locally_present_pops(province)
-	return tabb.filter_array(
-		tabb.map_array(DATA.get_building_location_from_location(province), DATA.building_location_get_building),
-		function (building)
-			local owner = DATA.ownership_get_owner(DATA.get_ownership_from_building(building))
-			return PROVINCE(owner) == province and values.potential_job(building) ~= nil
+	local result = {}
+	DATA.for_each_estate_location_from_province(province, function (estate_location)
+		local estate = DATA.estate_location_get_estate(estate_location)
+		local owner = OWNER(estate)
+		if PROVINCE(owner) ~= province then
+			return
 		end
-	)
+		DATA.for_each_building_estate_from_estate(estate, function (building_location)
+			local building = DATA.building_estate_get_building(building_location)
+			local employment = DATA.get_employment_from_building(building)
+			local worker = DATA.employment_get_worker(employment)
+			if worker == INVALID_ID then
+				table.insert(result, building)
+			end
+		end)
+	end)
+
+	return result
 end
 
 ---commenting
@@ -97,14 +108,9 @@ function values.potential_job(building)
 	local btype = DATA.building_get_current_type(building)
 	local method = DATA.building_type_get_production_method(btype)
 	local job = DATA.production_method_get_job(method)
-	local workers_with_this_job = 0
-	for _, employment in ipairs(DATA.get_employment_from_building(building)) do
-		if DATA.employment_get_job(employment) == job then
-			workers_with_this_job = workers_with_this_job + 1
-		end
-	end
-	local max_amount = 1
-	if max_amount > workers_with_this_job then
+	local employment = DATA.get_employment_from_building(building)
+	local worker = DATA.employment_get_worker(employment)
+	if worker == INVALID_ID then
 		return job
 	end
 	return nil

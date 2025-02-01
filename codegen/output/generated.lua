@@ -28,9 +28,11 @@ require "codegen.output.warband"
 require "codegen.output.realm"
 require "codegen.output.negotiation"
 require "codegen.output.building"
+require "codegen.output.estate"
 require "codegen.output.ownership"
 require "codegen.output.employment"
-require "codegen.output.building_location"
+require "codegen.output.estate_location"
+require "codegen.output.building_estate"
 require "codegen.output.warband_leader"
 require "codegen.output.warband_recruiter"
 require "codegen.output.warband_commander"
@@ -1136,105 +1138,85 @@ function DATA.test_set_get_0()
     local id = DATA.create_building()
     local fat_id = DATA.fatten_building(id)
     fat_id.current_type = 4
-    fat_id.savings = 6
-    fat_id.subsidy = -18
-    fat_id.subsidy_last = -4
-    fat_id.income_mean = 12
-    fat_id.last_income = 11
-    fat_id.last_donation_to_owner = 5
-    fat_id.unused = -1
-    fat_id.work_ratio = 10
-    fat_id.input_scale = 2
-    fat_id.production_scale = 17
-    fat_id.output_scale = -7
+    fat_id.work_ratio = 6
+    fat_id.input_scale = -18
+    fat_id.production_scale = -4
+    fat_id.output_scale = 12
     for j = 1, 8 do
-        DATA.building_set_spent_on_inputs_use(id, j, 12)
+        DATA.building_set_amount_of_inputs_use(id, j, 11)
     end
     for j = 1, 8 do
-        DATA.building_set_spent_on_inputs_amount(id, j, -12)
+        DATA.building_set_amount_of_inputs_amount(id, j, 5)
     end
     for j = 1, 8 do
-        DATA.building_set_earn_from_outputs_good(id, j, -2)
+        DATA.building_set_amount_of_outputs_good(id, j, -1)
     end
     for j = 1, 8 do
-        DATA.building_set_earn_from_outputs_amount(id, j, -12)
+        DATA.building_set_amount_of_outputs_amount(id, j, 10)
     end
-    for j = 1, 8 do
-        DATA.building_set_amount_of_inputs_use(id, j, -14)
-    end
-    for j = 1, 8 do
-        DATA.building_set_amount_of_inputs_amount(id, j, 19)
-    end
-    for j = 1, 8 do
-        DATA.building_set_amount_of_outputs_good(id, j, -4)
-    end
-    for j = 1, 8 do
-        DATA.building_set_amount_of_outputs_amount(id, j, 14)
-    end
-    for j = 1, 100 do
-        DATA.building_set_inventory(id, j --[[@as trade_good_id]],  18)    end
     local test_passed = true
     test_passed = test_passed and fat_id.current_type == 4
     if not test_passed then print("current_type", 4, fat_id.current_type) end
-    test_passed = test_passed and fat_id.savings == 6
-    if not test_passed then print("savings", 6, fat_id.savings) end
-    test_passed = test_passed and fat_id.subsidy == -18
-    if not test_passed then print("subsidy", -18, fat_id.subsidy) end
-    test_passed = test_passed and fat_id.subsidy_last == -4
-    if not test_passed then print("subsidy_last", -4, fat_id.subsidy_last) end
-    test_passed = test_passed and fat_id.income_mean == 12
-    if not test_passed then print("income_mean", 12, fat_id.income_mean) end
-    test_passed = test_passed and fat_id.last_income == 11
-    if not test_passed then print("last_income", 11, fat_id.last_income) end
-    test_passed = test_passed and fat_id.last_donation_to_owner == 5
-    if not test_passed then print("last_donation_to_owner", 5, fat_id.last_donation_to_owner) end
-    test_passed = test_passed and fat_id.unused == -1
-    if not test_passed then print("unused", -1, fat_id.unused) end
-    test_passed = test_passed and fat_id.work_ratio == 10
-    if not test_passed then print("work_ratio", 10, fat_id.work_ratio) end
-    test_passed = test_passed and fat_id.input_scale == 2
-    if not test_passed then print("input_scale", 2, fat_id.input_scale) end
-    test_passed = test_passed and fat_id.production_scale == 17
-    if not test_passed then print("production_scale", 17, fat_id.production_scale) end
-    test_passed = test_passed and fat_id.output_scale == -7
-    if not test_passed then print("output_scale", -7, fat_id.output_scale) end
+    test_passed = test_passed and fat_id.work_ratio == 6
+    if not test_passed then print("work_ratio", 6, fat_id.work_ratio) end
+    test_passed = test_passed and fat_id.input_scale == -18
+    if not test_passed then print("input_scale", -18, fat_id.input_scale) end
+    test_passed = test_passed and fat_id.production_scale == -4
+    if not test_passed then print("production_scale", -4, fat_id.production_scale) end
+    test_passed = test_passed and fat_id.output_scale == 12
+    if not test_passed then print("output_scale", 12, fat_id.output_scale) end
     for j = 1, 8 do
-        test_passed = test_passed and DATA.building_get_spent_on_inputs_use(id, j) == 12
+        test_passed = test_passed and DATA.building_get_amount_of_inputs_use(id, j) == 11
     end
-    if not test_passed then print("spent_on_inputs.use", 12, DATA.building[id].spent_on_inputs[0].use) end
+    if not test_passed then print("amount_of_inputs.use", 11, DATA.building[id].amount_of_inputs[0].use) end
     for j = 1, 8 do
-        test_passed = test_passed and DATA.building_get_spent_on_inputs_amount(id, j) == -12
+        test_passed = test_passed and DATA.building_get_amount_of_inputs_amount(id, j) == 5
     end
-    if not test_passed then print("spent_on_inputs.amount", -12, DATA.building[id].spent_on_inputs[0].amount) end
+    if not test_passed then print("amount_of_inputs.amount", 5, DATA.building[id].amount_of_inputs[0].amount) end
     for j = 1, 8 do
-        test_passed = test_passed and DATA.building_get_earn_from_outputs_good(id, j) == -2
+        test_passed = test_passed and DATA.building_get_amount_of_outputs_good(id, j) == -1
     end
-    if not test_passed then print("earn_from_outputs.good", -2, DATA.building[id].earn_from_outputs[0].good) end
+    if not test_passed then print("amount_of_outputs.good", -1, DATA.building[id].amount_of_outputs[0].good) end
     for j = 1, 8 do
-        test_passed = test_passed and DATA.building_get_earn_from_outputs_amount(id, j) == -12
+        test_passed = test_passed and DATA.building_get_amount_of_outputs_amount(id, j) == 10
     end
-    if not test_passed then print("earn_from_outputs.amount", -12, DATA.building[id].earn_from_outputs[0].amount) end
-    for j = 1, 8 do
-        test_passed = test_passed and DATA.building_get_amount_of_inputs_use(id, j) == -14
-    end
-    if not test_passed then print("amount_of_inputs.use", -14, DATA.building[id].amount_of_inputs[0].use) end
-    for j = 1, 8 do
-        test_passed = test_passed and DATA.building_get_amount_of_inputs_amount(id, j) == 19
-    end
-    if not test_passed then print("amount_of_inputs.amount", 19, DATA.building[id].amount_of_inputs[0].amount) end
-    for j = 1, 8 do
-        test_passed = test_passed and DATA.building_get_amount_of_outputs_good(id, j) == -4
-    end
-    if not test_passed then print("amount_of_outputs.good", -4, DATA.building[id].amount_of_outputs[0].good) end
-    for j = 1, 8 do
-        test_passed = test_passed and DATA.building_get_amount_of_outputs_amount(id, j) == 14
-    end
-    if not test_passed then print("amount_of_outputs.amount", 14, DATA.building[id].amount_of_outputs[0].amount) end
-    for j = 1, 100 do
-        test_passed = test_passed and DATA.building_get_inventory(id, j --[[@as trade_good_id]]) == 18
-    end
-    if not test_passed then print("inventory", 18, DATA.building[id].inventory[0]) end
+    if not test_passed then print("amount_of_outputs.amount", 10, DATA.building[id].amount_of_outputs[0].amount) end
     print("SET_GET_TEST_0_building:")
+    if test_passed then print("PASSED") else print("ERROR") end
+    local id = DATA.create_estate()
+    local fat_id = DATA.fatten_estate(id)
+    fat_id.savings = 4
+    for j = 1, 100 do
+        DATA.estate_set_inventory(id, j --[[@as trade_good_id]],  6)    end
+    for j = 1, 100 do
+        DATA.estate_set_inventory_sold_last_tick(id, j --[[@as trade_good_id]],  -18)    end
+    for j = 1, 100 do
+        DATA.estate_set_inventory_bought_last_tick(id, j --[[@as trade_good_id]],  -4)    end
+    for j = 1, 100 do
+        DATA.estate_set_inventory_demanded_last_tick(id, j --[[@as trade_good_id]],  12)    end
+    fat_id.balance_last_tick = 11
+    local test_passed = true
+    test_passed = test_passed and fat_id.savings == 4
+    if not test_passed then print("savings", 4, fat_id.savings) end
+    for j = 1, 100 do
+        test_passed = test_passed and DATA.estate_get_inventory(id, j --[[@as trade_good_id]]) == 6
+    end
+    if not test_passed then print("inventory", 6, DATA.estate[id].inventory[0]) end
+    for j = 1, 100 do
+        test_passed = test_passed and DATA.estate_get_inventory_sold_last_tick(id, j --[[@as trade_good_id]]) == -18
+    end
+    if not test_passed then print("inventory_sold_last_tick", -18, DATA.estate[id].inventory_sold_last_tick[0]) end
+    for j = 1, 100 do
+        test_passed = test_passed and DATA.estate_get_inventory_bought_last_tick(id, j --[[@as trade_good_id]]) == -4
+    end
+    if not test_passed then print("inventory_bought_last_tick", -4, DATA.estate[id].inventory_bought_last_tick[0]) end
+    for j = 1, 100 do
+        test_passed = test_passed and DATA.estate_get_inventory_demanded_last_tick(id, j --[[@as trade_good_id]]) == 12
+    end
+    if not test_passed then print("inventory_demanded_last_tick", 12, DATA.estate[id].inventory_demanded_last_tick[0]) end
+    test_passed = test_passed and fat_id.balance_last_tick == 11
+    if not test_passed then print("balance_last_tick", 11, fat_id.balance_last_tick) end
+    print("SET_GET_TEST_0_estate:")
     if test_passed then print("PASSED") else print("ERROR") end
 end
 return DATA

@@ -50,18 +50,6 @@ function MigrationEffects.start_migration(character)
 
 	---allow to move buildings and techs with warbands later
 
-	---@type building_location_id[]
-	local building_locations = {}
-	DATA.for_each_building_location_from_location(province, function (item)
-		table.insert(building_locations, item)
-	end)
-	for _, item in pairs(building_locations) do
-		local building = DATA.building_location_get_building(item)
-		local type_of = DATA.building_get_current_type(building)
-		local movable = DATA.building_type_get_movable(type_of)
-		economy_effects.unset_ownership(building)
-	end
-
 	realm_utils.remove_province(realm, province)
 	DATA.realm_set_capitol(realm, INVALID_ID)
 	WORLD:unset_settled_province(province)

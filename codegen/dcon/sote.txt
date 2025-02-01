@@ -1066,41 +1066,6 @@ object {
         tag { scenario }
     }
     property{
-        name { savings }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { subsidy }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { subsidy_last }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { income_mean }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { last_income }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { last_donation_to_owner }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { unused }
-        type { float }
-        tag { scenario }
-    }
-    property{
         name { work_ratio }
         type { float }
         tag { scenario }
@@ -1121,16 +1086,6 @@ object {
         tag { scenario }
     }
     property{
-        name { spent_on_inputs }
-        type { array{uint32_t}{base_types::use_case_container} }
-        tag { scenario }
-    }
-    property{
-        name { earn_from_outputs }
-        type { array{uint32_t}{base_types::trade_good_container} }
-        tag { scenario }
-    }
-    property{
         name { amount_of_inputs }
         type { array{uint32_t}{base_types::use_case_container} }
         tag { scenario }
@@ -1140,9 +1095,40 @@ object {
         type { array{uint32_t}{base_types::trade_good_container} }
         tag { scenario }
     }
+}
+object {
+    name { estate }
+    storage_type { erasable }
+    size { 200000 }
+    tag {scenario}
+    property{
+        name { savings }
+        type { float }
+        tag { scenario }
+    }
     property{
         name { inventory }
         type { array{trade_good_id}{float} }
+        tag { scenario }
+    }
+    property{
+        name { inventory_sold_last_tick }
+        type { array{trade_good_id}{float} }
+        tag { scenario }
+    }
+    property{
+        name { inventory_bought_last_tick }
+        type { array{trade_good_id}{float} }
+        tag { scenario }
+    }
+    property{
+        name { inventory_demanded_last_tick }
+        type { array{trade_good_id}{float} }
+        tag { scenario }
+    }
+    property{
+        name { balance_last_tick }
+        type { float }
         tag { scenario }
     }
 }
@@ -1152,8 +1138,8 @@ relationship {
     size { 200000 }
     tag {scenario}
     link {
-        object { building }
-        name { building }
+        object { estate }
+        name { estate }
         type { unique }
     }
     link {
@@ -1171,8 +1157,7 @@ relationship {
     link {
         object { building }
         name { building }
-        type { many }
-        index_storage{array}
+        type { unique }
     }
     link {
         object { pop }
@@ -1196,13 +1181,30 @@ relationship {
     }
 }
 relationship {
-    name { building_location }
+    name { estate_location }
     storage_type { erasable }
     size { 200000 }
     tag {scenario}
     link {
         object { province }
-        name { location }
+        name { province }
+        type { many }
+        index_storage{array}
+    }
+    link {
+        object { estate }
+        name { estate }
+        type { unique }
+    }
+}
+relationship {
+    name { building_estate }
+    storage_type { erasable }
+    size { 200000 }
+    tag {scenario}
+    link {
+        object { estate }
+        name { estate }
         type { many }
         index_storage{array}
     }

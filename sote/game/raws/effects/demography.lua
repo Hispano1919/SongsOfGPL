@@ -19,13 +19,6 @@ function demo.fire_pop(pop)
 	local employment = DATA.get_employment_from_worker(pop)
 	if DATA.employment_get_building(employment) ~= INVALID_ID then
 		DATA.delete_employment(employment)
-		local building = DATA.employment_get_building(employment)
-		if #DATA.get_employment_from_building(building) == 0 then
-			local fat = DATA.fatten_building(building)
-			fat.last_income = 0
-			fat.last_donation_to_owner = 0
-			fat.subsidy_last = 0
-		end
 	end
 end
 
@@ -145,17 +138,6 @@ function demo.employ_pop(pop, building)
 		new_employment.start_date = WORLD.year * 30 * 12 + WORLD.day + WORLD.month * 30
 	else
 		local fat = DATA.fatten_employment(employment)
-
-		local old_building = fat.building
-
-		-- clean up data if it was the last worker
-		if #DATA.get_employment_from_building(old_building) == 0 then
-			local fat_building = DATA.fatten_building(old_building)
-			fat_building.last_income = 0
-			fat_building.last_donation_to_owner = 0
-			fat_building.subsidy_last = 0
-		end
-
 		fat.building = building
 		fat.job = potential_job
 		fat.start_date = WORLD.year * 30 * 12 + WORLD.day + WORLD.month * 30

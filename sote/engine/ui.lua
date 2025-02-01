@@ -215,6 +215,7 @@ end
 ---@param height number
 ---@param horizontal_align love.AlignMode
 ---@param vertical_align VerticalAlignMode
+---@return Rect
 function Rect:subrect(x, y, width, height, horizontal_align, vertical_align)
 	local ll = Rect:new(self.x + x, self.y + y, width, height)
 

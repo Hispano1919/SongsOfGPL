@@ -210,10 +210,24 @@ function PROVINCE(pop_id)
 end
 
 ---commenting
+---@param estate_id estate_id
+---@return province_id
+function ESTATE_PROVINCE(estate_id)
+	return DATA.estate_location_get_province(DATA.get_estate_location_from_estate(estate_id))
+end
+
+---commenting
+---@param building_id building_id
+---@return estate_id
+function BUILDING_ESTATE(building_id)
+	return DATA.building_estate_get_estate(DATA.get_building_estate_from_building(building_id))
+end
+
+---commenting
 ---@param building_id building_id
 ---@return province_id
 function BUILDING_PROVINCE(building_id)
-	return DATA.building_location_get_location(DATA.get_building_location_from_building(building_id))
+	return ESTATE_PROVINCE(BUILDING_ESTATE(building_id))
 end
 
 ---commenting
@@ -266,9 +280,9 @@ function PARENT(pop_id)
 end
 
 ---commenting
----@param building_id building_id
-function OWNER(building_id)
-	return DATA.ownership_get_owner(DATA.get_ownership_from_building(building_id))
+---@param estate_id estate_id
+function OWNER(estate_id)
+	return DATA.ownership_get_owner(DATA.get_ownership_from_estate(estate_id))
 end
 
 function ACCEPT_ALL (item)
@@ -310,6 +324,8 @@ function LOCAL_PROVINCE(pop_id)
 	if province ~= INVALID_ID then
 		return province
 	end
+
+	return INVALID_ID
 end
 
 ---Returns local realm of a pop

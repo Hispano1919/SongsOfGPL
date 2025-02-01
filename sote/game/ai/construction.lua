@@ -196,9 +196,7 @@ local function construction_in_province(province, funds, excess, owner, overseer
 			-- We can build! But only build if we have enough excess money to pay for the upkeep...
 			if excess >= DATA.building_type_get_upkeep(to_build) then
 				local building = economy_effects.construct_building(to_build, province, owner)
-				DATA.building_inc_subsidy(building, 1)
-				DATA.building_inc_savings(building, construction_cost)
-
+				DATA.estate_inc_savings(BUILDING_ESTATE(building), construction_cost * 0.5)
 				funds = math.max(0, funds - construction_cost)
 			end
 		end

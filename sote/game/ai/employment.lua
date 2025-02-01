@@ -24,7 +24,7 @@ local function find_workers(province)
 	for index, value in ipairs(buildings) do
 		--- ai owners express desire to employ the worker
 		--- first one gets the worker
-		local owner = DATA.ownership_get_owner(DATA.get_ownership_from_building(value))
+		local owner = OWNER(BUILDING_ESTATE(value))
 
 		if not DATA.pop_get_is_player(owner) then
 			local prediction = economy_values.projected_income(

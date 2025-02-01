@@ -15,7 +15,7 @@ local tile_utils = require "game.entities.tile"
 local province_utils = require "game.entities.province".Province
 local warband_utils = require "game.entities.warband"
 local building_type_tooltip = require "game.raws.building-types".get_tooltip
-local remove_building = require "game.entities.building".Building.remove_from_province
+local economy_effects = require "game.raws.effects.economy"
 local military_effects = require "game.raws.effects.military"
 
 re.cached_scrollbar = 0
@@ -124,7 +124,7 @@ local function header_panel(gam, tile_id, panel)
 	uit.generic_number_field(
 		"barbute.png",
 		tabb.accumulate(
-			DATA.filter_warband_location_from_location(province_id, function (item)
+			DATA.filter_warband_location_from_location(DATA.province_get_center(province_id), function (item)
 				return true
 			end),
 			0,
@@ -846,15 +846,18 @@ local function buildings_view_tab(gam, tile_id, rect)
 		---@type table<building_type_id, number>
 		local stacks = {}
 		local size = 0
-		DATA.for_each_building_location_from_location(province_id, function (item)
-			local building = DATA.building_location_get_building(item)
-			local building_type = DATA.building_get_current_type(building)
-			if stacks[building_type] == nil then
-				stacks[building_type] = 1
-				size = size + 1
-			else
-				stacks[building_type] = stacks[building_type] + 1
-			end
+		DATA.for_each_estate_location_from_province(province_id, function (item)
+			local estate = DATA.estate_location_get_estate(item)
+			DATA.for_each_building_estate_from_estate(estate, function (building_estate)
+				local building = DATA.building_estate_get_building(building_estate)
+				local building_type = DATA.building_get_current_type(building)
+				if stacks[building_type] == nil then
+					stacks[building_type] = 1
+					size = size + 1
+				else
+					stacks[building_type] = stacks[building_type] + 1
+				end
+			end)
 		end)
 
 		re.buildings_scrollbar = re.buildings_scrollbar or 0
@@ -883,38 +886,27 @@ local function buildings_view_tab(gam, tile_id, rect)
 		-- Show individual buildings
 		re.buildings_scrollbar = re.buildings_scrollbar or 0
 		local amount = 0
-		local buildings = DATA.filter_building_location_from_location(province_id, function (item)
+		local estates = DATA.filter_estate_location_from_province(province_id, function (item)
 			amount = amount + 1
 			return true
 		end)
 
 		re.buildings_scrollbar = uit.scrollview(rect, function(number, rect)
 			if number > 0 and number <= amount then
-				---@type Building
-				local building = DATA.building_location_get_building(tabb.nth(buildings, number))
-				local building_type = DATA.building_get_current_type(building)
-				local icon = DATA.building_type_get_icon(building_type)
-				local description = DATA.building_type_get_description(building_type)
-				local owner = DATA.get_ownership_from_building(building)
-
-				ui.tooltip(building_type_tooltip(building_type), rect)
-				---@type Rect
-				local r = rect
-				local im = r:subrect(0, 0, base_unit, base_unit, "left", "up")
-				if uit.icon_button(ASSETS.icons[icon], im) then
-					gam.inspector = "building"
-					gam.selected.building = building
-				end
-				rect.x = rect.x + base_unit
-				ui.left_text(description, rect)
-				if WORLD:player_is_owner(building) then
-					local button = r:subrect(-base_unit, 0, base_unit, base_unit, "right", "up")
-					if uit.icon_button(ASSETS.get_icon("hammer-drop.png"), button, "Destroy the building") then
-						-- remove the building!
-						remove_building(building)
+				local estate = DATA.estate_location_get_estate(tabb.nth(estates, number))
+				local owner = OWNER(estate)
+				if owner == INVALID_ID then
+					if uit.text_button("Public estate", rect) then
+						gam.inspector = "building"
+						gam.selected.estate = estate
+						gam.selected.building = INVALID_ID
 					end
 				else
-					-- ???
+					if uit.text_button("Estates of " .. NAME(owner), rect) then
+						gam.inspector = "building"
+						gam.selected.estate = estate
+						gam.selected.building = INVALID_ID
+					end
 				end
 			end
 		end, UI_STYLE.scrollable_list_item_height, amount, UI_STYLE.slider_width,

@@ -32,8 +32,7 @@ void dcon_delete_employment(int32_t j);
 int32_t dcon_force_create_employment(int32_t building, int32_t worker);
 void dcon_employment_set_building(int32_t, int32_t);
 int32_t dcon_employment_get_building(int32_t);
-int32_t dcon_building_get_range_employment_as_building(int32_t);
-int32_t dcon_building_get_index_employment_as_building(int32_t, int32_t);
+int32_t dcon_building_get_employment_as_building(int32_t);
 void dcon_employment_set_worker(int32_t, int32_t);
 int32_t dcon_employment_get_worker(int32_t);
 int32_t dcon_pop_get_employment_as_worker(int32_t);
@@ -131,54 +130,9 @@ function DATA.employment_get_building(building)
     return DCON.dcon_employment_get_building(building - 1) + 1
 end
 ---@param building building_id valid building_id
----@return employment_id[] An array of employment 
+---@return employment_id employment 
 function DATA.get_employment_from_building(building)
-    local result = {}
-    DATA.for_each_employment_from_building(building, function(item) 
-        table.insert(result, item)
-    end)
-    return result
-end
----@param building building_id valid building_id
----@param func fun(item: employment_id) valid building_id
-function DATA.for_each_employment_from_building(building, func)
-    ---@type number
-    local range = DCON.dcon_building_get_range_employment_as_building(building - 1)
-    for i = 0, range - 1 do
-        ---@type employment_id
-        local accessed_element = DCON.dcon_building_get_index_employment_as_building(building - 1, i) + 1
-        if DCON.dcon_employment_is_valid(accessed_element - 1) then func(accessed_element) end
-    end
-end
----@param building building_id valid building_id
----@param func fun(item: employment_id):boolean 
----@return employment_id[]
-function DATA.filter_array_employment_from_building(building, func)
-    ---@type table<employment_id, employment_id> 
-    local t = {}
-    ---@type number
-    local range = DCON.dcon_building_get_range_employment_as_building(building - 1)
-    for i = 0, range - 1 do
-        ---@type employment_id
-        local accessed_element = DCON.dcon_building_get_index_employment_as_building(building - 1, i) + 1
-        if DCON.dcon_employment_is_valid(accessed_element - 1) and func(accessed_element) then table.insert(t, accessed_element) end
-    end
-    return t
-end
----@param building building_id valid building_id
----@param func fun(item: employment_id):boolean 
----@return table<employment_id, employment_id> 
-function DATA.filter_employment_from_building(building, func)
-    ---@type table<employment_id, employment_id> 
-    local t = {}
-    ---@type number
-    local range = DCON.dcon_building_get_range_employment_as_building(building - 1)
-    for i = 0, range - 1 do
-        ---@type employment_id
-        local accessed_element = DCON.dcon_building_get_index_employment_as_building(building - 1, i) + 1
-        if DCON.dcon_employment_is_valid(accessed_element - 1) and func(accessed_element) then t[accessed_element] = accessed_element end
-    end
-    return t
+    return DCON.dcon_building_get_employment_as_building(building - 1) + 1
 end
 ---@param employment_id employment_id valid employment id
 ---@param value building_id valid building_id

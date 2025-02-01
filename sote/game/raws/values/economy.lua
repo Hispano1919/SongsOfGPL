@@ -191,7 +191,7 @@ end
 ---@param female boolean
 ---@return number income
 function eco_values.projected_income(building, race, female)
-    local province = DATA.building_location_get_location(DATA.get_building_location_from_building(building))
+    local province = BUILDING_PROVINCE(building)
     local building_type = DATA.building_get_current_type(building)
 
     return eco_values.projected_income_building_type(province, building_type, race, female)

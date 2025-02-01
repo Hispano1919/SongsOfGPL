@@ -1517,9 +1517,11 @@ Realm = EntityDescription("realm", REALMS_MAX_COUNT, False)
 Negotiations = EntityDescription("negotiation", 45000, False)
 
 Building = EntityDescription("building", 200000, False)
-BuildingOwnership = EntityDescription("ownership", 200000, False)
+Estate = EntityDescription("estate", 200000, False)
+Ownership = EntityDescription("ownership", 200000, False)
 Employment = EntityDescription("employment", 300000, False)
-BuildingLocation = EntityDescription("building_location", 200000, False)
+EstateLocation = EntityDescription("estate_location", 200000, False)
+BuildingEstate = EntityDescription("building_estate", 200000, False)
 
 WarbandLeader = EntityDescription("warband_leader", 50000, False)
 WarbandRecruiter = EntityDescription("warband_recruiter", 50000, False)
