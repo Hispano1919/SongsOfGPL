@@ -10,16 +10,19 @@ import subprocess
 from pathlib import Path
 from shutil import copyfile, move
 
-COMPILE_DCON_GEN = sys.argv[1]
-COMPILE_LUA_GEN = sys.argv[2]
+COMPILE_DCON_GEN = sys.argv[1]=="true"
+COMPILE_LUA_GEN = sys.argv[2]=="true"
 
-CODEGEN_DCON = sys.argv[3]
-CODEGEN_LUA = sys.argv[4]
+CODEGEN_DCON = sys.argv[3]=="true"
+CODEGEN_LUA = sys.argv[4]=="true"
 
 SYSTEM = platform.system()
 MACHINE = platform.machine()
+is_x86 = MACHINE in ("AMD64", "x86_64")
+if is_x86:
+    MACHINE = "x86_64"
 
-print(SYSTEM, MACHINE)
+print("platform",SYSTEM, MACHINE)
 
 root = Path().absolute()
 
@@ -61,14 +64,14 @@ if os == 'nt':
     generator_name += ".exe"
     dll_generator_name += ".exe"
 
-binary_folder = generation_folder.joinpath(SYSTEM).joinpath(MACHINE)
-os.makedirs(binary_folder, exist_ok=True)
+system_path = generation_folder.joinpath(SYSTEM).joinpath(MACHINE)
+os.makedirs(system_path, exist_ok=True)
 
 generator_exe = \
-    binary_folder.joinpath(generator_name)
+    system_path.joinpath(generator_name)
 
 dll_generator_exe = \
-    binary_folder.joinpath(dll_generator_name)
+    system_path.joinpath(dll_generator_name)
 
 copyfile(description_path, description_destination)
 copyfile(additional_types_header, additional_types_destination)
@@ -77,11 +80,12 @@ copyfile(additional_functions_header, additional_functions_header_destination)
 
 
 if COMPILE_DCON_GEN:
-    print("compiling datacontainer")
+    print("Compiling DataContainerGenerator...")
+    now = time.time()
     try:
         subprocess.run(subprocess.list2cmdline([ \
             "clang++",
-            "-std=c++20", "-stdlib=libc++",
+            "-std=c++20",
             dcon_generator_folder.joinpath("code_fragments.cpp"),
             dcon_generator_folder.joinpath("DataContainerGenerator.cpp"),
             dcon_generator_folder.joinpath("object_member_fragments.cpp"),
@@ -95,29 +99,38 @@ if COMPILE_DCON_GEN:
         print(subprocess.list2cmdline(command_line_error.cmd))
         raise
     move("a.exe", generator_exe)
+    print("DataContainerGenerator took " + str(time.time() - now) + " seconds to compile.")
 
 if CODEGEN_DCON:
+    print("Running DataContainerGenerator...")
+    now = time.time()
     subprocess.run([generator_exe, description_destination], check=True)
+    print("DataContainerGenerator took " + str(time.time() - now) + " seconds to run.")
 
 if COMPILE_LUA_GEN:
-    print("compiling dll source code generator")
+    print("Compiling LuaDLLGenerator...")
+    now = time.time()
     subprocess.run(subprocess.list2cmdline([ \
         "clang++",
-        "-std=c++20", "-stdlib=libc++",
+        "-std=c++20",
         dll_generator_folder.joinpath("LuaDLLGenerator.cpp"),
         dll_generator_folder.joinpath("parsing.cpp"),
         "-o", "a.exe",
     ]), check=True, shell=True)
     move("a.exe", dll_generator_exe)
+    print("LuaDLLGenerator took " + str(time.time() - now) + " seconds to compile.")
 
 if CODEGEN_LUA:
+    print("Running LuaDLLGenerator...")
+    now = time.time()
     subprocess.run([dll_generator_exe, description_destination], check=True)
+    print("LuaDLLGenerator took " + str(time.time() - now) + " seconds to run.")
 
 # compile dll itself
 for file in os.listdir(common_include):
     copyfile(common_include.joinpath(file), generation_folder.joinpath(file))
 
-dll_folder = root.joinpath("libraries").joinpath(SYSTEM).joinpath(MACHINE)
+dll_folder = root.joinpath("lib").joinpath(SYSTEM).joinpath(MACHINE)
 os.makedirs(dll_folder, exist_ok = True)
 
 O2 = "-inline -mldst-motion -gvn -elim-avail-extern -slp-vectorizer -constmerge".split()
@@ -155,7 +168,7 @@ O3 = "-callsite-splitting -argpromotion"
 # ]
 
 if os.name == 'nt':
-    print("compiling dll")
+    print("Compiling dll...")
     now = time.time()
     subprocess.run(subprocess.list2cmdline([ \
         "clang++",
@@ -163,7 +176,7 @@ if os.name == 'nt':
         # "-O1",
         # "-O0"
         ] \
-        +["-std=c++20", "-stdlib=libc++",
+        +["-std=c++20",
         # "-msse4.1",
         "-shared",
         "-mavx2",
@@ -176,8 +189,7 @@ if os.name == 'nt':
     ]), check=True, shell=True)
 
 
-    print("compilation completed")
-    print("it took " + str(time.time() - now) + " seconds")
+    print("DLL took " + str(time.time() - now) + " seconds")
 
     time.sleep(0.1)
 
@@ -191,15 +203,15 @@ if os.name == 'nt':
         except PermissionError:
             time.sleep(0.5)
 else:
-    print("compile linux library")
+    print("Compiling linux library...")
     now = time.time()
 
     subprocess.run(" ".join(["clang++", "-O3",
                                             "-std=c++20", "-msse4.1", "-shared", "-fdeclspec",
                                             "-mavx2", "-fPIC",
-                                            "-L./codegen/dll/linux",
-                                            "-Wl,-R./codegen/dll/linux",
-                                            "-DPREFER_ONE_TBB", f'-I{str(codegen_path.joinpath("include"))}',
+                                            ("-L./lib/"+SYSTEM+"/"+MACHINE),
+                                            ("-Wl,-R./lib/"+SYSTEM+"/"+MACHINE),
+                                            "-DPREFER_ONE_TBB", f'-I{str(generation_folder.joinpath(SYSTEM).joinpath(MACHINE).joinpath("include"))}',
                                             str(generation_folder.joinpath("lua_objs.cpp")),
                                             str(generation_folder.joinpath("common_types.cpp")),
                                             str(additional_functions_src_destination),
@@ -210,7 +222,6 @@ else:
                              ]),
                    check = True, shell = True)
 
-    print("compilation completed")
-    print("it took " + str(time.time() - now) + " seconds")
+    print("Linux Library took " + str(time.time() - now) + " seconds to compile.")
     move("./dcon.so", dll_folder.joinpath("dcon.so"))
 

@@ -1,5 +1,21 @@
 --- Helper functions to reduce key presses to type names of common wrappers
 
+---@enum AI_GOAL
+AI_GOAL = {
+	RAID = 0,
+	TRADE = 1,
+	ENFORCE_TRIBUTE = 2,
+	COLLECT_TRIBUTE = 3,
+	COLLECT_TAX = 4,
+	EXPLORE = 5,
+	PATROL = 6,
+	IDLE = 7,
+}
+
+---@class AI_DATA
+---@field target_province province_id
+---@field current_goal AI_GOAL
+
 ---@type table<world_tile_id, tile_id>
 TILE_FROM_WORLD_ID = {}
 
@@ -194,10 +210,24 @@ function PROVINCE(pop_id)
 end
 
 ---commenting
+---@param estate_id estate_id
+---@return province_id
+function ESTATE_PROVINCE(estate_id)
+	return DATA.estate_location_get_province(DATA.get_estate_location_from_estate(estate_id))
+end
+
+---commenting
+---@param building_id building_id
+---@return estate_id
+function BUILDING_ESTATE(building_id)
+	return DATA.building_estate_get_estate(DATA.get_building_estate_from_building(building_id))
+end
+
+---commenting
 ---@param building_id building_id
 ---@return province_id
 function BUILDING_PROVINCE(building_id)
-	return DATA.building_location_get_location(DATA.get_building_location_from_building(building_id))
+	return ESTATE_PROVINCE(BUILDING_ESTATE(building_id))
 end
 
 ---commenting
@@ -250,9 +280,9 @@ function PARENT(pop_id)
 end
 
 ---commenting
----@param building_id building_id
-function OWNER(building_id)
-	return DATA.ownership_get_owner(DATA.get_ownership_from_building(building_id))
+---@param estate_id estate_id
+function OWNER(estate_id)
+	return DATA.ownership_get_owner(DATA.get_ownership_from_estate(estate_id))
 end
 
 function ACCEPT_ALL (item)
@@ -264,6 +294,38 @@ end
 function REALM(pop_id)
 	local pop_realm = DATA.get_realm_pop_from_pop(pop_id)
 	return DATA.realm_pop_get_realm(pop_realm)
+end
+
+---commenting
+---@param pop_id pop_id
+---@return province_id
+function LOCAL_PROVINCE(pop_id)
+	local province = PROVINCE(pop_id)
+	if province ~= INVALID_ID then
+		return province
+	end
+
+	province = TILE_PROVINCE(WARBAND_TILE(LEADER_OF_WARBAND(pop_id)))
+	if province ~= INVALID_ID then
+		return province
+	end
+
+	province = TILE_PROVINCE(WARBAND_TILE(COMMANDER_OF_WARBAND(pop_id)))
+	if province ~= INVALID_ID then
+		return province
+	end
+
+	province = TILE_PROVINCE(WARBAND_TILE(RECRUITER_OF_WARBAND(pop_id)))
+	if province ~= INVALID_ID then
+		return province
+	end
+
+	province = TILE_PROVINCE(WARBAND_TILE(UNIT_OF(pop_id)))
+	if province ~= INVALID_ID then
+		return province
+	end
+
+	return INVALID_ID
 end
 
 ---Returns local realm of a pop
@@ -366,12 +428,29 @@ function LEADER_OF_WARBAND(leader)
 	return DATA.warband_leader_get_warband(leadership)
 end
 
+---@param warband warband_id
+function WARBAND_TILE(warband)
+	return DATA.warband_location_get_location(DATA.get_warband_location_from_warband(warband))
+end
+
+---@param tile tile_id
+function TILE_PROVINCE(tile)
+	return DATA.tile_province_membership_get_province(DATA.get_tile_province_membership_from_tile(tile))
+end
+
 ---commenting
 ---@param leader pop_id
 ---@return warband_id
 function RECRUITER_OF_WARBAND(leader)
 	local leadership = DATA.get_warband_recruiter_from_recruiter(leader)
 	return DATA.warband_recruiter_get_warband(leadership)
+end
+
+---@param leader pop_id
+---@return warband_id
+function COMMANDER_OF_WARBAND(leader)
+	local leadership = DATA.get_warband_commander_from_commander(leader)
+	return DATA.warband_commander_get_warband(leadership)
 end
 
 ---commenting
@@ -475,7 +554,7 @@ INVALID_ID = 0
 ---@alias Race race_id
 ---@alias Realm realm_id
 ---@alias Warband warband_id
----@alias Army army_id
+---@alias Army warband_id[]
 
 ---@type table<trade_good_id, table<use_case_id, number>>
 USE_WEIGHT = {}

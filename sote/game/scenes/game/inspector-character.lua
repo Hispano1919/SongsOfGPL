@@ -81,8 +81,10 @@ function window.draw(game)
                     .. name
                     .. " "
                     .. character.name
-                    .. " owns. They think that its price is "
-                    .. ut.to_fixed_point2(DATA.pop_get_price_memory(character_id, good))
+                    .. " owns. They think they could sell it for "
+                    .. ut.to_fixed_point2(DATA.pop_get_price_belief_sell(character_id, good))
+                    .. " and buy it for "
+                    .. ut.to_fixed_point2(DATA.pop_get_price_belief_buy(character_id, good))
                 ut.sqrt_number_entry_icon(
                     icon,
                     amount or 0,

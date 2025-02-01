@@ -240,32 +240,6 @@ function rea.run(realm_id)
 	-- ## Military spending ##
 	-- #######################
 
-	---#logging LOGS:write("military spendings \n")
-	---#logging LOGS:flush()
-
-	DATA.for_each_realm_provinces_from_realm(realm_id, function (item)
-		local province_id = DATA.realm_provinces_get_province(item)
-
-		DATA.for_each_warband_location_from_location(province_id, function (location)
-			local warband_id = DATA.warband_location_get_warband(location)
-			local treasury = DATA.warband_get_treasury(warband_id)
-			local total_upkeep = DATA.warband_get_total_upkeep(warband_id)
-
-
-			if treasury > total_upkeep then
-				DATA.warband_inc_treasury(warband_id, -total_upkeep)
-				DATA.for_each_warband_unit_from_warband(warband_id, function (unit)
-					local unit_type = DATA.warband_unit_get_type(unit)
-					local upkeep = DATA.unit_type_get_upkeep(unit_type)
-					local pop = DATA.warband_unit_get_unit(unit)
-					economic_effects.add_pop_savings(pop, upkeep, ECONOMY_REASON.UPKEEP)
-				end)
-			else
-
-			end
-		end)
-	end)
-
 	-- spend and set military budget target based on capitol guard
 	local military_upkeep = 0.0
 	local guard = GUARD(realm_id)

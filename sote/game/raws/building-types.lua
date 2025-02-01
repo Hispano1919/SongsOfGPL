@@ -42,16 +42,12 @@ function BuildingType.get_tooltip(building_type)
 			local new_string = ""
 			local job_found = false
 			new_string = new_string .. "\n\nJobs: "
-			for i = 1, MAX_SIZE_ARRAYS_PRODUCTION_METHOD do
-				local job = DATA.production_method_get_jobs_job(prod_method, i)
-				if job == INVALID_ID then
-					break
-				end
-				local amount = DATA.production_method_get_jobs_amount(prod_method, i)
-				---@type string
-				new_string = new_string .. DATA.job_get_description(job) .. " (" .. tostring(amount) .. "), "
-				job_found = true
-			end
+
+			local job = DATA.production_method_get_job(prod_method)
+			local amount = 1
+			---@type string
+			new_string = new_string .. DATA.job_get_description(job) .. " (" .. tostring(amount) .. "), "
+			job_found = true
 
 			if job_found then
 				s = s .. new_string

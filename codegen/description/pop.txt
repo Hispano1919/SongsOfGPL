@@ -7,7 +7,8 @@ name string
 traits TRAIT[10]
 need_satisfaction need_satisfaction[20]
 inventory float[trade_good_id]
-price_memory float[trade_good_id]
+price_belief_sell float[trade_good_id]
+price_belief_buy float[trade_good_id]
 savings float
 life_needs_satisfaction float from 0 to 1
 basic_needs_satisfaction float from 0 to 1
@@ -23,3 +24,4 @@ free_will bool
 is_player bool
 rank CHARACTER_RANK
 dna float[20]
+ai_data AI_DATA

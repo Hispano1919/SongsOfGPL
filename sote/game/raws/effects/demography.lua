@@ -1,4 +1,5 @@
 local warband_utils = require "game.entities.warband"
+local demography_values = require "game.raws.values.demography"
 
 local demo = {}
 
@@ -18,13 +19,6 @@ function demo.fire_pop(pop)
 	local employment = DATA.get_employment_from_worker(pop)
 	if DATA.employment_get_building(employment) ~= INVALID_ID then
 		DATA.delete_employment(employment)
-		local building = DATA.employment_get_building(employment)
-		if #DATA.get_employment_from_building(building) == 0 then
-			local fat = DATA.fatten_building(building)
-			fat.last_income = 0
-			fat.last_donation_to_owner = 0
-			fat.subsidy_last = 0
-		end
 	end
 end
 
@@ -32,7 +26,7 @@ end
 ---@param pop pop_id
 function demo.outlaw_pop(province, pop)
 	-- ignore pops which are already outlawed
-	if DATA.get_outlaw_location_from_outlaw(pop) then
+	if DATA.outlaw_location_get_location(DATA.get_outlaw_location_from_outlaw(pop)) ~= INVALID_ID then
 		return
 	end
 
@@ -47,23 +41,44 @@ function demo.outlaw_pop(province, pop)
 	DATA.delete_pop_location(pop_location)
 end
 
----Marks a pop as a soldier of a given type in a given warband.
+---Moves a pop from province to warband
 ---@param pop pop_id
----@param unit_type unit_type_id
 ---@param warband warband_id
-function demo.recruit(pop, unit_type, warband)
-	local membership = DATA.get_warband_unit_from_unit(pop)
+---@param unit_type UNIT_TYPE
+function demo.recruit(pop, warband, unit_type)
+	local membership = DATA.warband_unit_get_warband(DATA.get_warband_unit_from_unit(pop))
 	-- if pop is already drafted, do nothing
 	if membership ~= INVALID_ID then
 		return
 	end
 
-	-- clean pop and set his unit type
+	-- clean pop data
 	demo.fire_pop(pop)
 	warband_utils.unregister_military(pop)
 
+	if DATA.character_location_get_location(DATA.get_character_location_from_character(pop)) ~= INVALID_ID then
+		DATA.delete_character_location(DATA.get_character_location_from_character(pop))
+	end
+
+	if DATA.pop_location_get_location(DATA.get_pop_location_from_pop(pop)) ~= INVALID_ID then
+		DATA.delete_pop_location(DATA.get_pop_location_from_pop(pop))
+	end
+
 	-- set warband
 	warband_utils.hire_unit(warband, pop, unit_type)
+end
+
+function demo.unrecruit(pop)
+	local warband = UNIT_OF(pop)
+	local province = TILE_PROVINCE(WARBAND_TILE(warband))
+
+	if IS_CHARACTER(pop) then
+		DATA.force_create_character_location(province, pop)
+	else
+		DATA.force_create_pop_location(province, pop)
+	end
+
+	warband_utils.fire_unit(warband, pop)
 end
 
 ---Kills ratio of army
@@ -90,16 +105,43 @@ function demo.kill_off_warband(warband, ratio)
 end
 
 ---kills of a ratio of army and returns the losses
----@param army army_id
+---@param army warband_id[]
 ---@param ratio number
 ---@return number
 function demo.kill_off_army(army, ratio)
 	local losses = 0
-	for _, army_membership in pairs(DATA.get_army_membership_from_army(army)) do
-		local warband = DATA.army_membership_get_member(army_membership)
+	for _, warband in pairs(army) do
 		losses = losses + demo.kill_off_warband(warband, ratio)
 	end
 	return losses
+end
+
+---Employs a pop and handles its removal from relevant data structures...
+---@param pop pop_id
+---@param building building_id
+function demo.employ_pop(pop, building)
+	local potential_job = demography_values.potential_job(building)
+	if potential_job == nil then
+		return
+	end
+	-- Now that we know that the job is needed, employ the pop!
+
+	DATA.pop_set_forage_ratio(pop, 0.5)
+	DATA.pop_set_work_ratio(pop, 0.5)
+
+	-- ... but fire them first to update the previous building if needed
+	local employment = DATA.get_employment_from_worker(pop)
+	if DATA.employment_get_building(employment) == INVALID_ID then
+		-- no need to update stuff: just create new employment
+		local new_employment = DATA.fatten_employment(DATA.force_create_employment(building, pop))
+		new_employment.job = potential_job
+		new_employment.start_date = WORLD.year * 30 * 12 + WORLD.day + WORLD.month * 30
+	else
+		local fat = DATA.fatten_employment(employment)
+		fat.building = building
+		fat.job = potential_job
+		fat.start_date = WORLD.year * 30 * 12 + WORLD.day + WORLD.month * 30
+	end
 end
 
 return demo

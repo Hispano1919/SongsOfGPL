@@ -151,6 +151,12 @@ enum class POLITICS_REASON : uint8_t {
     OTHER = 8,
 };
 
+enum class UNIT_TYPE : uint8_t {
+    INVALID = 0,
+    WARRIOR = 1,
+    CIVILIAN = 2,
+};
+
 enum class LAW_TRADE : uint8_t {
     INVALID = 0,
     NO_REGULATION = 1,
@@ -205,11 +211,6 @@ enum class LAW_BUILDING : uint8_t {
         NEED need;
         int32_t use_case;
         float required;
-    };
-
-    struct job_container {
-        int32_t job;
-        uint32_t amount;
     };
 
 }

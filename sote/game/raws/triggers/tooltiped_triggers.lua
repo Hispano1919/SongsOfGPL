@@ -41,6 +41,25 @@ Trigger.Pretrigger.not_busy = {
 }
 
 ---@type Pretrigger
+Trigger.Pretrigger.during_migration = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "You are not migrating currently" }
+	end,
+	condition = function(root)
+		return CAPITOL(REALM(root)) == INVALID_ID
+	end
+}
+
+Trigger.Pretrigger.at_province_center = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "You have to settle at province center" }
+	end,
+	condition = function(root)
+		return WARBAND_TILE(LEADER_OF_WARBAND(root)) == DATA.province_get_center(LOCAL_PROVINCE(root))
+	end
+}
+
+---@type Pretrigger
 Trigger.Pretrigger.not_ai_or_is_trader = {
 	tooltip_on_condition_failure = function(root, primary_target)
 		return { "AI specific pretrigger" }
@@ -50,6 +69,49 @@ Trigger.Pretrigger.not_ai_or_is_trader = {
 			return true
 		end
 		return HAS_TRAIT(root, TRAIT.TRADER)
+	end
+}
+
+---@type Pretrigger
+Trigger.Pretrigger.is_tribute_collector = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "You are not allowed to collect tribute" }
+	end,
+	condition = function(root)
+		return office_triggers.tribute_collector(root, REALM(root))
+	end
+}
+
+---@type Pretrigger
+Trigger.Pretrigger.is_at_tributary_capital = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "Local province does not pay tribute to your realm" }
+	end,
+	condition = function(root)
+		local province_in = PROVINCE(root)
+		if province_in == INVALID_ID then
+			province_in = TILE_PROVINCE(WARBAND_TILE(LEADER_OF_WARBAND(root)))
+		end
+
+		return diplomacy_trigger.pays_tribute_to(PROVINCE_REALM(province_in), REALM(root))
+	end
+}
+
+---@type Pretrigger
+Trigger.Pretrigger.at_core_realm_province = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "You have not entered a settlement you can collect taxes from" }
+	end,
+	condition = function(root)
+		local province = PROVINCE(root)
+		if province == INVALID_ID then
+			return false
+		end
+		local local_realm = PROVINCE_REALM(province)
+		if local_realm == REALM(root) then
+			return true
+		end
+		return false
 	end
 }
 
@@ -209,11 +271,21 @@ Trigger.Pretrigger.decision_maker_local = {
 
 		local local_realm = LOCAL_REALM(root)
 
-		if local_realm == nil then
+		if local_realm == INVALID_ID then
 			return false
 		end
 
 		return LEADER(local_realm) == root
+	end
+}
+
+---@type Pretrigger
+Trigger.Pretrigger.foreign_policy_decision_maker = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "You are not the one who decides foreign policy decisions in the your tribe" }
+	end,
+	condition = function(root)
+		return office_triggers.decides_foreign_policy(root, REALM(root))
 	end
 }
 

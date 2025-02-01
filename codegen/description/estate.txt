@@ -1,0 +1,6 @@
+savings float
+inventory float[trade_good_id]
+inventory_sold_last_tick float[trade_good_id]
+inventory_bought_last_tick float[trade_good_id]
+inventory_demanded_last_tick float[trade_good_id]
+balance_last_tick float

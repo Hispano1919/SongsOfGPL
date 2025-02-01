@@ -19,13 +19,14 @@ REGISTERED_STRUCTS: typing.Dict[str, StructDescription] = {}
 # retrieve list of names of entity linked to a given name and name of according field
 REGISTERED_LINKS: typing.Dict[str, typing.List[typing.Tuple[str, str]]] = {}
 
-DESCRIPTION_PATH = "./sote/codegen/description"
-DESCRIPTION_RAWS_PATH = "./sote/codegen/description_raws"
-DESCRIPTION_STATIC_PATH = "./sote/codegen/description_static"
-DESCRIPTION_STRUCTS_PATH = "./sote/codegen/description_structs"
-OUTPUT_PATH = "./sote/codegen/output/generated.lua"
-DCON_DESC_PATH = "./sote/codegen/dcon/sote.txt"
-CPP_COMMON_TYPES_PATH = "./sote/codegen/dcon/sote_types.hpp"
+DESCRIPTION_PATH = "./codegen/description"
+DESCRIPTION_RAWS_PATH = "./codegen/description_raws"
+DESCRIPTION_STATIC_PATH = "./codegen/description_static"
+DESCRIPTION_STRUCTS_PATH = "./codegen/description_structs"
+OUTPUT_PATH = "./codegen/output/generated.lua"
+LUAGEN_PATH = "./codegen/output/"
+DCON_DESC_PATH = "./codegen/dcon/sote.txt"
+CPP_COMMON_TYPES_PATH = "./codegen/dcon/sote_types.hpp"
 NAMESPACE = "DATA"
 SAVE_FILE_NAME_LUA = "gamestatesave.bitserbeaver"
 SAVE_FILE_NAME_FFI = "gamestatesave.binbeaver"
@@ -884,8 +885,13 @@ class EntityDescription:
         result += f"\n---{self.name}: LSP types---\n"
         #id
         result += f"\n---Unique identificator for {self.name} entity\n"
-        result += f'---@class (exact) {prefix_to_id_name(self.name)} : number\n'
-        result += f'---@field is_{self.name} nil\n\n'
+        result += f'---@class (exact) {prefix_to_id_name(self.name)} : table\n'
+        result += f'---@field is_{self.name} number\n'
+        # for id_name in REGISTERED_ID_NAMES:
+            # if id_name == prefix_to_id_name(self.name):
+                # result += f'---@field is_{self.name} table\n'
+            # else:
+                # result += f'---@field is_{id_name} number\n'
 
         #fat id
         result += f'---@class (exact) fat_{prefix_to_id_name(self.name)}\n'
@@ -1147,8 +1153,8 @@ class EntityDescription:
         result += f'---@return fat_{prefix_to_id_name(self.name)} fat_id\n'
         result += f"function {NAMESPACE}.fatten_{self.name}(id)\n"
         result +=  "    local result = {id = id}\n"
-        result += f"    setmetatable(result, fat_{prefix_to_id_name(self.name)}_metatable)"
-        result +=  "    return result\n"
+        result += f"    setmetatable(result, fat_{prefix_to_id_name(self.name)}_metatable)\n"
+        result += f"    return result --[[@as fat_{prefix_to_id_name(self.name)}]]\n"
         result +=  "end\n"
         return result
 
@@ -1272,6 +1278,18 @@ def save_state():
     result += "end\n"
     return result
 
+def check_dcon_limits():
+    """
+    Generates routine which displays current dcon state:\n
+    """
+    result = f"function {NAMESPACE}.check_state()\n"
+
+    for entity in ENTITY_LIST:
+        result += f"    print(string.format(\"%.2f %%\", DCON.dcon_{entity.name}_size() / {entity.max_count} * 100), \"{entity.name}\", {entity.max_count})\n"
+
+    result += "end\n"
+    return result
+
 def load_state():
     """
     Generates routine which saves lua state:\n
@@ -1305,7 +1323,7 @@ def tests():
     Generates tests for generated code
     """
     result = ""
-    for i in range(3):
+    for i in range(1):
         # result += f"function {NAMESPACE}.test_save_load_{i}()\n"
 
         # # generate data
@@ -1447,6 +1465,7 @@ ForageResource = StaticEntityDescription("forage_resource")
 BudgetCategory = StaticEntityDescription("budget_category")
 EconomyReason = StaticEntityDescription("economy_reason")
 PoliticsReason = StaticEntityDescription("politics_reason")
+UnitType = StaticEntityDescription("unit_type")
 
 LawTrade = StaticEntityDescription("law_trade")
 LawBuilding = StaticEntityDescription("law_building")
@@ -1474,14 +1493,10 @@ Plate = EntityDescription("plate", 50, False)
 PlateTiles = EntityDescription("plate_tiles", TILES_MAX_COUNT + 20, False)
 PlateTiles.index_storage = "std_vector"
 
-UnitType = EntityDescription("unit_type", 20, True)
-
 Satisfaction = StructDescription("need_satisfaction")
 NeedDefinition = StructDescription("need_definition")
 
 Job = EntityDescription("job", 250, True)
-
-JobContainer = StructDescription("job_container")
 
 ProductionMethod = EntityDescription("production_method", 250, True)
 Technology = EntityDescription("technology", 400, True)
@@ -1508,18 +1523,18 @@ Subreligion = EntityDescription("subreligion", 10000, False)
 
 Pop = EntityDescription("pop", POPS_MAX_COUNT, False)
 Province = EntityDescription("province", 20000, False)
-Army = EntityDescription("army", 50000, False)
 Warband = EntityDescription("warband", 50000, False)
 Realm = EntityDescription("realm", REALMS_MAX_COUNT, False)
 
 Negotiations = EntityDescription("negotiation", 45000, False)
 
-Building = EntityDescription("building", 200000, False)
-BuildingOwnership = EntityDescription("ownership", 200000, False)
-Employment = EntityDescription("employment", 300000, False)
-BuildingLocation = EntityDescription("building_location", 200000, False)
+Building = EntityDescription("building", POPS_MAX_COUNT * 20, False)
+Estate = EntityDescription("estate", 300000, False)
+Ownership = EntityDescription("ownership", 300000, False)
+Employment = EntityDescription("employment", POPS_MAX_COUNT * 2, False)
+EstateLocation = EntityDescription("estate_location", 300000, False)
+BuildingEstate = EntityDescription("building_estate", POPS_MAX_COUNT * 2, False)
 
-ArmyMembership = EntityDescription("army_membership", 50000, False)
 WarbandLeader = EntityDescription("warband_leader", 50000, False)
 WarbandRecruiter = EntityDescription("warband_recruiter", 50000, False)
 WarbandCommander = EntityDescription("warband_commander", 50000, False)
@@ -1538,7 +1553,6 @@ ParentChild = EntityDescription("parent_child_relation", 900000, False)
 Loyalty = EntityDescription("loyalty", 200000, False)
 Succession = EntityDescription("succession", 200000, False)
 
-RealmArmies = EntityDescription("realm_armies", REALMS_MAX_COUNT, False)
 RealmGuard = EntityDescription("realm_guard", REALMS_MAX_COUNT, False)
 RealmOverseer = EntityDescription("realm_overseer", REALMS_MAX_COUNT, False)
 RealmLeader = EntityDescription("realm_leadership", REALMS_MAX_COUNT, False)
@@ -1559,20 +1573,28 @@ with open(OUTPUT_PATH, "w", encoding="utf8") as out:
     out.write("\n")
     out.write(f'{NAMESPACE} = {{}}\n')
     for struct_description in STRUCTS_LIST:
-        out.write(str(struct_description))
-
+        with open (f'{LUAGEN_PATH}{struct_description.name}.lua', "w", encoding="utf8") as description_file:
+            description_file.write('local ffi = require("ffi")\n')
+            description_file.write(str(struct_description))
+        out.write(f'require "codegen.output.{struct_description.name}"\n')
     for entity_description in ENTITY_LIST:
-        out.write(str(entity_description))
+        with open (f'{LUAGEN_PATH}{entity_description.name}.lua', "w", encoding="utf8") as description_file:
+            description_file.write('local ffi = require("ffi")\n')
+            description_file.write(str(entity_description))
+        out.write(f'require "codegen.output.{entity_description.name}"\n')
     for entity_description in RAWS_LIST:
-        out.write(str(entity_description))
+        with open (f'{LUAGEN_PATH}{entity_description.name}.lua', "w", encoding="utf8") as description_file:
+            description_file.write('local ffi = require("ffi")\n')
+            description_file.write(str(entity_description))
+        out.write(f'require "codegen.output.{entity_description.name}"\n')
 
     out.write(auxiliary_types())
     out.write(save_state())
+    out.write(check_dcon_limits())
     out.write(load_state())
     out.write(tests())
 
     out.write(f'return {NAMESPACE}\n')
-
 
 with open(DCON_DESC_PATH, "w", encoding="utf8") as out:
 

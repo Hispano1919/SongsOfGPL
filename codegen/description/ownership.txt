@@ -1,2 +1,2 @@
-link one building building
+link one estate estate
 link many owner pop

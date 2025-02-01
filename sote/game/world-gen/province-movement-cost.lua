@@ -2,7 +2,7 @@ local pro = {}
 
 -- After provinces are created, we also need to create the neighborhoods and travel time costs
 ---@param t tile_id
-local single_tile_cost = function(t)
+function pro.single_tile_cost(t)
 	if DATA.tile_get_is_land(t) then
 		local elevation = DATA.tile_get_elevation(t)
 		local grass = DATA.tile_get_grass(t)
@@ -31,7 +31,7 @@ function pro.run()
 		local fat = DATA.fatten_province(province_id)
 		fat.movement_cost = 0
 		for _, tile_member in pairs(DATA.get_tile_province_membership_from_province(province_id)) do
-			fat.movement_cost = fat.movement_cost + single_tile_cost(DATA.tile_province_membership_get_tile(tile_member))
+			fat.movement_cost = fat.movement_cost + pro.single_tile_cost(DATA.tile_province_membership_get_tile(tile_member))
 		end
 	end)
 end

@@ -112,17 +112,18 @@ return function ()
 					local target_sell_price = economic_values.get_pessimistic_local_price(target, good, 5, true) / 5
 					local target_buy_price = economic_values.get_local_price(target, good)
 
-					local known_price = DATA.pop_get_price_memory(root, good)
+					local known_sell_price = DATA.pop_get_price_belief_sell(root, good)
+					local known_buy_price = DATA.pop_get_price_belief_buy(root, good)
 					local greed = character_values.profit_desire(root)
 
 					local stockpile = DATA.province_get_local_storage(PROVINCE(root), good)
 
-					if (target_sell_price > known_price * (1.0 + greed)) and (stockpile > 5) then -- we want to sell there
-						trade_profits = trade_profits + target_sell_price - known_price
+					if (target_sell_price > known_sell_price * (1.0 + greed)) and (stockpile > 5) then -- we want to sell there
+						trade_profits = trade_profits + target_sell_price - known_sell_price
 					end
 
-					if (target_buy_price * (1.0 + greed) < known_price) and (stockpile > 5) then -- we want to buy there
-						trade_profits = trade_profits + known_price - target_buy_price
+					if (target_buy_price * (1.0 + greed) < known_buy_price) and (stockpile > 5) then -- we want to buy there
+						trade_profits = trade_profits + known_buy_price - target_buy_price
 					end
 				end
 

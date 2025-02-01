@@ -6,7 +6,7 @@ local warband_utils = require "game.entities.warband"
 
 local demography_effects = require "game.raws.effects.demography"
 local politics_values = require "game.raws.values.politics"
-local military_effects = require "game.raws.effects.military"
+local warband_effect = require "game.raws.effects.warband"
 local messages_effects = require "game.raws.effects.messages"
 
 local PoliticalEffects = {}
@@ -177,7 +177,7 @@ end
 function PoliticalEffects.set_guard_leader(realm, guard_leader)
 	local realm_guard = DATA.get_realm_guard_from_realm(realm)
 	local guard = DATA.realm_guard_get_guard(realm_guard)
-	military_effects.set_recruiter(guard, guard_leader)
+	warband_effect.set_recruiter(guard, guard_leader)
 
 	if WORLD:does_player_see_realm_news(realm) then
 		WORLD:emit_notification(NAME(guard_leader) .. " now commands guards of " .. DATA.realm_get_name(realm) .. ".")
@@ -198,7 +198,7 @@ function PoliticalEffects.remove_guard_leader(realm)
 		return
 	end
 
-	military_effects.unset_recruiter(guard, guard_leader)
+	warband_effect.unset_recruiter(guard, guard_leader)
 
 	local command = DATA.get_warband_commander_from_warband(guard)
 	if command ~= INVALID_ID then

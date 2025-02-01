@@ -18,7 +18,7 @@ function pro.run_fast()
 
 		if not IS_CHARACTER(item) then
 			local savings = DATA.pop_get_savings(item)
-			DATA.pop_set_savings(item, savings * 0.9)
+			DATA.pop_set_savings(item, savings * 0.99)
 			economic_effects.register_income(LOCAL_REALM(item), savings, ECONOMY_REASON.DONATION)
 		end
 	end)

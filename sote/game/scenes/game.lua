@@ -1,3 +1,9 @@
+local pathfinding = require "game.ai.pathfinding"
+local warband_utils = require "game.entities.warband"
+local portrait = require "game.scenes.game.widgets.portrait"
+
+local military_values = require "game.raws.values.military"
+
 ---@class (exact) GameScene
 ---@field macrobuilder_public_mode boolean
 ---@field tile_inspector_tab TileInspectorTabs | nil
@@ -253,6 +259,7 @@ local profiler_state = {
 ---@field province Province?
 ---@field realm Realm?
 ---@field building_type BuildingType?
+---@field estate estate_id
 ---@field building Building?
 ---@field macrobuilder_building_type BuildingType
 ---@field war War?
@@ -261,11 +268,14 @@ local profiler_state = {
 ---@field macrodecision DecisionCharacterProvince?
 ---@field tech Technology?
 ---@field cached_tech Technology?
-
+---@field current_path tile_id[]|nil
+---@field current_path_time number
 gam.selected = {
 	character = INVALID_ID,
 	tile = INVALID_ID,
-	macrobuilder_building_type = INVALID_ID
+	macrobuilder_building_type = INVALID_ID,
+	estate = INVALID_ID,
+	current_path_time = 0
 }
 
 local function is_known(province)
@@ -549,7 +559,7 @@ function gam.update(dt)
 		PAUSE_REQUESTED = false
 	end
 
-	if gam.paused and gam.ticks_without_map_update > world.ticks_per_hour * 24 * 10 then
+	if gam.paused and gam.ticks_without_map_update > WORLD.ticks_per_hour * 24 * 10 then
 		gam.ticks_without_map_update = 0
 		gam.refresh_map_mode()
 
@@ -724,12 +734,38 @@ function gam.handle_zoom()
 	end
 end
 
----@param tile_id number
+---@param tile_id tile_id
 function gam.click_tile(tile_id)
 	gam.clicked_tile_id = tile_id
 
 	if tile_id then
 		gam.selected.province = tile.province(tile_id)
+		gam.selected.tile = tile_id
+
+		if WORLD.player_character ~= INVALID_ID then
+			local warband = LEADER_OF_WARBAND(WORLD.player_character)
+			--print(warband)
+			if warband ~= INVALID_ID and PROVINCE(WORLD.player_character) == INVALID_ID then
+				--print(WARBAND_TILE(warband), gam.selected.tile)
+				local hours, path = pathfinding.pathfind(
+					WARBAND_TILE(warband),
+					gam.selected.tile,
+					military_values.warband_speed(warband),
+					DATA.realm_get_known_provinces(REALM(WORLD.player_character))
+				)
+				tabb.print(path)
+				if path then
+					table.insert(path, WARBAND_TILE(warband))
+					DATA.warband_set_current_path(warband, path)
+					DATA.warband_set_movement_progress(
+						warband,
+						pathfinding.tile_distance(WARBAND_TILE(warband), path[#path], military_values.warband_speed(warband))
+					)
+				end
+				-- gam.selected.current_path = path
+				-- gam.selected.current_path_time = hours
+			end
+		end
 	end
 
 	gam.reset_decision_selection()
@@ -1251,7 +1287,7 @@ function gam.draw()
 	end
 
 	local draw_distance = 1.075
-	local flood_fill = 200
+	local flood_fill = 40
 
 	if coll_point and (gam.camera_position:len() < draw_distance) then
 		local draw_tile = function(tile_id)
@@ -1279,6 +1315,29 @@ function gam.draw()
 				end
 			end
 
+			--- draw warband icons:
+			local count = 0
+			DATA.for_each_warband_location_from_location(tile_id, function (item)
+				count = count + 1
+			end)
+
+			rect_for_icons.width = size / 2
+			rect_for_icons.height = size / 2
+			local radius = 0
+			if count > 1 then
+				radius = size
+			end
+			if count > 0 then
+				local current = 0
+				DATA.for_each_warband_location_from_location(tile_id, function (item)
+					rect_for_icons.x = x + math.cos(2 * math.pi * current / count) * radius - size / 4
+					rect_for_icons.y = y + math.sin(2 * math.pi * current / count) * radius - size / 4
+					current = current + 1
+					portrait(rect_for_icons, WARBAND_LEADER(DATA.warband_location_get_warband(item)))
+				end)
+			end
+			rect_for_icons.width = size
+			rect_for_icons.height = size
 			return false
 		end
 
@@ -1291,17 +1350,33 @@ function gam.draw()
 		local center_tile = world_id
 		local prov = tile.province(center_tile)
 		visited[prov] = prov
+
+		---@type table<tile_id, tile_id>
+		local tiles_to_draw = {}
+
 		qq:enqueue(prov)
 		while qq:length() > 0 and to_draw > 0 do
 			to_draw = to_draw - 1
 			local td = qq:dequeue()
 
-			for i = 1, MAX_RESOURCES_IN_PROVINCE_INDEX - 1 do
-				local res = DATA.province_get_local_resources_resource(td, i)
-				if res == INVALID_ID then
-					break
+			local valid = true
+
+			if WORLD.player_character ~= INVALID_ID then
+				valid = false
+				if DATA.realm_get_known_provinces(PROVINCE_REALM(td)) and DATA.realm_get_known_provinces(REALM(WORLD.player_character))[td] then
+					valid = true
 				end
-				draw_tile(DATA.province_get_local_resources_location(td, i))
+			end
+
+			if valid then
+				for i = 1, MAX_RESOURCES_IN_PROVINCE_INDEX - 1 do
+					local res = DATA.province_get_local_resources_resource(td, i)
+					if res == INVALID_ID then
+						break
+					end
+					local tile = DATA.province_get_local_resources_location(td, i)
+					tiles_to_draw[tile] = tile
+				end
 			end
 
 			DATA.for_each_province_neighborhood_from_origin(td, function (neighborhood)
@@ -1312,7 +1387,38 @@ function gam.draw()
 					qq:enqueue(n)
 				end
 			end)
+
+			if valid then
+				DATA.for_each_tile_province_membership_from_province(td, function (item)
+					local local_tile = DATA.tile_province_membership_get_tile(item)
+					DATA.for_each_warband_location_from_location(local_tile, function (item)
+						tiles_to_draw[local_tile] = local_tile
+					end)
+				end)
+			end
 		end
+
+		for key, value in pairs(tiles_to_draw) do
+			draw_tile(value)
+		end
+	end
+
+	--print(gam.selected.tile)
+	local warband = LEADER_OF_WARBAND(WORLD.player_character)
+
+	if warband ~= INVALID_ID and DATA.warband_get_current_path(warband) ~= nil and DATA.warband_get_current_path(warband)[1] then
+		local x, y, z = tile_to_x_y(DATA.warband_get_current_path(warband)[1])
+		rect_for_icons.x = x - size / 2
+		rect_for_icons.y = y - size / 2
+		rect_for_icons.width = size
+		rect_for_icons.height = size
+		require "game.scenes.game.widgets.onmap.path" (
+			gam,
+			rect_for_icons,
+			WARBAND_TILE(warband),
+			DATA.warband_get_current_path(warband),
+			tile_to_x_y
+		)
 	end
 
 	if coll_point and ((gam.camera_position:len() < draw_distance) or (gam.inspector == 'macrobuilder') or (gam.inspector == 'macrodecision')) then
@@ -1353,31 +1459,6 @@ function gam.draw()
 
 			-- draw
 			local result = nil
-			if mode == "path" then
-				local decision = gam.selected.macrodecision
-				if decision == nil then
-					return
-				end
-				local player = WORLD.player_character
-				if player == INVALID_ID then
-					return
-				end
-
-				if not decision.clickable(player, province) then
-					return
-				end
-
-				if decision.path == nil then
-					return
-				end
-
-				local hours, path = decision.path(player, province)
-
-				if path then
-					table.insert(path, WORLD:player_province())
-					result = require "game.scenes.game.widgets.onmap.path" (gam, rect_for_icons, hours, path, tile_to_x_y)
-				end
-			end
 
 			if mode == "label" then
 				result = require "game.scenes.game.widgets.onmap.province" (gam, center, rect_for_icons, x, y, size)

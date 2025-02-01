@@ -1,6 +1,7 @@
 name string
 icon string
 description string
+good_consumption float
 r float
 g float
 b float

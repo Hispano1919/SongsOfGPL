@@ -1,4 +1,5 @@
-link many building building
+link one building building
 link one worker pop
 worker_income float
 job job_id
+start_date int32_t

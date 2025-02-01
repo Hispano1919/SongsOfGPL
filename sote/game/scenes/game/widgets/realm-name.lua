@@ -20,7 +20,9 @@ local function realm_name(gam, realm, rect, mode)
         gam.inspector = "realm"
         gam.selected.realm = realm
         local capitol = DATA.province_get_center(DATA.realm_get_capitol(realm))
-        gam.click_tile(capitol)
+        if capitol ~= INVALID_ID then
+            gam.click_tile(capitol)
+        end
     end
 
     if ut.coa(realm, COA_rect) then

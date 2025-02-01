@@ -132,7 +132,7 @@ function d.load()
 		b = 0.3,
 		base_price = 2,
 		belongs_to_category = TRADE_GOOD_CATEGORY.GOOD,
-		decay = 0.99
+		decay = 0.4
 	}
 	add_use_case("hide", "clothes", 0.125)
 	add_use_case("hide", "containers", 0.25)
@@ -147,7 +147,7 @@ function d.load()
 		b = 0.22,
 		base_price = 2,
 		belongs_to_category = TRADE_GOOD_CATEGORY.GOOD,
-		decay = 0.99
+		decay = 0.9
 	}
 	add_use_case("timber", "tools-like", 0.25)
 	add_use_case("timber", "timber", 1)

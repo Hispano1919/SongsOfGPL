@@ -28,12 +28,15 @@ function r.run(province)
 	end
 
 	-- From buildings
-	DATA.for_each_building_location_from_location(province, function (item)
-		local building = DATA.building_location_get_building(item)
-		local building_type = DATA.building_get_current_type(building)
-		local infrastructure_needs = DATA.building_type_get_needed_infrastructure(building_type)
-		---@type number
-		inf = inf + infrastructure_needs
+	DATA.for_each_estate_location_from_province(province, function (estate_location)
+		local estate = DATA.estate_location_get_estate(estate_location)
+		DATA.for_each_building_estate_from_estate(estate, function (item)
+			local building = DATA.building_estate_get_building(item)
+			local building_type = DATA.building_get_current_type(building)
+			local infrastructure_needs = DATA.building_type_get_needed_infrastructure(building_type)
+			---@type number
+			inf = inf + infrastructure_needs
+		end)
 	end)
 
 	-- Write the needs

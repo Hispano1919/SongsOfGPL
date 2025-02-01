@@ -16,7 +16,6 @@ SYSTEM = "unknown"
 MACHINE = "unknown"
 
 local jit_os = jit.os:lower()
-print(jit_os)
 for pattern, name in pairs(os_patterns) do
     if jit_os:match(pattern) then
         SYSTEM = name
@@ -25,7 +24,6 @@ for pattern, name in pairs(os_patterns) do
 end
 
 local jit_arch = jit.arch:lower()
-print(jit_arch)
 for pattern, name in pairs(arch_patterns) do
     if jit_arch:match(pattern) then
         MACHINE = name
@@ -33,11 +31,10 @@ for pattern, name in pairs(arch_patterns) do
     end
 end
 
+print("jit id: " ..  jit.os .. " " .. jit.arch)
+print("library path: lib/" .. SYSTEM .. "/" .. MACHINE)
 
-print("OS: " .. SYSTEM)
-print("CPU: " .. MACHINE)
-
-local dll_path = love.filesystem.getSourceBaseDirectory() .. "/libraries/" .. SYSTEM .. "/" .. MACHINE
+local dll_path = love.filesystem.getSourceBaseDirectory() .. "/lib/" .. SYSTEM .. "/" .. MACHINE
 
 if love.system.getOS() == "Windows" then
 	DCON = ffi.load(dll_path .. "/dcon.dll")
@@ -87,6 +84,9 @@ ffi.cdef[[
 
     void update_map_mode_pointer(uint8_t* map, uint32_t world_size);
     int32_t get_neighbor(int32_t tile_id, uint8_t neighbor_index, uint32_t world_size);
+
+    void ai_update_price_belief(int32_t trader_raw_id);
+	void ai_trade(int32_t trader_raw_id);
 ]]
 
 

@@ -17,7 +17,9 @@ prov.Province.__index = prov.Province
 function prov.Province.new(fake_flag)
 	local o = DATA.fatten_province(DATA.create_province())
 
-
+	DATA.for_each_trade_good(function (item)
+		DATA.province_set_local_prices(o.id, item, 1.0)
+	end)
 	-- print("add province:", o.id)
 
 	o.name = "<uninhabited>"
@@ -98,29 +100,26 @@ function prov.Province.update_size(province)
 	DATA.province_set_size(province, tabb.size(DATA.get_tile_province_membership_from_province(province)))
 end
 
----Returns the total military size of the province.
+---Returns the total amount of potential defenders of the province.
 ---@param province province_id
 ---@return number
 function prov.Province.military(province)
+	local settlement = DATA.province_get_center(province)
 	local total = 0
-	DATA.for_each_warband_location_from_location(province, function (item)
-		---@type number
-		total = total + warband_utils.size(DATA.warband_location_get_warband(item))
+	DATA.for_each_warband_location_from_location(settlement, function (item)
+		local warband = DATA.warband_location_get_warband(item)
+		if (warband == INVALID_ID) then
+			return
+		end
+
+		local leader = warband_utils.active_leader(warband)
+		if REALM(leader) == PROVINCE_REALM(province) then
+			total = total + warband_utils.size(warband)
+		end
 	end)
 	return total
 end
 
----Returns the total target military size of the province.
----@param province province_id
----@return number
-function prov.Province.military_target(province)
-	local total = 0
-	DATA.for_each_warband_location_from_location(province, function (item)
-		---@type number
-		total = total + warband_utils.target_size(DATA.warband_location_get_warband(item))
-	end)
-	return total
-end
 
 ---Returns the total population of the province, not including characters.
 ---Doesn't include outlaws and active armies.
@@ -315,11 +314,17 @@ function prov.Province.transfer_home(origin, pop, target)
 	end
 end
 
+---Amount of active defenders
 ---@param province province_id
-function prov.Province.local_army_size(province)
+function prov.Province.patrol_size(province)
+	local settlement = DATA.province_get_center(province)
 	local total = 0
-	DATA.for_each_warband_location_from_location(province, function (item)
+	DATA.for_each_warband_location_from_location(settlement, function (item)
 		local warband = DATA.warband_location_get_warband(item)
+		if (warband == INVALID_ID) then
+			return
+		end
+
 		local status = DATA.warband_get_current_status(warband)
 		if status == WARBAND_STATUS.PATROL then
 			---@type number
@@ -345,73 +350,6 @@ function prov.Province.return_pop_from_army(province, pop)
 	prov.Province.add_pop(province, pop)
 end
 
-
----Employs a pop and handles its removal from relevant data structures...
----@param province province_id
----@param pop pop_id
----@param building building_id
-function prov.Province.employ_pop(province, pop, building)
-	local potential_job = prov.Province.potential_job(province, building)
-	if potential_job == nil then
-		return
-	end
-	-- Now that we know that the job is needed, employ the pop!
-
-	DATA.pop_set_forage_ratio(pop, 0.5)
-	DATA.pop_set_work_ratio(pop, 0.5)
-
-	-- ... but fire them first to update the previous building if needed
-	local employment = DATA.get_employment_from_worker(pop)
-	if DATA.employment_get_building(employment) == INVALID_ID then
-		-- no need to update stuff: just create new employment
-		local new_employment = DATA.fatten_employment(DATA.force_create_employment(building, pop))
-		new_employment.job = potential_job
-	else
-		local fat = DATA.fatten_employment(employment)
-
-		local old_building = fat.building
-		-- clean up data if it was the last worker
-		if tabb.size(DATA.get_employment_from_building(old_building)) == 0 then
-			local fat_building = DATA.fatten_building(old_building)
-			fat_building.last_income = 0
-			fat_building.last_donation_to_owner = 0
-			fat_building.subsidy_last = 0
-		end
-
-		fat.building = building
-		fat.job = potential_job
-	end
-end
-
----Returns a potential job, if a pop was to be employed by this building.
----@param province province_id
----@param building building_id
----@return job_id?
-function prov.Province.potential_job(province, building)
-	local btype = DATA.building_get_current_type(building)
-	local method = DATA.building_type_get_production_method(btype)
-
-	for i = 1, MAX_SIZE_ARRAYS_PRODUCTION_METHOD - 1 do
-		local job = DATA.production_method_get_jobs_job(method, i)
-		if job == INVALID_ID then
-			break
-		end
-
-		local workers_with_this_job = 0
-		for _, employment in ipairs(DATA.get_employment_from_building(building)) do
-			if DATA.employment_get_job(employment) == job then
-				workers_with_this_job = workers_with_this_job + 1
-			end
-		end
-
-		local max_amount = DATA.production_method_get_jobs_amount(method, i)
-		if max_amount > workers_with_this_job then
-			return job
-		end
-	end
-
-	return nil
-end
 
 ---@param province province_id
 ---@param researched_technology Technology
@@ -656,12 +594,15 @@ end
 ---@return boolean
 function prov.Province.building_type_present(province, target_building_type)
 	local present = false
-	DATA.for_each_building_location_from_location(province, function (item)
-		local bld = DATA.building_location_get_building(item)
-		local local_bld_type = DATA.building_get_current_type(bld)
-		if local_bld_type == target_building_type then
-			present = true
-		end
+	DATA.for_each_estate_location_from_province(province, function (location)
+		local estate = DATA.estate_location_get_estate(location)
+		DATA.for_each_building_estate_from_estate(estate, function (item)
+			local bld = DATA.building_estate_get_building(item)
+			local local_bld_type = DATA.building_get_current_type(bld)
+			if local_bld_type == target_building_type then
+				present = true
+			end
+		end)
 	end)
 	return present
 end
@@ -861,15 +802,11 @@ function prov.Province.get_spotting(province)
 		s = s + DATA.race_get_spotting(race)
 	end)
 
-	DATA.for_each_building_location_from_location(province, function (location)
-		local building = DATA.building_location_get_building(location)
-		local btype = DATA.building_get_current_type(building)
-		local spotting = DATA.building_type_get_spotting(btype)
-		---@type number
-		s = s + spotting
-	end)
+	--- TODO:
+	--- buildings should not provide spotting while unmanned:
+	--- figure out good way to handle it later
 
-	DATA.for_each_warband_location_from_location(province, function (party)
+	DATA.for_each_warband_location_from_location(DATA.province_get_center(province), function (party)
 		local warband = DATA.warband_location_get_warband(party)
 		local status = DATA.warband_get_current_status(warband)
 		if status == WARBAND_STATUS.PATROL then
@@ -918,7 +855,7 @@ function prov.Province.spot_chance(province, visibility)
 end
 
 ---@param province province_id
----@param army army_id Attacking army
+---@param army warband_id[] Attacking army
 ---@param stealth_penalty number? Multiplicative penalty, multiplies army visibility score.
 ---@return boolean True if the army was spotted.
 function prov.Province.army_spot_test(province, army, stealth_penalty)
@@ -988,40 +925,6 @@ function prov.Province.get_unemployment(province)
 	end
 
 	return u
-end
-
----@param province province_id
----@return warband_id warband
-function prov.Province.new_warband(province)
-	local warband = DATA.create_warband()
-	DATA.force_create_warband_location(province, warband)
-	DATA.warband_set_current_status(warband, WARBAND_STATUS.IDLE)
-	DATA.warband_set_idle_stance(warband, WARBAND_STANCE.FORAGE)
-	return warband
-end
-
----@param province province_id
-function prov.Province.num_of_warbands(province)
-	local amount = 0
-	DATA.for_each_warband_location_from_location(province, function (item)
-		amount = amount + 1
-	end)
-	return amount
-end
-
----@param province province_id
----@return warband_id[]
-function prov.Province.vacant_warbands(province)
-	local res = {}
-
-	DATA.for_each_warband_location_from_location(province, function (item)
-		local warband = DATA.warband_location_get_warband(item)
-		if warband_utils.vacant(warband) then
-			table.insert(res, warband)
-		end
-	end)
-
-	return res
 end
 
 ---@param province province_id

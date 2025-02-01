@@ -14,7 +14,8 @@ local warband_utils = require "game.entities.warband"
 
 local EconomicEffects = {}
 
----consumes `days` worth amount of supplies
+--- consumes `days` worth amount of supplies
+--- returns ratio consumed / desired
 ---@param warband warband_id
 ---@param days number
 ---@return number
@@ -40,7 +41,10 @@ function EconomicEffects.consume_supplies(warband, days)
 			.. "\n days = "
 			.. tostring(days))
 	end
-	return consumed
+	if consumption == 0 then
+		return 1
+	end
+	return consumed / consumption
 end
 
 ---Change realm treasury and display effects to player
@@ -199,55 +203,70 @@ function EconomicEffects.change_local_wealth(province, x, reason)
 end
 
 ---comment
----@param building Building
+---@param estate estate_id
 ---@param pop POP
-function EconomicEffects.set_ownership(building, pop)
+function EconomicEffects.set_ownership(estate, pop)
 	assert(pop ~= INVALID_ID)
-	assert(building ~= INVALID_ID)
+	assert(estate ~= INVALID_ID)
 
-	local ownership = DATA.get_ownership_from_building(building)
-	if ownership == INVALID_ID then
-		DATA.force_create_ownership(building, pop)
+	local owner = OWNER(estate)
+	local province = ESTATE_PROVINCE(estate)
+
+	local estate_found = false
+
+	DATA.for_each_ownership_from_owner(pop, function (item)
+		local owned_estate = DATA.ownership_get_estate(item)
+		local location = ESTATE_PROVINCE(owned_estate)
+		if location == province then
+			--- merge estates:
+			local to_move = {}
+			DATA.for_each_building_estate_from_estate(estate, function (item)
+				table.insert(to_move, item)
+			end)
+			for key, value in pairs(to_move) do
+				DATA.building_estate_set_estate(value, owned_estate)
+			end
+			estate_found = true
+		end
+	end)
+
+	if not estate_found then
+		if owner == INVALID_ID then
+			DATA.force_create_ownership(estate, pop)
+		else
+			DATA.ownership_set_owner(DATA.get_ownership_from_estate(estate), pop)
+		end
 	else
-		DATA.ownership_set_owner(ownership, pop)
+		DATA.delete_estate(estate)
 	end
 
-	local province = building_utils.province(building)
-
 	if pop and WORLD:does_player_see_province_news(province) then
-		local building_type = DATA.building_get_current_type(building)
-		local name_building = DATA.building_type_get_name(building_type)
-		local pop_name = DATA.pop_get_name(pop)
-
 		if WORLD.player_character == pop then
-			WORLD:emit_notification(name_building .. " is now owned by me, " .. pop_name .. ".")
+			WORLD:emit_notification("Estates of " .. NAME(owner) .. " in " .. PROVINCE_NAME(province) .. " is now owned by me, " .. NAME(pop) .. ".")
 		else
-			WORLD:emit_notification(name_building .. " is now owned by " .. pop_name .. ".")
+			WORLD:emit_notification("Estates of " .. NAME(owner) .. " in " .. PROVINCE_NAME(province) .. " is now owned by " .. NAME(pop) .. ".")
 		end
 	end
 end
 
----@param building Building
-function EconomicEffects.unset_ownership(building)
-	local owner = DATA.ownership_get_owner(DATA.get_ownership_from_building(building))
+---@param estate estate_id
+function EconomicEffects.unset_ownership(estate)
+	local owner = DATA.ownership_get_owner(DATA.get_ownership_from_estate(estate))
 
 	if owner == INVALID_ID then
 		return
 	end
 
-	local province = building_utils.province(building)
+	local province = ESTATE_PROVINCE(estate)
 
-	DATA.delete_ownership(DATA.get_ownership_from_building(building))
+	DATA.delete_ownership(DATA.get_ownership_from_estate(estate))
 
 	if WORLD:does_player_see_province_news(province) then
-		local building_type = DATA.building_get_current_type(building)
-		local name_building = DATA.building_type_get_name(building_type)
 		local pop_name = DATA.pop_get_name(owner)
-
 		if WORLD.player_character == owner then
-			WORLD:emit_notification(name_building .. " is no longer owned by me, " .. pop_name .. ".")
+			WORLD:emit_notification("Estates in " .. PROVINCE_NAME(province) .. " are no longer owned by me, " .. pop_name .. ".")
 		else
-			WORLD:emit_notification(name_building .. " is no longer owned by " .. pop_name .. ".")
+			WORLD:emit_notification("Estates in " .. PROVINCE_NAME(province) .. " are no longer owned by " .. pop_name .. ".")
 		end
 	end
 end
@@ -258,7 +277,25 @@ end
 ---@param owner POP
 ---@return Building
 function EconomicEffects.construct_building(building_type, province, owner)
-	local result_building = building_utils.new(province, building_type)
+	---@type estate_id
+	local estate = INVALID_ID
+
+	DATA.for_each_ownership_from_owner(owner, function (item)
+		local owned_estate = DATA.ownership_get_estate(item)
+		if ESTATE_PROVINCE(owned_estate) == province then
+			estate = owned_estate
+		end
+	end)
+
+	if estate == INVALID_ID then
+		estate = DATA.create_estate()
+		DATA.force_create_estate_location(province, estate)
+		if (owner ~= INVALID_ID) then
+			DATA.force_create_ownership(estate, owner)
+		end
+	end
+
+	local result_building = building_utils.new(estate, building_type)
 
 	local name_building = DATA.building_type_get_name(building_type)
 	local province_name = DATA.province_get_name(province)
@@ -267,18 +304,13 @@ function EconomicEffects.construct_building(building_type, province, owner)
 		WORLD:emit_notification(name_building .. " was constructed in " .. province_name .. ".")
 	end
 
-	if owner ~= INVALID_ID then
-		EconomicEffects.set_ownership(result_building, owner)
-	end
-
 	return result_building
 end
 
 ---comment
 ---@param building Building
 function EconomicEffects.destroy_building(building)
-	EconomicEffects.unset_ownership(building)
-	building_utils.remove_from_province(building)
+	DATA.delete_building(building)
 end
 
 ---comment
@@ -306,7 +338,7 @@ end
 ---@param realm Realm
 ---@return number
 function EconomicEffects.collect_tribute(collector, realm)
-	local hauling = pop_utils.get_supply_capacity(collector, INVALID_ID) * 2
+	local hauling = pop_utils.get_supply_capacity(collector) * 2
 	local max_tribute = DATA.realm_get_budget_budget(realm, BUDGET_CATEGORY.TRIBUTE)
 	local tribute_amount = math.min(hauling, math.floor(max_tribute))
 
@@ -423,12 +455,12 @@ function EconomicEffects.buy(character, good, amount)
 
 	local price = ev.get_local_price(province, good)
 
-	local price_memory = DATA.pop_get_price_memory(character, good)
+	local price_belief = DATA.pop_get_price_belief_buy(character, good)
 
-	if price_memory == 0 then
-		DATA.pop_set_price_memory(character, good, price)
+	if price_belief == 0 then
+		DATA.pop_set_price_belief_buy(character, good, price)
 	else
-		DATA.pop_set_price_memory(character, good, price_memory * (3 / 4) + price * (1 / 4))
+		DATA.pop_set_price_belief_buy(character, good, price_belief * (3 / 4) + price * (1 / 4))
 	end
 
 	local cost = price * amount
@@ -490,11 +522,7 @@ end
 function EconomicEffects.consume_use_case_from_inventory(pop, use_case, amount)
 	local supply = ev.available_use_case_from_inventory(pop, use_case)
 	if supply < amount then
-		error("NOT ENOUGH IN INVENTORY: "
-			.. "\n supply = "
-			.. tostring(supply)
-			.. "\n amount = "
-			.. tostring(amount))
+		amount = supply
 	end
 	local consumed = tabb.accumulate(DATA.get_use_weight_from_use_case(use_case), 0, function(a, _, weight_id)
 		local good = DATA.use_weight_get_trade_good(weight_id)
@@ -582,11 +610,11 @@ function EconomicEffects.character_buy_use(character, use, amount)
 		local good = DATA.use_weight_get_trade_good(weight_id)
 		local weight = DATA.use_weight_get_weight(weight_id)
 		local good_price = ev.get_local_price(province, good)
-		local memory = DATA.pop_get_price_memory(character, good)
-		if memory == 0 then
-			DATA.pop_set_price_memory(character, good, good_price)
+		local price_belief = DATA.pop_get_price_belief_buy(character, good)
+		if price_belief == 0 then
+			DATA.pop_set_price_belief_buy(character, good, good_price)
 		else
-			DATA.pop_set_price_memory(character, good, memory * (3 / 4) + good_price * (1 / 4))
+			DATA.pop_set_price_belief_buy(character, good, price_belief * (3 / 4) + good_price * (1 / 4))
 		end
 		local goods_available = DATA.province_get_local_storage(province, good)
 		if goods_available > 0 then
@@ -826,13 +854,13 @@ function EconomicEffects.sell(character, good, amount)
 	local province = PROVINCE(character)
 	local price = ev.get_pessimistic_local_price(province, good, amount, true)
 
-	local memory = DATA.pop_get_price_memory(character, good)
+	local memory = DATA.pop_get_price_belief_sell(character, good)
 	local new_memory = price
 	if memory > 0 then
 		new_memory = memory * (3 / 4) + price * (1 / 4)
 	end
 
-	DATA.pop_set_price_memory(character, good, new_memory)
+	DATA.pop_set_price_belief_sell(character, good, new_memory)
 
 	local cost = price * amount
 
@@ -965,6 +993,31 @@ function EconomicEffects.gift_to_warband(warband, character, amount)
 	DATA.warband_inc_treasury(warband, amount)
 end
 
+---comment
+---@param gifter Character
+---@param receiver Character
+---@param amount number
+function EconomicEffects.gift_to_pop(gifter, receiver, amount)
+	assert(gifter ~= INVALID_ID)
+	assert(receiver ~= INVALID_ID)
+
+	local savings_origin = DATA.pop_get_savings(gifter)
+	local savings_target = DATA.pop_get_savings(receiver)
+
+	if amount > 0 then
+		if savings_origin < amount then
+			amount = savings_origin
+		end
+	else
+		if savings_target < -amount then
+			amount = -savings_target
+		end
+	end
+
+	EconomicEffects.add_pop_savings(gifter, -amount, ECONOMY_REASON.LOYALTY_GIFT)
+	EconomicEffects.add_pop_savings(receiver, amount, ECONOMY_REASON.LOYALTY_GIFT)
+end
+
 ---commenting
 ---@param character Character
 ---@return number
@@ -986,7 +1039,7 @@ function EconomicEffects.collect_tax(character)
 		end
 	end
 
-	DATA.for_each_pop_location(function (item)
+	DATA.for_each_pop_location_from_location(LOCAL_PROVINCE(character), function (item)
 		local pop = DATA.pop_location_get_pop(item)
 		local savings = DATA.pop_get_savings(pop)
 		if savings > 0 then

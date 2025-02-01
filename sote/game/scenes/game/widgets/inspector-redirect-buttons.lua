@@ -80,14 +80,15 @@ end
 
 
 ---@param gamescene GameScene
----@param building Building
+---@param estate estate_id
 ---@param rect Rect
 ---@param tooltip string?
 ---@param potential boolean?
 ---@param active boolean?
-function ib.text_button_to_building(gamescene, building, rect, text, tooltip, potential, active)
+function ib.text_button_to_estate(gamescene, estate, rect, text, tooltip, potential, active)
     if ut.text_button(text, rect, tooltip, potential, active) then
-        gamescene.selected.building = building
+        gamescene.selected.building = INVALID_ID
+        gamescene.selected.estate = estate
         gamescene.inspector = "building"
     end
 end

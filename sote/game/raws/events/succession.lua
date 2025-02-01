@@ -80,7 +80,7 @@ local function load()
 			local inheritance = DATA.pop_get_savings(character)
 			if successor ~= INVALID_ID then
 				DATA.for_each_ownership_from_owner(character, function (item)
-					local building = DATA.ownership_get_building(item)
+					local building = DATA.ownership_get_estate(item)
 					ee.set_ownership(building, successor)
 				end)
 				ee.add_pop_savings(successor, inheritance, ECONOMY_REASON.INHERITANCE)

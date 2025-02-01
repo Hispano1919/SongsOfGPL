@@ -4,7 +4,6 @@ local economic_effects = require "game.raws.effects.economy"
 ---@class (exact) TributeCollection
 ---@field origin Realm
 ---@field target Realm
----@field travel_time number
 ---@field tribute number
 ---@field trade_goods_tribute table<trade_good_id, number?>
 
@@ -57,7 +56,7 @@ return function()
 				end
 			end
 
-			WORLD:emit_action("tribute-collection-2", root, associated_data, associated_data.travel_time, true)
+			WORLD:emit_immediate_action("tribute-collection-2", root, associated_data)
 		end,
 	}
 
@@ -73,7 +72,6 @@ return function()
 			---@type TributeCollection
 			associated_data = associated_data
 			economic_effects.return_tribute_home(root, associated_data.origin, associated_data.tribute)
-			UNSET_BUSY(root)
 		end,
 	}
 end

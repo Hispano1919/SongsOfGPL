@@ -429,7 +429,12 @@ object {
         tag { scenario }
     }
     property{
-        name { price_memory }
+        name { price_belief_sell }
+        type { array{trade_good_id}{float} }
+        tag { scenario }
+    }
+    property{
+        name { price_belief_buy }
         type { array{trade_good_id}{float} }
         tag { scenario }
     }
@@ -655,6 +660,11 @@ object {
         tag { scenario }
     }
     property{
+        name { local_merchants_demand }
+        type { array{trade_good_id}{float} }
+        tag { scenario }
+    }
+    property{
         name { local_prices }
         type { array{trade_good_id}{float} }
         tag { scenario }
@@ -747,17 +757,6 @@ object {
     property{
         name { on_a_forest }
         type { bitfield }
-        tag { scenario }
-    }
-}
-object {
-    name { army }
-    storage_type { erasable }
-    size { 50000 }
-    tag {scenario}
-    property{
-        name { destination }
-        type { province_id }
         tag { scenario }
     }
 }
@@ -1059,46 +1058,11 @@ relationship {
 object {
     name { building }
     storage_type { erasable }
-    size { 200000 }
+    size { 600000 }
     tag {scenario}
     property{
         name { current_type }
         type { building_type_id }
-        tag { scenario }
-    }
-    property{
-        name { savings }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { subsidy }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { subsidy_last }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { income_mean }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { last_income }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { last_donation_to_owner }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { unused }
-        type { float }
         tag { scenario }
     }
     property{
@@ -1122,16 +1086,6 @@ object {
         tag { scenario }
     }
     property{
-        name { spent_on_inputs }
-        type { array{uint32_t}{base_types::use_case_container} }
-        tag { scenario }
-    }
-    property{
-        name { earn_from_outputs }
-        type { array{uint32_t}{base_types::trade_good_container} }
-        tag { scenario }
-    }
-    property{
         name { amount_of_inputs }
         type { array{uint32_t}{base_types::use_case_container} }
         tag { scenario }
@@ -1141,20 +1095,51 @@ object {
         type { array{uint32_t}{base_types::trade_good_container} }
         tag { scenario }
     }
+}
+object {
+    name { estate }
+    storage_type { erasable }
+    size { 300000 }
+    tag {scenario}
+    property{
+        name { savings }
+        type { float }
+        tag { scenario }
+    }
     property{
         name { inventory }
         type { array{trade_good_id}{float} }
+        tag { scenario }
+    }
+    property{
+        name { inventory_sold_last_tick }
+        type { array{trade_good_id}{float} }
+        tag { scenario }
+    }
+    property{
+        name { inventory_bought_last_tick }
+        type { array{trade_good_id}{float} }
+        tag { scenario }
+    }
+    property{
+        name { inventory_demanded_last_tick }
+        type { array{trade_good_id}{float} }
+        tag { scenario }
+    }
+    property{
+        name { balance_last_tick }
+        type { float }
         tag { scenario }
     }
 }
 relationship {
     name { ownership }
     storage_type { erasable }
-    size { 200000 }
+    size { 300000 }
     tag {scenario}
     link {
-        object { building }
-        name { building }
+        object { estate }
+        name { estate }
         type { unique }
     }
     link {
@@ -1167,13 +1152,12 @@ relationship {
 relationship {
     name { employment }
     storage_type { erasable }
-    size { 300000 }
+    size { 600000 }
     tag {scenario}
     link {
         object { building }
         name { building }
-        type { many }
-        index_storage{array}
+        type { unique }
     }
     link {
         object { pop }
@@ -1190,38 +1174,43 @@ relationship {
         type { job_id }
         tag { scenario }
     }
+    property{
+        name { start_date }
+        type { int32_t }
+        tag { scenario }
+    }
 }
 relationship {
-    name { building_location }
+    name { estate_location }
     storage_type { erasable }
-    size { 200000 }
+    size { 300000 }
     tag {scenario}
     link {
         object { province }
-        name { location }
+        name { province }
+        type { many }
+        index_storage{array}
+    }
+    link {
+        object { estate }
+        name { estate }
+        type { unique }
+    }
+}
+relationship {
+    name { building_estate }
+    storage_type { erasable }
+    size { 600000 }
+    tag {scenario}
+    link {
+        object { estate }
+        name { estate }
         type { many }
         index_storage{array}
     }
     link {
         object { building }
         name { building }
-        type { unique }
-    }
-}
-relationship {
-    name { army_membership }
-    storage_type { erasable }
-    size { 50000 }
-    tag {scenario}
-    link {
-        object { army }
-        name { army }
-        type { many }
-        index_storage{array}
-    }
-    link {
-        object { warband }
-        name { member }
         type { unique }
     }
 }
@@ -1279,7 +1268,7 @@ relationship {
     size { 50000 }
     tag {scenario}
     link {
-        object { province }
+        object { tile }
         name { location }
         type { many }
         index_storage{array}
@@ -1464,23 +1453,6 @@ relationship {
         name { successor }
         type { many }
         index_storage{array}
-    }
-}
-relationship {
-    name { realm_armies }
-    storage_type { erasable }
-    size { 15000 }
-    tag {scenario}
-    link {
-        object { realm }
-        name { realm }
-        type { many }
-        index_storage{array}
-    }
-    link {
-        object { army }
-        name { army }
-        type { unique }
     }
 }
 relationship {
@@ -1810,6 +1782,12 @@ object {
     tag {scenario}
 }
 object {
+    name { unit_type }
+    storage_type { contiguous }
+    size { 4 }
+    tag {scenario}
+}
+object {
     name { law_trade }
     storage_type { contiguous }
     size { 5 }
@@ -1862,6 +1840,11 @@ object {
     storage_type { contiguous }
     size { 100 }
     tag {scenario}
+    property{
+        name { good_consumption }
+        type { float }
+        tag { scenario }
+    }
     property{
         name { r }
         type { float }
@@ -2300,92 +2283,6 @@ object {
     }
 }
 object {
-    name { unit_type }
-    storage_type { contiguous }
-    size { 20 }
-    tag {scenario}
-    property{
-        name { r }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { g }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { b }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { base_price }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { upkeep }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { supply_used }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { trade_good_requirements }
-        type { array{uint32_t}{base_types::trade_good_container} }
-        tag { scenario }
-    }
-    property{
-        name { base_health }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { base_attack }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { base_armor }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { speed }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { foraging }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { bonuses }
-        type { array{unit_type_id}{float} }
-        tag { scenario }
-    }
-    property{
-        name { supply_capacity }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { spotting }
-        type { float }
-        tag { scenario }
-    }
-    property{
-        name { visibility }
-        type { float }
-        tag { scenario }
-    }
-}
-object {
     name { job }
     storage_type { contiguous }
     size { 250 }
@@ -2432,8 +2329,8 @@ object {
         tag { scenario }
     }
     property{
-        name { jobs }
-        type { array{uint32_t}{base_types::job_container} }
+        name { job }
+        type { job_id }
         tag { scenario }
     }
     property{
