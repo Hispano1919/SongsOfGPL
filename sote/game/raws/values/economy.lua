@@ -255,4 +255,11 @@ function eco_values.days_of_travel(warband)
 	return supplies / per_day
 end
 
+---commenting
+---@param pop pop_id
+---@return number
+function eco_values.pop_employment_cost(pop)
+    return math.floor(DATA.pop_get_expected_wage(pop) * 12 * EMPLOYMENT_YEARS + 1)
+end
+
 return eco_values

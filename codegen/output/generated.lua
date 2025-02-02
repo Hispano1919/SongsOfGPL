@@ -617,12 +617,13 @@ function DATA.test_set_get_0()
     for j = 1, 100 do
         DATA.pop_set_price_belief_buy(id, j --[[@as trade_good_id]],  12)    end
     fat_id.savings = -12
-    fat_id.life_needs_satisfaction = -2
-    fat_id.basic_needs_satisfaction = -12
-    fat_id.pending_economy_income = -14
-    fat_id.forage_ratio = 19
-    fat_id.work_ratio = -4
-    fat_id.spend_savings_ratio = 14
+    fat_id.expected_wage = -2
+    fat_id.life_needs_satisfaction = -12
+    fat_id.basic_needs_satisfaction = -14
+    fat_id.pending_economy_income = 19
+    fat_id.forage_ratio = -4
+    fat_id.work_ratio = 14
+    fat_id.spend_savings_ratio = 18
     fat_id.female = true
     fat_id.busy = false
     fat_id.former_pop = true
@@ -677,18 +678,20 @@ function DATA.test_set_get_0()
     if not test_passed then print("price_belief_buy", 12, DATA.pop[id].price_belief_buy[0]) end
     test_passed = test_passed and fat_id.savings == -12
     if not test_passed then print("savings", -12, fat_id.savings) end
-    test_passed = test_passed and fat_id.life_needs_satisfaction == -2
-    if not test_passed then print("life_needs_satisfaction", -2, fat_id.life_needs_satisfaction) end
-    test_passed = test_passed and fat_id.basic_needs_satisfaction == -12
-    if not test_passed then print("basic_needs_satisfaction", -12, fat_id.basic_needs_satisfaction) end
-    test_passed = test_passed and fat_id.pending_economy_income == -14
-    if not test_passed then print("pending_economy_income", -14, fat_id.pending_economy_income) end
-    test_passed = test_passed and fat_id.forage_ratio == 19
-    if not test_passed then print("forage_ratio", 19, fat_id.forage_ratio) end
-    test_passed = test_passed and fat_id.work_ratio == -4
-    if not test_passed then print("work_ratio", -4, fat_id.work_ratio) end
-    test_passed = test_passed and fat_id.spend_savings_ratio == 14
-    if not test_passed then print("spend_savings_ratio", 14, fat_id.spend_savings_ratio) end
+    test_passed = test_passed and fat_id.expected_wage == -2
+    if not test_passed then print("expected_wage", -2, fat_id.expected_wage) end
+    test_passed = test_passed and fat_id.life_needs_satisfaction == -12
+    if not test_passed then print("life_needs_satisfaction", -12, fat_id.life_needs_satisfaction) end
+    test_passed = test_passed and fat_id.basic_needs_satisfaction == -14
+    if not test_passed then print("basic_needs_satisfaction", -14, fat_id.basic_needs_satisfaction) end
+    test_passed = test_passed and fat_id.pending_economy_income == 19
+    if not test_passed then print("pending_economy_income", 19, fat_id.pending_economy_income) end
+    test_passed = test_passed and fat_id.forage_ratio == -4
+    if not test_passed then print("forage_ratio", -4, fat_id.forage_ratio) end
+    test_passed = test_passed and fat_id.work_ratio == 14
+    if not test_passed then print("work_ratio", 14, fat_id.work_ratio) end
+    test_passed = test_passed and fat_id.spend_savings_ratio == 18
+    if not test_passed then print("spend_savings_ratio", 18, fat_id.spend_savings_ratio) end
     test_passed = test_passed and fat_id.female == true
     if not test_passed then print("female", true, fat_id.female) end
     test_passed = test_passed and fat_id.busy == false

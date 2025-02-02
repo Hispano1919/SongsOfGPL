@@ -1,4 +1,5 @@
 local demography_values = require "game.raws.values.demography"
+local economy_values = require "game.raws.values.economy"
 local demography_effects = require "game.raws.effects.demography"
 local economy_effects = require "game.raws.effects.economy"
 
@@ -89,17 +90,19 @@ return function (rect, building)
 			info_rect.width = info_rect.width - portrait_rect.width
 			info_rect.height = info_rect.height / 2
 
+			local cost = economy_values.pop_employment_cost(worker)
+
 			if ut.text_button(
-				tostring(warband_utils.base_unit_price) .. MONEY_SYMBOL,
+				ut.to_fixed_point2(cost) .. MONEY_SYMBOL,
 				info_rect,
-				"Cost: " .. tostring(warband_utils.base_unit_price),
-				SAVINGS(player) > warband_utils.base_unit_price
+				"Cost: " .. cost,
+				SAVINGS(player) > cost
 			) then
 				demography_effects.employ_pop(worker, building)
 				economy_effects.gift_to_pop(
 					player,
 					unemployed_pops[index],
-					warband_utils.base_unit_price
+					cost
 				)
 			end
 

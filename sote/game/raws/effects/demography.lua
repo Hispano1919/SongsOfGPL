@@ -124,6 +124,11 @@ function demo.employ_pop(pop, building)
 	if potential_job == nil then
 		return
 	end
+
+	-- employment increases pop's perceived value of their work:
+	local current_value = DATA.pop_get_expected_wage(pop)
+	DATA.pop_set_expected_wage(pop, current_value + 0.5)
+
 	-- Now that we know that the job is needed, employ the pop!
 
 	DATA.pop_set_forage_ratio(pop, 0.5)

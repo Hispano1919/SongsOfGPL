@@ -1481,6 +1481,10 @@ void update_economy() {
 		});
 	});
 
+	// update pops self value
+	state.execute_serial_over_pop([&](auto pops) {
+		state.pop_set_expected_wage(pops, ve::max(state.pop_get_savings(pops) * 0.01f, state.pop_get_expected_wage(pops)));
+	});
 
 	auto eps = 0.001f;
 

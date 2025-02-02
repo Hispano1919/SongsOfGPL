@@ -16,6 +16,7 @@ local ffi = require("ffi")
 ---@field age number 
 ---@field name string 
 ---@field savings number 
+---@field expected_wage number 
 ---@field life_needs_satisfaction number from 0 to 1
 ---@field basic_needs_satisfaction number from 0 to 1
 ---@field pending_economy_income number 
@@ -43,6 +44,7 @@ local ffi = require("ffi")
 ---@field price_belief_sell table<trade_good_id, number> 
 ---@field price_belief_buy table<trade_good_id, number> 
 ---@field savings number 
+---@field expected_wage number 
 ---@field life_needs_satisfaction number from 0 to 1
 ---@field basic_needs_satisfaction number from 0 to 1
 ---@field pending_economy_income number 
@@ -86,6 +88,8 @@ void dcon_pop_set_price_belief_buy(int32_t, int32_t, float);
 float dcon_pop_get_price_belief_buy(int32_t, int32_t);
 void dcon_pop_set_savings(int32_t, float);
 float dcon_pop_get_savings(int32_t);
+void dcon_pop_set_expected_wage(int32_t, float);
+float dcon_pop_get_expected_wage(int32_t);
 void dcon_pop_set_life_needs_satisfaction(int32_t, float);
 float dcon_pop_get_life_needs_satisfaction(int32_t);
 void dcon_pop_set_basic_needs_satisfaction(int32_t, float);
@@ -405,6 +409,23 @@ function DATA.pop_inc_savings(pop_id, value)
     DCON.dcon_pop_set_savings(pop_id - 1, current + value)
 end
 ---@param pop_id pop_id valid pop id
+---@return number expected_wage 
+function DATA.pop_get_expected_wage(pop_id)
+    return DCON.dcon_pop_get_expected_wage(pop_id - 1)
+end
+---@param pop_id pop_id valid pop id
+---@param value number valid number
+function DATA.pop_set_expected_wage(pop_id, value)
+    DCON.dcon_pop_set_expected_wage(pop_id - 1, value)
+end
+---@param pop_id pop_id valid pop id
+---@param value number valid number
+function DATA.pop_inc_expected_wage(pop_id, value)
+    ---@type number
+    local current = DCON.dcon_pop_get_expected_wage(pop_id - 1)
+    DCON.dcon_pop_set_expected_wage(pop_id - 1, current + value)
+end
+---@param pop_id pop_id valid pop id
 ---@return number life_needs_satisfaction from 0 to 1
 function DATA.pop_get_life_needs_satisfaction(pop_id)
     return DCON.dcon_pop_get_life_needs_satisfaction(pop_id - 1)
@@ -617,6 +638,7 @@ local fat_pop_id_metatable = {
         if (k == "age") then return DATA.pop_get_age(t.id) end
         if (k == "name") then return DATA.pop_get_name(t.id) end
         if (k == "savings") then return DATA.pop_get_savings(t.id) end
+        if (k == "expected_wage") then return DATA.pop_get_expected_wage(t.id) end
         if (k == "life_needs_satisfaction") then return DATA.pop_get_life_needs_satisfaction(t.id) end
         if (k == "basic_needs_satisfaction") then return DATA.pop_get_basic_needs_satisfaction(t.id) end
         if (k == "pending_economy_income") then return DATA.pop_get_pending_economy_income(t.id) end
@@ -660,6 +682,10 @@ local fat_pop_id_metatable = {
         end
         if (k == "savings") then
             DATA.pop_set_savings(t.id, v)
+            return
+        end
+        if (k == "expected_wage") then
+            DATA.pop_set_expected_wage(t.id, v)
             return
         end
         if (k == "life_needs_satisfaction") then

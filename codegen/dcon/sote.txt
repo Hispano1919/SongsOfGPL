@@ -444,6 +444,11 @@ object {
         tag { scenario }
     }
     property{
+        name { expected_wage }
+        type { float }
+        tag { scenario }
+    }
+    property{
         name { life_needs_satisfaction }
         type { float }
         tag { scenario }

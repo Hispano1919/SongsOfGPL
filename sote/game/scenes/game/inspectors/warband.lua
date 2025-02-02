@@ -337,7 +337,7 @@ function window.draw(gamescene)
 			local icon_rect = rect:subrect(0, 0, rect.height, rect.height, "left", "center")
 			local text_rect = rect:subrect(0, 0, rect.width - rect.height, rect.height, "right", "center")
 			local race = F_RACE(character)
-			ut.render_icon_panel(icon_rect, race.icon, race.r, race.g, race.b, 1)
+			render_icon_panel(icon_rect, race.icon, race.r, race.g, race.b, 1)
 			ui.text_panel(unit_name, text_rect)
 		else
 			ui.panel(rect, 1, true)
