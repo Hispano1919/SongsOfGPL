@@ -1058,7 +1058,7 @@ relationship {
 object {
     name { building }
     storage_type { erasable }
-    size { 600000 }
+    size { 6000000 }
     tag {scenario}
     property{
         name { current_type }
