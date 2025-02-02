@@ -2,6 +2,7 @@ local language_utils = require "game.entities.language".Language
 
 local cl = {}
 
+--TODO GLOBALIZE
 ---@enum BURIAL_RITES
 BURIAL_RIGHTS = {
 	INVALID = 0,
@@ -9,8 +10,12 @@ BURIAL_RIGHTS = {
 	BURIAL = 2,
 	NONE = 3
 }
-
----@alias BurialRites 'cremation' | 'burial' | 'none'
+BURIAL_NAMES = {
+	[BURIAL_RIGHTS.INVALID] = "INVALID",
+	[BURIAL_RIGHTS.CREMATION] = "CREMATION",
+	[BURIAL_RIGHTS.BURIAL] = "BURIAL",
+	[BURIAL_RIGHTS.NONE] = "NONE",
+}
 
 
 cl.Religion = {}

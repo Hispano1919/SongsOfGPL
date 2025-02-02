@@ -71,7 +71,6 @@ function inspector.draw(gamescene)
             gamescene,
             BUILDING_PROVINCE(v),
             rect,
-            PROVINCE_NAME(BUILDING_PROVINCE(v)),
             "This building is location in " .. PROVINCE_NAME(BUILDING_PROVINCE(v)) .. "."
         )
     end

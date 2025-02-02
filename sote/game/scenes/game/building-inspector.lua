@@ -107,8 +107,8 @@ function re.draw(gam)
 		if owner ~= INVALID_ID then
 			-- target character
 			ib.icon_button_to_character(gam, owner, owner_icon)
-			ib.text_button_to_character(gam, owner, owner_button,
-				NAME(owner), NAME(owner) .. " owns this building.")
+			ui.text(NAME(owner), owner_button)
+			ui.tooltip(NAME(owner) .. " owns this building.", owner_button)
 		else
 			-- target realm if possible
 			if realm then
@@ -116,8 +116,8 @@ function re.draw(gam)
 			else
 				ut.render_icon(owner_icon, "world.png", 1, 1, 1, 1)
 			end
-			ib.text_button_to_province(gam, province, owner_button,
-				PROVINCE_NAME(province), "Public builing in" .. PROVINCE_NAME(province) .. ".")
+			ui.text(REALM_NAME(PROVINCE_REALM(province)), owner_button)
+			ui.tooltip("Public builing in" .. PROVINCE_NAME(province) .. ".", owner_button)
 		end
 		owner_icon.y = owner_icon.y + ut.BASE_HEIGHT * 2 + 10
 
@@ -460,7 +460,7 @@ function re.draw(gam)
 			},
 			{
 				header = "name",
-				---@param k string
+				---@param k use_case_id
 				---@param v number
 				render_closure = function(rect, k, v)
 					ui.centered_text(DATA.use_case_get_name(k), rect)
@@ -590,20 +590,32 @@ function re.draw(gam)
 			workers[worker] = worker
 			workers_income[worker] = DATA.employment_get_worker_income(item)
 		end)
-
 		-- list of employees
 		worker_list_state = list_widget(next_panel, workers, {
 			{
-				header = ".",
+				header = "rlm",
 				---@param k POP
 				render_closure = function(rect, k, v)
 					--ui.image(ASSETS.get_icon(v.race.icon)
-					portrait_widget(rect, k)
+					ib.icon_button_to_realm(gam,REALM(k),rect,NAME(k) .. " is a  "
+						.. require "game.raws.ranks.localisation"(k) .. " of " .. REALM_NAME(REALM(k)))
 				end,
 				width = 1,
 				---@param k POP
 				value = function(k, v)
-					return F_RACE(k).name
+					return RANK(k)
+				end
+			},
+			{
+				header = ".",
+				---@param k POP
+				render_closure = function(rect, k, v)
+					ib.icon_button_to_character(gam,k,rect,require "game.scenes.game.widgets.pop-ui-widgets".pop_tooltip(k))
+				end,
+				width = 1,
+				---@param k POP
+				value = function(k, v)
+					return RANK(k)
 				end
 			},
 			{
@@ -652,7 +664,7 @@ function re.draw(gam)
 			},
 			{
 				header = "satisfac.",
-				render_closure = ut.render_pop_satsifaction,
+				render_closure = require "game.scenes.game.widgets.pop-ui-widgets".render_basic_needs_satsifaction,
 				width = 2,
 				---@param k POP
 				value = function(k, v)

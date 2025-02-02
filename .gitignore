@@ -11,8 +11,11 @@ seed.txt
 sote/seed.txt
 sote/logs/
 
-DataContainer
-DataContainer/*
+build
+build/*
+
+lib/*/*/cmake/*
+lib/*/*/pkgconfig/*
 
 temp
 temp/*

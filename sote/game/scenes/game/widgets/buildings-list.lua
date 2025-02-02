@@ -34,7 +34,7 @@ local function init_state(state, compact)
 end
 
 ---@param rect Rect
----@param table POP[]
+---@param table Building[]
 ---@param state TableState?
 ---@param title string?
 ---@param compact boolean?
@@ -44,104 +44,77 @@ return function(game, rect, table, state, title, compact)
     end
 
     return function()
-        ---@type TableColumn<pop_id>[]
+        ---@type TableColumn<building_id>[]
         local columns = {
-            {
-                header = "rlm",
-                render_closure = function(rect, k, v)
-                    local realm_id = REALM(v)
-                    ib.icon_button_to_realm(game,realm_id,rect,NAME(v) .. " is a "
-                        .. require "game.raws.ranks.localisation"(v) .. " of " .. REALM_NAME(realm_id) .. ".")
-                end,
-                width = 1,
-                value = function(k, v)
-                    return REALM_NAME(REALM(v))
-                end
-            },
             {
                 header = ".",
                 render_closure = function(rect, k, v)
-                    ib.icon_button_to_character(game, v, rect, pui.pop_tooltip(v))
+                    ib.icon_button_to_building(game, v, rect)
                 end,
                 width = 1,
                 value = function(k, v)
-                    return RANK(v)
+                    return DATA.building_get_current_type(v)
                 end
             },
             {
-                header = "name",
+                header = "location",
                 render_closure = function(rect, k, v)
-                    ui.text(NAME(v), rect)
+                    local province_id = BUILDING_PROVINCE(v)
+                    ib.text_button_to_province(game,province_id,rect,strings.title(DATA.building_type_get_name(DATA.building_get_current_type(v)))
+                        .. " is in the province of " .. PROVINCE_NAME(province_id) .. ".")
                 end,
                 width = 4,
                 value = function(k, v)
-                    ---@type POP
-                    v = v
-                    return NAME(v)
-                end
+                    return PROVINCE_NAME(BUILDING_PROVINCE(v))
+                end,
             },
             {
-                header = "job",
+                header = "rlm",
                 render_closure = function(rect, k, v)
-                    pui.render_occupation_icon(rect,v,pui.occupation_tooltip(v))
+                    local realm_id = PROVINCE_REALM(BUILDING_PROVINCE(v))
+                    ib.icon_button_to_realm(game,realm_id,rect,strings.title(DATA.building_type_get_name(DATA.building_get_current_type(v)))
+                        .. " is in the capitol of " .. REALM_NAME(realm_id) .. ".")
                 end,
                 width = 1,
                 value = function(k, v)
-                    return RANK(v)
-                end
+                    return PROVINCE_REALM(BUILDING_PROVINCE(v))
+                end,
             },
             {
-                header = "age",
-                render_closure = function (rect, k, v)
-                    pui.render_age(rect,v)
+                header = "profit",
+                render_closure = function(rect, k, v)
+                    ut.generic_number_field(
+                        "receive-money.png",
+                        DATA.building_get_last_income(v),
+                        rect,
+                        "This build gained " .. ut.to_fixed_point2(DATA.building_get_last_income(v)) .. MONEY_SYMBOL .. " last month.",
+                        ut.NUMBER_MODE.BALANCE,
+                        ut.NAME_MODE.ICON,
+                        true)
+
                 end,
-                width = 1,
+                width = 3,
                 value = function(k, v)
-                    return DATA.pop_get_age(v)
-                end
+                    return DATA.building_get_last_income(v)
+                end,
             },
             {
-                header = "sex",
-                render_closure = function (rect, k, v)
-                    pui.render_female_icon(rect,v)
+                header = "savings",
+                render_closure = function(rect, k, v)
+                    ut.generic_number_field(
+                        "coins.png",
+                        DATA.building_get_savings(v),
+                        rect,
+                        "This build has " .. ut.to_fixed_point2(DATA.building_get_savings(v)) .. MONEY_SYMBOL .. " in savings.",
+                        ut.NUMBER_MODE.BALANCE,
+                        ut.NAME_MODE.ICON,
+                        true)
+
                 end,
-                width = 1,
+                width = 3,
                 value = function(k, v)
-                    return DATA.pop_get_female(v) and "f" or "m"
-                end
-            },
-            {
-                header = "r",
-                render_closure = function (rect, k, v)
-                    local race_id = RACE(v)
-                    ui.render_race_icon(rect,race_id,ui.race_tooltip(race_id))
+                    return DATA.building_get_savings(v)
                 end,
-                width = 1,
-                value = function(k, v)
-                    return DATA.race_get_name(RACE(v))
-                end
-            },
-            {
-                header = "c",
-                render_closure = function (rect, k, v)
-                    local culture_id = CULTURE(v)
-                    ui.render_culture_icon(rect,culture_id,ui.culture_tooltip(culture_id))
-                end,
-                width = 1,
-                value = function(k, v)
-                    return DATA.culture_get_name(CULTURE(v))
-                end
-            },
-            {
-                header = "f",
-                render_closure = function (rect, k, v)
-                    local faith_id = DATA.pop_get_faith(v)
-                    ui.render_faith_icon(rect,faith_id,ui.faith_tooltip(faith_id))
-                end,
-                width = 1,
-                value = function(k, v)
-                    return DATA.faith_get_name(DATA.pop_get_faith(v))
-                end
             },
         }
         state = init_state(state, compact)

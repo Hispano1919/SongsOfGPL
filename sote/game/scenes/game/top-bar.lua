@@ -1,6 +1,7 @@
 local tabb = require "engine.table"
 local ui = require "engine.ui"
 local uit = require "game.ui-utils"
+local pui = require "game.scenes.game.widgets.pop-ui-widgets"
 
 local realm_utils = require "game.entities.realm".Realm
 local province_utils = require "game.entities.province".Province
@@ -184,7 +185,7 @@ function tb.draw(gam)
 		layout:next(uit.BASE_HEIGHT * 3, uit.BASE_HEIGHT),
 		"My popularity")
 
-	uit.render_pop_satsifaction(
+	pui.render_basic_needs_satsifaction(
 		layout:next(uit.BASE_HEIGHT * 3, uit.BASE_HEIGHT),
 		character)
 

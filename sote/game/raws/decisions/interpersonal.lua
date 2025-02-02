@@ -85,7 +85,7 @@ local function load()
 		end,
 		effect = function(root, primary_target, secondary_target)
 			if WORLD.player_character == root then
-				WORLD:emit_notification("I requested loyalty from ".. primary_target.name)
+				WORLD:emit_notification("I requested loyalty from ".. NAME(primary_target))
 			end
 			WORLD:emit_immediate_event('request-loyalty', primary_target, root)
 		end
