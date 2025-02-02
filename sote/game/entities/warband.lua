@@ -218,7 +218,7 @@ function warband_utils.speed(warband)
 			result = result + pop_utils.get_speed(pop).base
 		end
 	end
-	return result, math.max(result / warband_utils.size(warband), 0)
+	return result, math.max(result / warband_utils.size(warband))
 end
 
 ---Total size of warband

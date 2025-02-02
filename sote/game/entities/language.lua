@@ -1,4 +1,4 @@
-local string = require "engine.string"
+local strings = require "engine.string"
 
 local lang = {}
 
@@ -159,35 +159,35 @@ function lang.Language.get_random_culture_name(language)
 	local fat_language = DATA.fatten_language(language)
 	local ll = love.math.random(3)
 	local n = lang.Language.random_word(language, ll)
-	return string.title(n .. fat_language.ending_adj[love.math.random(#fat_language.ending_adj)])
+	return strings.title(n .. fat_language.ending_adj[love.math.random(#fat_language.ending_adj)])
 end
 ---@param language language_id
 function lang.Language.get_random_faith_name(language)
 	local fat_language = DATA.fatten_language(language)
 	local ll = love.math.random(3)
 	local n = lang.Language.random_word(language, ll)
-	return string.title(n .. fat_language.ending_adj[love.math.random(#fat_language.ending_adj)])
+	return strings.title(n .. fat_language.ending_adj[love.math.random(#fat_language.ending_adj)])
 end
 ---@param language language_id
 function lang.Language.get_random_realm_name(language)
 	local fat_language = DATA.fatten_language(language)
 	local ll = love.math.random(3)
 	local n = lang.Language.random_word(language, ll)
-	return string.title(n .. fat_language.ending_realm[love.math.random(#fat_language.ending_realm)])
+	return strings.title(n .. fat_language.ending_realm[love.math.random(#fat_language.ending_realm)])
 end
 ---@param language language_id
 function lang.Language.get_random_province_name(language)
 	local fat_language = DATA.fatten_language(language)
 	local ll = love.math.random(3)
 	local n = lang.Language.random_word(language, ll)
-	return string.title(n .. fat_language.ending_province[love.math.random(#fat_language.ending_province)])
+	return strings.title(n .. fat_language.ending_province[love.math.random(#fat_language.ending_province)])
 end
 ---@param language language_id
 function lang.Language.get_random_name(language)
 	local fat_language = DATA.fatten_language(language)
 	local ll = love.math.random(4)
 	local n = lang.Language.random_word(language, ll)
-	return string.title(n)
+	return strings.title(n)
 end
 
 return lang

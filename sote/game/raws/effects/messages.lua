@@ -143,9 +143,9 @@ end
 function messages.on_loyalty_shift(character, former_top, new_top)
 	if WORLD.player_character == new_top then
 		WORLD:emit_notification(
-			NAME(character) .. " sweared loyalty to me. He was formerly loyal to " .. NAME(former_top) .. ".")
+			NAME(character) .. " sweared loyalty to me." .. (former_top ~= INVALID_ID and " He was formerly loyal to " .. NAME(former_top) .. "." or ""))
 	end
-	if WORLD.player_character == former_top then
+	if former_top ~= INVALID_ID and WORLD.player_character == former_top then
 		WORLD:emit_notification(NAME(character) .. " betrayed me. He is loyal to " .. NAME(new_top) .. " now.")
 	end
 	if WORLD.player_character == character then

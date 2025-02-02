@@ -90,7 +90,7 @@ function re.draw(gam)
 		if owner ~= INVALID_ID then
 			-- target character
 			ib.icon_button_to_character(gam, owner, owner_rect)
-			ib.text_button_to_character(gam, owner, button_owner_rect, NAME(owner))
+			ib.text_button_to_character(gam, owner, button_owner_rect, NAME(owner), NAME(owner) .. " owns this building.")
 		else
 			-- target realm if possible
 			if realm ~= INVALID_ID then

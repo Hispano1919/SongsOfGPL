@@ -4,6 +4,7 @@ local ui = require "engine.ui";
 local ut = require "game.ui-utils"
 
 local ib = require "game.scenes.game.widgets.inspector-redirect-buttons"
+local pui = require "game.scenes.game.widgets.pop-ui-widgets"
 local list_widget = require "game.scenes.game.widgets.list-widget"
 
 local pop_utils = require "game.entities.pop".POP
@@ -318,11 +319,11 @@ function window.draw(gamescene)
 		if character ~= INVALID_ID and character ~= nil then
 			ib.icon_button_to_realm(gam, REALM(character), realm_rect)
 			ib.icon_button_to_character(gam, character, portrait_rect)
-			ib.text_button_to_character(gam, character, button_rect,
-				NAME(character), NAME(character) .. " is currently " .. office_action .. " this warband.")
+			ui.text(NAME(character),button_rect)
+			ui.tooltip(NAME(character) .. " is currently " .. office_action .. " this warband.",button_rect)
 
 		else
-			render_icon_panel(portrait_rect, "uncertainty.png", 1, 1, 1, 1)
+			ut.render_icon(portrait_rect, "uncertainty.png",.8,.8,.8,1,true)
 			ut.text_button("empty", button_rect, nil, false)
 		end
 	end
@@ -336,7 +337,7 @@ function window.draw(gamescene)
 			local icon_rect = rect:subrect(0, 0, rect.height, rect.height, "left", "center")
 			local text_rect = rect:subrect(0, 0, rect.width - rect.height, rect.height, "right", "center")
 			local race = F_RACE(character)
-			render_icon_panel(icon_rect, race.icon, race.r, race.g, race.b, 1)
+			ut.render_icon_panel(icon_rect, race.icon, race.r, race.g, race.b, 1)
 			ui.text_panel(unit_name, text_rect)
 		else
 			ui.panel(rect, 1, true)
@@ -353,17 +354,16 @@ function window.draw(gamescene)
 				:position(rect.x, rect.y)
 				:build()
 			-- draw using functions if a unit
-			local unit = DATA.warband_unit_get_type(DATA.get_warband_unit_from_unit(character))
 			-- declare variables and intialize as a male noncombatant character
-			render_unit_speed(layout:next(width_fraction, rect.height), character, unit)
-			render_unit_spotting(layout:next(width_fraction, rect.height), character, unit)
-			render_unit_visibility(layout:next(width_fraction, rect.height), character, unit)
-			render_unit_supply_use(layout:next(width_fraction, rect.height), character, unit)
-			render_unit_hauling(layout:next(width_fraction, rect.height), character, unit)
+			pui.render_speed(layout:next(width_fraction, rect.height), character)
+			pui.render_spotting(layout:next(width_fraction, rect.height), character)
+			pui.render_visibility(layout:next(width_fraction, rect.height), character)
+			pui.render_supply_use(layout:next(width_fraction, rect.height), character)
+			pui.render_supply_capacity(layout:next(width_fraction, rect.height), character)
 			-- actually draw stats in rect
 		else
 			ui.panel(rect)
-			render_icon_panel(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
+			ut.render_icon(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
 		end
 	end
 
@@ -402,9 +402,10 @@ function window.draw(gamescene)
 		leader_rect:shrink(spacing)
 		ui.text("Capitol Guard", leader_rect:subrect(0, 0, leader_rect.width, ut.BASE_HEIGHT, "left", "up"), "center", "center")
 		ib.icon_button_to_realm(gamescene, guarding_realm, leader_rect:subrect(0, 0, ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT * 2, "left", "down"))
-		ib.text_button_to_realm(gamescene, guarding_realm, leader_rect:subrect(ut.BASE_HEIGHT * 2, 0, leader_rect.width - ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT, "left", "center"), REALM_NAME(guarding_realm),
-			"This warband is the capitol guard of " .. REALM_NAME(guarding_realm) .. ".")
-		ib.text_button_to_province(gamescene, province, leader_rect:subrect(ut.BASE_HEIGHT * 2, 0,leader_rect.width - ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT, "left", "down"), PROVINCE_NAME(province),
+		local realm_rect = leader_rect:subrect(ut.BASE_HEIGHT*2,0,leader_rect.width-ut.BASE_HEIGHT*2,ut.BASE_HEIGHT,"left","center")
+		ui.text(REALM_NAME(guarding_realm),realm_rect)
+		ui.tooltip("This warband is the capitol guard of " .. REALM_NAME(guarding_realm) .. ".",realm_rect)
+		ib.text_button_to_province(gamescene, province, leader_rect:subrect(ut.BASE_HEIGHT * 2, 0,leader_rect.width - ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT, "left", "down"),
 			"This warband guards the province of " .. PROVINCE_NAME(province) .. ".")
 	end
 
@@ -610,8 +611,8 @@ function window.draw(gamescene)
 		province_realm = PROVINCE_REALM(province)
 		if province_realm ~= INVALID_ID then
 			ib.icon_button_to_realm(gamescene, province_realm, realm_icon_rect)
-			ib.text_button_to_realm(gamescene, province_realm, realm_text_rect,
-				REALM_NAME(province_realm), "The warband is currently in a province belonging " .. REALM_NAME(province_realm) .. ".")
+			ui.text(REALM_NAME(province_realm), realm_text_rect)
+			ui.tooltip("The warband is currently in a province belonging " .. REALM_NAME(province_realm) .. ".",realm_text_rect)
 		else
 			ut.render_icon(realm_icon_rect, "uncertainty.png", 1, 1, 1, 1)
 			ut.text_button("no realm", realm_text_rect, "The province the warband is currently in is claimed by no one.")
@@ -650,14 +651,14 @@ function window.draw(gamescene)
 					:spacing(0)
 					:build()
 
-				render_unit_health(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_attack(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_armor(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_speed(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_spotting(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_visibility(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_supply_use(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
-				render_unit_hauling(strength_layout:next(layout_width, ut.BASE_HEIGHT), character, unit)
+				pui.render_health(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_attack(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_armor(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_speed(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_spotting(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_visibility(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_supply_use(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
+				pui.render_hauling(strength_layout:next(layout_width, ut.BASE_HEIGHT), character)
 
 				-- check if player is eligable to control the warband and draw button to fire
 				local control_warband = false
@@ -684,7 +685,7 @@ function window.draw(gamescene)
 						warband_utils.unset_commander(warband)
 					end
 				else
-					render_icon_panel(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
+					ut.render_icon(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
 				end
 			else
 				ui.panel(rect, 1, true)
@@ -710,7 +711,7 @@ function window.draw(gamescene)
 						WORLD:emit_immediate_event('pick-commander-unit', player_character, warband)
 					end
 				else
-					render_icon_panel(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
+					ut.render_icon(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
 				end
 			end
 		end)
@@ -854,7 +855,7 @@ function window.draw(gamescene)
 		DATA.for_each_warband_unit_from_warband(warband, function (item)
 			local unit_type = DATA.warband_unit_get_type(item)
 			local pop = DATA.warband_unit_get_unit(item)
-			unit_spotting = unit_spotting + pop_utils.get_spotting(pop, unit_type)
+			unit_spotting = unit_spotting + pop_utils.get_spotting(pop)
 		end)
 		if recruiter ~= INVALID_ID and recruiter ~= commander then
 			unit_spotting = unit_spotting + F_RACE(recruiter).spotting
@@ -1019,7 +1020,7 @@ function window.draw(gamescene)
 				},
 				{
 					header = "health",
-					render_closure = render_unit_health,
+					render_closure = pui.render_health,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
@@ -1029,7 +1030,7 @@ function window.draw(gamescene)
 				},
 				{
 					header = "attack",
-					render_closure = render_unit_attack,
+					render_closure = pui.render_attack,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
@@ -1039,7 +1040,7 @@ function window.draw(gamescene)
 				},
 				{
 					header = "armor",
-					render_closure = render_unit_armor,
+					render_closure = pui.render_armor,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
@@ -1049,7 +1050,7 @@ function window.draw(gamescene)
 				},
 				{
 					header = "speed",
-					render_closure = render_unit_speed,
+					render_closure = pui.render_speed,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
@@ -1059,7 +1060,7 @@ function window.draw(gamescene)
 				},
 				{
 					header = "spotting",
-					render_closure = render_unit_spotting,
+					render_closure = pui.render_spotting,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
@@ -1069,7 +1070,7 @@ function window.draw(gamescene)
 				},
 				{
 					header = "visibility",
-					render_closure = render_unit_visibility,
+					render_closure = pui.render_visibility,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
@@ -1079,7 +1080,7 @@ function window.draw(gamescene)
 				},
 				{
 					header = "supply",
-					render_closure = render_unit_supply_use,
+					render_closure = pui.render_supply_use,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
@@ -1089,7 +1090,7 @@ function window.draw(gamescene)
 				},
 				{
 					header = "hauling",
-					render_closure = render_unit_hauling,
+					render_closure = pui.render_supply_capacity,
 					width = stat_width,
 					---@param k POP
 					---@param v unit_type_id
@@ -1099,7 +1100,7 @@ function window.draw(gamescene)
 				},
 				{
 					header = "satisfac.",
-					render_closure = ut.render_pop_satsifaction,
+					render_closure = pui.render_basic_needs_satsifaction,
 					width = end_width - icon_width,
 					---@param k POP
 					---@param v unit_type_id

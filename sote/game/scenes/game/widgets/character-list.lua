@@ -1,15 +1,16 @@
 local tabb = require "engine.table"
+local strings = require "engine.string"
 local ui = require "engine.ui"
 local ut = require "game.ui-utils"
-
+local ib = require "game.scenes.game.widgets.inspector-redirect-buttons"
+local pui = require "game.scenes.game.widgets.pop-ui-widgets"
 local portrait = require "game.scenes.game.widgets.portrait"
 
----@type TableState
-local state = nil
-
 ---comment
+---@param state TableState?
 ---@param compact boolean
-local function init_state(compact)
+---@return TableState
+local function init_state(state, compact)
     local entry_height = UI_STYLE.scrollable_list_item_height
     if compact then
         entry_height = UI_STYLE.scrollable_list_small_item_height
@@ -29,76 +30,72 @@ local function init_state(compact)
         state.individual_height = entry_height
         state.slider_width = UI_STYLE.slider_width
     end
-end
-
-local function render_name(rect, k, v)
-    if ut.text_button(DATA.pop_get_name(v), rect) then
-        return v
-    end
-end
-
-local function render_race(rect, k, v)
-    ui.centered_text(v.race.name, rect)
-end
-
----commenting
----@param pop pop_id
----@return string
-local function pop_sex(pop)
-    local f = "m"
-    if DATA.pop_get_female(pop) then f = "f" end
-    return f
+    return state
 end
 
 ---@param rect Rect
 ---@param table POP[]
+---@param state TableState?
 ---@param title string?
 ---@param compact boolean?
-return function(rect, table, title, compact)
+return function(game, rect, table, state, title, compact)
     if compact == nil then
         compact = false
     end
 
-    local portrait_width = UI_STYLE.scrollable_list_item_height
-    if compact then
-        portrait_width = UI_STYLE.scrollable_list_small_item_height
-    end
-
-    local rest_width = rect.width - portrait_width
-    local width_unit = rest_width / 12
     return function()
         ---@type TableColumn<pop_id>[]
         local columns = {
             {
+                header = "rlm",
+                render_closure = function(rect, k, v)
+                    local realm_id = REALM(v)
+                    ib.icon_button_to_realm(game,realm_id,rect,NAME(v) .. " is a "
+                        .. require "game.raws.ranks.localisation"(v) .. " of " .. REALM_NAME(realm_id) .. ".")
+                end,
+                width = 1,
+                value = function(k, v)
+                    return REALM_NAME(REALM(v))
+                end
+            },
+            {
                 header = ".",
                 render_closure = function(rect, k, v)
-                    portrait(rect, v)
+                    ib.icon_button_to_character(game, v, rect, pui.pop_tooltip(v))
                 end,
-                width = portrait_width,
+                width = 1,
                 value = function(k, v)
-                    ---@type POP
-                    v = v
-                    local race = DATA.pop_get_race(v)
-                    return DATA.race_get_name(race)
+                    return RANK(v)
                 end
             },
             {
                 header = "name",
-                render_closure = render_name,
-                width = width_unit * 7,
+                render_closure = function(rect, k, v)
+                    ui.text(NAME(v), rect)
+                end,
+                width = 4,
                 value = function(k, v)
                     ---@type POP
                     v = v
-                    return DATA.pop_get_name(v)
+                    return NAME(v)
+                end
+            },
+            {
+                header = "job",
+                render_closure = function(rect, k, v)
+                    pui.render_occupation_icon(rect,v,pui.occupation_tooltip(v))
                 end,
-                active = true
+                width = 1,
+                value = function(k, v)
+                    return RANK(v)
+                end
             },
             {
                 header = "age",
                 render_closure = function (rect, k, v)
-                    ui.right_text(tostring(DATA.pop_get_age(v)), rect)
+                    pui.render_age(rect,v)
                 end,
-                width = width_unit * 3,
+                width = 1,
                 value = function(k, v)
                     return DATA.pop_get_age(v)
                 end
@@ -106,15 +103,48 @@ return function(rect, table, title, compact)
             {
                 header = "sex",
                 render_closure = function (rect, k, v)
-                    ui.centered_text(pop_sex(v), rect)
+                    pui.render_female_icon(rect,v)
                 end,
-                width = width_unit * 1,
+                width = 1,
                 value = function(k, v)
-                    return pop_sex(v)
+                    return DATA.pop_get_female(v) and "f" or "m"
                 end
-            }
+            },
+            {
+                header = "r",
+                render_closure = function (rect, k, v)
+                    local race_id = RACE(v)
+                    ui.render_race_icon(rect,race_id,ui.race_tooltip(race_id))
+                end,
+                width = 1,
+                value = function(k, v)
+                    return DATA.race_get_name(RACE(v))
+                end
+            },
+            {
+                header = "c",
+                render_closure = function (rect, k, v)
+                    local culture_id = CULTURE(v)
+                    ui.render_culture_icon(rect,culture_id,ui.culture_tooltip(culture_id))
+                end,
+                width = 1,
+                value = function(k, v)
+                    return DATA.culture_get_name(CULTURE(v))
+                end
+            },
+            {
+                header = "f",
+                render_closure = function (rect, k, v)
+                    local faith_id = DATA.pop_get_faith(v)
+                    ui.render_faith_icon(rect,faith_id,ui.faith_tooltip(faith_id))
+                end,
+                width = 1,
+                value = function(k, v)
+                    return DATA.faith_get_name(DATA.pop_get_faith(v))
+                end
+            },
         }
-        init_state(compact)
+        state = init_state(state, compact)
         local bottom_height = rect.height
         local bottom_y = 0
         if title then
@@ -124,6 +154,7 @@ return function(rect, table, title, compact)
             ui.centered_text(title, top)
         end
         local bottom = rect:subrect(0, bottom_y, rect.width, bottom_height, "left", "up")
-        return ut.table(bottom, table, columns, state)
+        ut.table(bottom, table, columns, state)
+        return state
     end
 end

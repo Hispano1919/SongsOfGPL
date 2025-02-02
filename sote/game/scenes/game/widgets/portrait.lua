@@ -17,6 +17,10 @@ return function(rect, character_id)
 
     local race = DATA.fatten_race(character.race)
 
+    -- drawing rectangles: remove boarder from space portrait image
+    local border_width = math.max(1, math.floor(math.min(rect.height, rect.width) / ut.BASE_HEIGHT))
+    local inner_rect = rect:copy():shrink(math.floor(math.max(1, border_width)))
+    local square = inner_rect:centered_square()
 
     local style = ui.style.panel_outline
     if character.rank == CHARACTER_RANK.NOBLE then
@@ -26,15 +30,13 @@ return function(rect, character_id)
         -- gold color rgba
         ui.style.panel_outline = {r = 255 / 255, g = 215 / 255, b = 0 / 255, a = 1}
     end
-    -- square portrait image
-    local subrect = rect:centered_square()
     -- TODO: maybe we should draw background images related to current position
     local old_inside = ui.style["panel_inside"]
     ui.style["panel_inside"] = {r = 0 / 255, g = 20 / 255, b = 10 / 255, a = 0.3}
-    ui.panel(subrect, 2, false)
+    ui.panel(inner_rect, 2, false)
     ui.style["panel_inside"] = old_inside
 
-    love.graphics.setLineWidth( 4 )
+    love.graphics.setLineWidth( border_width )
 
     local portrait_set = race.male_portrait
     if character.female then
@@ -94,45 +96,15 @@ return function(rect, character_id)
         for i, layer in ipairs(portrait.layers) do
             assert(ASSETS.portraits[portrait.folder][layer] ~= nil, layer .. " WAS NOT LOADED")
             assert(dna_per_layer[i] ~= nil, i)
-            ui.image_ith(ASSETS.portraits[portrait.folder][layer], dna_per_layer[i], subrect)
+            ui.image_ith(ASSETS.portraits[portrait.folder][layer], dna_per_layer[i], square)
         end
     else
         assert(race.icon ~= nil, "race " .. character.race .. " icon is nil")
         assert(ASSETS.icons[race.icon] ~= nil, "race " .. race.name .. " icon " .. race.icon .. " is missing ")
-        ui.image(ASSETS.icons[race.icon], subrect)
+        ui.image(ASSETS.icons[race.icon], square)
     end
 
-    -- relation to player character
-    if WORLD.player_character ~= INVALID_ID then
-        local player_realtion_icon_size = math.min(20, (subrect.width - 2) / 3)
-        local player_relation_icon_rect = subrect:subrect(2, -2, player_realtion_icon_size, player_realtion_icon_size, "left", "down")
-
-        local parent_rel = DATA.get_parent_child_relation_from_child(WORLD.player_character)
-        local parent = DATA.parent_child_relation_get_parent(parent_rel)
-        local is_parent = false
-        if parent == character then
-            is_parent = true
-        end
-
-        local is_child = false
-        DATA.for_each_parent_child_relation_from_parent(WORLD.player_character, function (item)
-            local child = DATA.parent_child_relation_get_child(item)
-            if child == character then
-                is_child = true
-            end
-        end)
-
-        if WORLD.player_character == character then
-            ut.render_icon(player_relation_icon_rect, "self-love.png", 1, 1, 1, 1)
-            player_relation_icon_rect:shrink(-1)
-            ut.render_icon(player_relation_icon_rect, "self-love.png", 0.72, 0.13, 0.27, 1.0)
-        elseif is_parent or is_child then
-            ut.render_icon(player_relation_icon_rect, "ages.png", 1, 1, 1, 1)
-            player_relation_icon_rect:shrink(-1)
-            ut.render_icon(player_relation_icon_rect, "ages.png", 0.72, 0.13, 0.27, 1.0)
-        end
-    end
-    ui.panel(subrect, 2, true, false)
+    ui.panel(square, 2, true, false)
     love.graphics.setLineWidth( 1 )
     ui.style.panel_outline = style
 end
