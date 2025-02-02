@@ -1404,7 +1404,7 @@ void estates_buy() {
 			auto last_change = state.estate_get_balance_last_tick(estates);
 
 			state.estate_set_savings(estates, ve::max(0.f, budget - cost));
-			state.estate_set_balance_last_tick(estates, budget - cost);
+			state.estate_set_balance_last_tick(estates, last_change - cost);
 			state.estate_set_inventory_bought_last_tick(estates, trade_good, bought);
 			state.estate_set_inventory(estates, trade_good, stock + bought);
 		});
