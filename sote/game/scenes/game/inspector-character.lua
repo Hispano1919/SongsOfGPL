@@ -138,7 +138,7 @@ local function render_employer_overview(game,rect,pop_id,player_id)
         ib.icon_button_to_building(game,employer_id,icon_rect,employer_tooltip)
         pui.render_work_time(time_rect,pop_id)
 
-        local owner_id = OWNER(employer_id)
+        local owner_id = OWNER(BUILDING_ESTATE(employer_id))
         local owner_name = ""
         if owner_id ~= INVALID_ID then
             owner_name = NAME(owner_id) .. "'s "
@@ -147,7 +147,7 @@ local function render_employer_overview(game,rect,pop_id,player_id)
             local realm_id = PROVINCE_REALM(BUILDING_PROVINCE(employer_id))
             owner_id = require "game.raws.values.politics".overseer(realm_id)
             if owner_id ~= INVALID_ID then
-               owner_name = NAME(owner_id) .. "'s "
+                owner_name = NAME(owner_id) .. "'s "
                 ib.render_portrait_with_overlay(game,portrait_rect,owner_id,player_id,pui.pop_tooltip(pop_id))
             else -- building in a realmless province
                 ut.render_icon(portrait_rect,"horizon-road.png",.8,.8,.8,1,true)
@@ -170,7 +170,7 @@ local function render_employer_overview(game,rect,pop_id,player_id)
         local job_tooltip = job_name .. "\n " .. DATA.job_get_description(job_id)
         local job_name_rect = line_layout:next(line_rect.width-ut.BASE_HEIGHT*4,ut.BASE_HEIGHT)
         ui.tooltip(job_tooltip,job_name_rect)
-        ui.text(job_name,job_name_rect)
+        ui.text(job_name, job_name_rect)
         pui.render_job_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),pop_id, job_tooltip)
         pui.render_job_efficiency(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id,job_type_id)
 
@@ -190,7 +190,7 @@ local function render_employer_overview(game,rect,pop_id,player_id)
             pui.render_realm_popularity(owner_pop_rect,owner_id,REALM(pop_id))
         end
         -- building income and savings, pop income
-        local last_income = DATA.building_get_last_income(employer_id)
+        local last_income = DATA.estate_get_balance_last_tick(BUILDING_ESTATE(employer_id))
         ut.generic_number_field(
             "two-coins.png",
             last_income,
@@ -198,7 +198,7 @@ local function render_employer_overview(game,rect,pop_id,player_id)
             employer_name .. " gained " .. ut.to_fixed_point2(last_income) .. MONEY_SYMBOL .. " last month.",
             ut.NUMBER_MODE.BALANCE,
             ut.NAME_MODE.ICON)
-        local savings = DATA.building_get_savings(employer_id)
+        local savings = DATA.estate_get_savings(BUILDING_ESTATE(employer_id))
         ut.generic_number_field(
             "coins.png",
             savings,
@@ -236,8 +236,9 @@ local function render_warband_overview(game,rect,pop_id,player_id,title)
         local warband_location = warband_utils.location(warband_id)
         local warband_name = strings.title(DATA.warband_get_name(warband_id))
         local status_name = DATA.warband_status_get_name(warband_status)
-        local warband_tooltip = warband_name .. " is currently " .. status_name .. " in " .. PROVINCE_NAME(warband_location) .. "."
-        ui.text("Party: " .. warband_name,title_rect)
+        local province = TILE_PROVINCE(WARBAND_TILE(warband_id))
+        local warband_tooltip = warband_name .. " is currently " .. status_name .. " in " .. PROVINCE_NAME(province) .. "."
+        ui.text("Party: " .. warband_name, title_rect)
         ui.tooltip(warband_tooltip,title_rect)
         ib.icon_button_to_warband(game,warband_id,icon_rect,warband_tooltip)
         pui.render_warband_time(time_rect,pop_id)
@@ -276,7 +277,7 @@ local function render_warband_overview(game,rect,pop_id,player_id,title)
         -- warband location and leader local popularity
         line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
         line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-        ib.text_button_to_province(game,warband_location,line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),warband_tooltip)
+        ib.text_button_to_province(game,province,line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),warband_tooltip)
         if leader_id ~= INVALID_ID then
             pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),leader_id,PROVINCE_REALM(PROVINCE(leader_id)))
         end
@@ -495,9 +496,9 @@ local function draw_prp_tab(game,rect,pop_id)
         },
         {
             text = "BUILDINGS",
-            tooltip = NAME(pop_id) .. "'s owned buildings.",
+            tooltip = NAME(pop_id) .. "'s owned estates.",
             closure = function()
-                property_buildings_state = require "game.scenes.game.widgets.buildings-list" (
+                property_buildings_state = require "game.scenes.game.widgets.estates-list" (
                     game,
                     property_list_rect,
                     tabb.map_array(
@@ -505,7 +506,7 @@ local function draw_prp_tab(game,rect,pop_id)
                             pop_id,
                             function (item) return true end
                         ),
-                        DATA.ownership_get_building
+                        DATA.ownership_get_estate
                     ),
                     property_buildings_state
                 )()

@@ -217,7 +217,7 @@ function pui.unit_tooltip(pop_id)
 			.. "\n\tHealth\t" .. ut.to_fixed_point2(fat_unit.base_health)
 				.. "\tArmor\t" .. ut.to_fixed_point2(fat_unit.base_armor)
 			.. "\n\tAttack\t" .. ut.to_fixed_point2(fat_unit.base_attack)
-				.. "\tSpeed\t" .. ut.to_fixed_point2(fat_unit.speed) .. "%" 
+				.. "\tSpeed\t" .. ut.to_fixed_point2(fat_unit.speed) .. "%"
 			.. "\n\tForaging\t" .. ut.to_fixed_point2(fat_unit.foraging) .. "%"
 				.. "\tSupply Capacity\t" .. ut.to_fixed_point2(fat_unit.supply_capacity)
 			.. "\n\tUpkeep\t" .. MONEY_SYMBOL .. ut.to_fixed_point2(fat_unit.upkeep)
@@ -232,25 +232,14 @@ end
 ---@param tooltip string?
 function pui.render_unit_icon(rect, pop_id, tooltip)
 	local center_square = rect:centered_square()
-	local unit_type_id = pop_utils.get_unit_type_of(pop_id)
-	if unit_type_id ~= INVALID_ID then
-		ut.render_icon(center_square,
-			DATA.unit_type_get_icon(unit_type_id),
-			DATA.unit_type_get_r(unit_type_id),
-			DATA.unit_type_get_g(unit_type_id),
-			DATA.unit_type_get_b(unit_type_id),
-			1,
-			true)
-	else
-		local race_id = RACE(pop_id)
-		ut.render_icon(center_square,
-			DATA.race_get_icon(race_id),
-			DATA.race_get_r(race_id),
-			DATA.race_get_g(race_id),
-			DATA.race_get_b(race_id),
-			1,
-			true)
-	end
+	local race_id = RACE(pop_id)
+	ut.render_icon(center_square,
+		DATA.race_get_icon(race_id),
+		DATA.race_get_r(race_id),
+		DATA.race_get_g(race_id),
+		DATA.race_get_b(race_id),
+		1,
+		true)
 	if tooltip then
 		ui.tooltip(tooltip, rect)
 	end
@@ -572,7 +561,7 @@ function pui.pop_tooltip(pop_id)
 			.. "\n ".. unit_type .. "\tHealth\t" .. ut.to_fixed_point2(pop_utils.get_health(pop_id))
 			.. "\n  Attack\t" .. ut.to_fixed_point2(pop_utils.get_attack(pop_id))
 				.. "\tArmor\t" .. ut.to_fixed_point2(pop_utils.get_armor(pop_id))
-			.. "\n  Speed\t" .. ut.to_fixed_point2(pop_utils.get_speed(pop_id))
+			.. "\n  Speed\t" .. ut.to_fixed_point2(pop_utils.get_speed(pop_id).base)
 				.. "\tSupply Capacity\t" .. ut.to_fixed_point2(pop_utils.get_supply_capacity(pop_id))
 			.. "\n Skills"
 		for i=1, tabb.size(JOBTYPE)-1 do
@@ -592,7 +581,7 @@ end
 ---@param rect Rect
 ---@param pop_id pop_id
 ---@param job_type_id jobtype_id
-function pui.render_job_efficiency(rect,pop_id,job_type_id)
+function pui.render_job_efficiency(rect, pop_id, job_type_id)
 	local race_id = RACE(pop_id)
 	local race_efficiency
 	if DATA.pop_get_female(pop_id) then
@@ -709,20 +698,9 @@ end
 ---@param pop_id pop_id
 function pui.render_health(rect,pop_id)
 	local value = pop_utils.get_health(pop_id)
-	local unit_of = UNIT_OF(pop_id)
-
 	local base = pop_utils.get_size(pop_id)
 	local tooltip = "Max Health"
 		.. "\n\t" .. ut.to_fixed_point2(base) .. " (Size)"
-
-	if unit_of ~= INVALID_ID then
-		local unit_type_id = pop_utils.get_unit_type_of(pop_id)
-		if unit_type_id ~= INVALID_ID then
-			local unit_base = DATA.unit_type_get_base_health(unit_type_id)
-			tooltip = tooltip .. "\n\t × " .. ut.to_fixed_point2(unit_base)
-				.. " (" .. strings.title(DATA.unit_type_get_name(unit_type_id)) .. ")"
-		end
-	end
 	ut.generic_number_field(
 		"health-normal.png",
 		value,
@@ -737,20 +715,9 @@ end
 ---@param pop_id pop_id
 function pui.render_attack(rect,pop_id)
 	local value = pop_utils.get_attack(pop_id)
-	local unit_of = UNIT_OF(pop_id)
-
 	local base = pop_utils.job_efficiency(pop_id,JOBTYPE.WARRIOR)
 	local tooltip = "Attack"
 		.. "\n\t" .. ut.to_fixed_point2(base) .. " (Warrior)"
-
-	if unit_of ~= INVALID_ID then
-		local unit_type_id = pop_utils.get_unit_type_of(pop_id)
-		if unit_type_id ~= INVALID_ID then
-			local unit_base = DATA.unit_type_get_base_attack(unit_type_id)
-			tooltip = tooltip .. "\n\t × " .. ut.to_fixed_point2(unit_base)
-				.. " (" .. strings.title(DATA.unit_type_get_name(unit_type_id)) .. ")"
-		end
-	end
 	ut.generic_number_field(
 		"stone-spear.png",
 		value,
@@ -765,20 +732,8 @@ end
 ---@param pop_id pop_id
 function pui.render_armor(rect,pop_id)
 	local value = pop_utils.get_armor(pop_id)
-	local unit_of = UNIT_OF(pop_id)
-
-	local size = pop_utils.get_size(pop_id)
 	local tooltip = "Armor"
 		.. "\n\t" .. ut.to_fixed_point2(0) .. " (Base)"
-
-	if unit_of ~= INVALID_ID then
-		local unit_type_id = pop_utils.get_unit_type_of(pop_id)
-		if unit_type_id ~= INVALID_ID then
-			local unit_base = DATA.unit_type_get_base_armor(unit_type_id)
-			tooltip = tooltip .. "\n\t + " .. ut.to_fixed_point2(unit_base)
-				.. " (" .. strings.title(DATA.unit_type_get_name(unit_type_id)) .. ")"
-		end
-	end
 	ut.generic_number_field(
 		"round-shield.png",
 		value,
@@ -792,21 +747,10 @@ end
 ---@param rect Rect
 ---@param pop_id pop_id
 function pui.render_speed(rect,pop_id)
-	local value = pop_utils.get_speed(pop_id)
-	local unit_of = UNIT_OF(pop_id)
+	local value = pop_utils.get_speed(pop_id).base
 
-	local base = pop_utils.get_size(pop_id)
 	local tooltip = "Speed"
 		.. "\n\t" .. ut.to_fixed_point2(1) .. " (Base)"
-
-	if unit_of ~= INVALID_ID then
-		local unit_type_id = pop_utils.get_unit_type_of(pop_id)
-		if unit_type_id ~= INVALID_ID then
-			local unit_base = DATA.unit_type_get_speed(unit_type_id)*100
-			tooltip = tooltip .. "\n\t × " .. ut.to_fixed_point2(unit_base)
-				.. "% (" .. strings.title(DATA.unit_type_get_name(unit_type_id)) .. ")"
-		end
-	end
 
 	local race_id = RACE(pop_id)
 	local age, teen_age, middle_age =
@@ -833,21 +777,9 @@ end
 ---@param pop_id pop_id
 function pui.render_supply_capacity(rect,pop_id)
 	local value = pop_utils.get_supply_capacity(pop_id)
-	local unit_of = UNIT_OF(pop_id)
-
 	local base = pop_utils.job_efficiency(pop_id, JOBTYPE.HAULING)
 	local tooltip = "Supply Capacity"
 		.. "\n\t" .. ut.to_fixed_point2(base) .. " (Hauling)"
-
-	if unit_of ~= INVALID_ID then
-		local unit_type_id = pop_utils.get_unit_type_of(pop_id)
-		if unit_type_id ~= INVALID_ID then
-			local unit_base = DATA.unit_type_get_supply_capacity(unit_type_id)
-			tooltip = tooltip .. "\n\t + " .. ut.to_fixed_point2(unit_base)
-				.. " (" .. strings.title(DATA.unit_type_get_name(unit_type_id)) .. ")"
-		end
-	end
-
 	ut.generic_number_field(
 		"cardboard-box.png",
 		value,

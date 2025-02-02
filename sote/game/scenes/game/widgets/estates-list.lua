@@ -34,85 +34,77 @@ local function init_state(state, compact)
 end
 
 ---@param rect Rect
----@param table trade_good_id[]
+---@param table estate_id[]
 ---@param state TableState?
 ---@param title string?
 ---@param compact boolean?
-return function(game, rect, pop_id, table, state, title, compact)
+return function(game, rect, table, state, title, compact)
     if compact == nil then
         compact = false
     end
 
     return function()
-        ---@type TableColumn<trade_good_id>[]
+        ---@type TableColumn<estate_id>[]
         local columns = {
             {
-                header = ".",
+                header = "location",
                 render_closure = function(rect, k, v)
-                    ut.render_icon(rect,
-                        DATA.trade_good_get_icon(k),
-                        DATA.trade_good_get_r(k),
-                        DATA.trade_good_get_g(k),
-                        DATA.trade_good_get_b(k),
-                        1, true)
-                    ui.tooltip(strings.title(DATA.trade_good_get_name(k)),rect)
+                    local province_id = ESTATE_PROVINCE(v)
+                    ib.text_button_to_province(game,province_id,rect,strings.title(DATA.building_type_get_name(DATA.building_get_current_type(v)))
+                        .. " is in the province of " .. PROVINCE_NAME(province_id) .. ".")
+                end,
+                width = 4,
+                value = function(k, v)
+                    return PROVINCE_NAME(ESTATE_PROVINCE(v))
+                end,
+            },
+            {
+                header = "rlm",
+                render_closure = function(rect, k, v)
+                    local realm_id = PROVINCE_REALM(ESTATE_PROVINCE(v))
+                    ib.icon_button_to_realm(game,realm_id,rect,strings.title(DATA.building_type_get_name(DATA.building_get_current_type(v)))
+                        .. " is in the capitol of " .. REALM_NAME(realm_id) .. ".")
                 end,
                 width = 1,
                 value = function(k, v)
-                    return k
-                end
-            },
-            {
-                header = "good",
-                render_closure = function(rect, k, v)
-                    ui.text(strings.title(DATA.trade_good_get_name(k)),rect,"center","center")
-                    ui.tooltip(strings.title(DATA.trade_good_get_name(k)),rect)
+                    return PROVINCE_REALM(ESTATE_PROVINCE(v))
                 end,
-                width = 5,
-                value = function(k, v)
-                    return DATA.trade_good_get_name(k)
-                end
             },
             {
-                header = "amount",
-                render_closure = function (rect, k, v)
+                header = "profit",
+                render_closure = function(rect, k, v)
                     ut.generic_number_field(
-                        "cardboard-box.png",
-                        v,
+                        "receive-money.png",
+                        DATA.estate_get_balance_last_tick(v),
                         rect,
-                        ut.to_fixed_point2(v) .. " " .. DATA.trade_good_get_name(k) .. " in inventory.",
+                        "This build gained " .. ut.to_fixed_point2(DATA.estate_get_balance_last_tick(v)) .. MONEY_SYMBOL .. " last month.",
                         ut.NUMBER_MODE.BALANCE,
                         ut.NAME_MODE.ICON,
                         true)
+
                 end,
                 width = 3,
                 value = function(k, v)
-                    return v
-                end
+                    return DATA.estate_get_balance_last_tick(v)
+                end,
             },
             {
-                header = "price",
-                render_closure = function (rect, k, v)
-                    local belief_buy = DATA.pop_get_price_belief_buy(pop_id,k)
-                    local belief_sell = DATA.pop_get_price_belief_sell(pop_id,k)
-                    local average_belief = (belief_buy + belief_sell) * 0.5
+                header = "savings",
+                render_closure = function(rect, k, v)
                     ut.generic_number_field(
-                        "bank.png",
-                        average_belief,
+                        "coins.png",
+                        DATA.estate_get_savings(v),
                         rect,
-                        NAME(pop_id)
-                        .. " believes they can buy one unit of " .. DATA.trade_good_get_name(k)
-                        .. " at " .. ut.to_fixed_point2(belief_buy) .. MONEY_SYMBOL
-                        .. " and sell it at " .. ut.to_fixed_point2(belief_sell) .. MONEY_SYMBOL
-                        .. ".",
-                        ut.NUMBER_MODE.MONEY,
+                        "This build has " .. ut.to_fixed_point2(DATA.estate_get_savings(v)) .. MONEY_SYMBOL .. " in savings.",
+                        ut.NUMBER_MODE.BALANCE,
                         ut.NAME_MODE.ICON,
                         true)
+
                 end,
                 width = 3,
                 value = function(k, v)
-                    return v
-                end
+                    return DATA.estate_get_savings(v)
+                end,
             },
         }
         state = init_state(state, compact)

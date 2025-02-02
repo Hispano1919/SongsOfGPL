@@ -73,6 +73,18 @@ function ib.icon_button_to_character(gamescene, character, rect, tooltip)
 end
 
 ---@param gamescene GameScene
+---@param character Character
+---@param rect Rect
+---@param text string
+---@param tooltip string?
+function ib.text_button_to_character(gamescene, character, rect, text, tooltip, potential, active)
+    if ut.text_button(text, rect, tooltip, potential, active) then
+        gamescene.selected.character = character
+        gamescene.inspector = "character"
+    end
+end
+
+---@param gamescene GameScene
 ---@param province Province
 ---@param rect Rect
 ---@param tooltip string?
@@ -91,7 +103,6 @@ function ib.text_button_to_province(gamescene, province, rect, tooltip)
     else
         ut.text_button("Unknown", rect, tooltip)
     end
-
 end
 
 ---@param gamescene GameScene
