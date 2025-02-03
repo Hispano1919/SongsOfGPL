@@ -753,8 +753,9 @@ function gam.click_tile(tile_id)
 					military_values.warband_speed(warband),
 					DATA.realm_get_known_provinces(REALM(WORLD.player_character))
 				)
-				tabb.print(path)
+				print(path)
 				if path then
+					tabb.print(path)
 					table.insert(path, WARBAND_TILE(warband))
 					DATA.warband_set_current_path(warband, path)
 					DATA.warband_set_movement_progress(

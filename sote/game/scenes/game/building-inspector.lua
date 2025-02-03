@@ -46,6 +46,8 @@ local ESTATE_TAB = {
 ---@type ESTATE_TAB
 local selected_tab = ESTATE_TAB.BUILDINGS
 
+local property_inventory_state = nil
+
 ---@param gam GameScene
 function re.draw(gam)
 
@@ -125,7 +127,7 @@ function re.draw(gam)
 		tabs_rect.x = tabs_rect.x + tabs_rect.width
 
 		if ut.text_button(
-			"Budget",
+			"Inventory",
 			tabs_rect,
 			"In this tab you can manage your budget and inventory of your estate",
 			true,
@@ -175,7 +177,9 @@ function re.draw(gam)
 
 		else
 			--- budget and inventory related decisions
-
+			--- savings are already displayed:
+			--- show inventory stats
+			property_inventory_state = require "game.scenes.game.widgets.estate-inventory-list"(gam, management_rect, estate, property_inventory_state, nil, true)()
 		end
 	else
 		gam.selected.estate = INVALID_ID

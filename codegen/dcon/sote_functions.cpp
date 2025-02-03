@@ -220,9 +220,6 @@ constexpr inline float MAX_INDUCED_DEMAND = 3.f;
 // how much of income is siphoned to local wealth pool
 constexpr inline float INCOME_TO_LOCAL_WEALTH_MULTIPLIER = 0.125f / 4.f;
 
-// buying prices for pops are multiplied on this number
-constexpr inline float POP_BUY_PRICE_MULTIPLIER = 3.0f;
-
 // pops work at least this time
 constexpr inline float MINIMAL_WORKING_RATIO = 0.2f;
 
@@ -1160,7 +1157,7 @@ void pops_demand() {
 				auto price = state.province_get_local_prices(province, trade_good);
 				auto score = need.demanded * price_score(price / weight);
 				total_score += score;
-				total_cost += need.demanded * score * price * POP_BUY_PRICE_MULTIPLIER;
+				total_cost += need.demanded * score * price;
 			});
 		};
 
@@ -1297,7 +1294,7 @@ void pops_buy() {
 				assert(score >= 0.f);
 
 				total_score += score;
-				total_cost += need.demanded * score * price * POP_BUY_PRICE_MULTIPLIER;
+				total_cost += need.demanded * score * price;
 			});
 		};
 
@@ -1344,7 +1341,7 @@ void pops_buy() {
 				state.pop_set_pending_economy_income(
 					pop,
 					std::max(0.f, state.pop_get_pending_economy_income(pop)
-					- demand * demand_satisfaction * price * POP_BUY_PRICE_MULTIPLIER)
+					- demand * demand_satisfaction * price)
 				);
 			});
 		};
@@ -1411,7 +1408,7 @@ void estates_buy() {
 	});
 }
 
-constexpr inline float WORKERS_SHARE = 0.05f;
+constexpr inline float WORKERS_SHARE = 0.01f;
 
 // estates can interact only with local pops
 // can do in parallel over provinces
@@ -1684,7 +1681,7 @@ void update_economy() {
 			auto produced = state.province_get_local_production(province, trade_good);
 			auto price = state.province_get_local_prices(province, trade_good);
 
-			auto balance = demanded * satisfied * POP_BUY_PRICE_MULTIPLIER - produced * price;
+			auto balance = demanded * satisfied - produced * price;
 			auto wealth = state.province_get_trade_wealth(province);
 
 			auto result = ve::select(balance + wealth > 0.f, balance + wealth, 0.f);
@@ -1783,7 +1780,7 @@ float estimate_building_type_income(int32_t province_lua, int32_t building_type_
 		}
 
 		auto use = dcon::use_case_id {dcon::use_case_id::value_base_t(input.use - 1)};
-		income -= input_modifier * estimate_province_use_price(province, use) * input.amount * POP_BUY_PRICE_MULTIPLIER;
+		income -= input_modifier * estimate_province_use_price(province, use) * input.amount;
 	}
 	for (uint32_t i = 0; i < state.production_method_get_outputs_size(); i++) {
 		base_types::trade_good_container& output = state.production_method_get_outputs(method, i);

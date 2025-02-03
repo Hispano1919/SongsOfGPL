@@ -33,7 +33,9 @@ local function init_state(state, compact)
     return state
 end
 
+---@param game GameScene
 ---@param rect Rect
+---@param pop_id pop_id
 ---@param table trade_good_id[]
 ---@param state TableState?
 ---@param title string?

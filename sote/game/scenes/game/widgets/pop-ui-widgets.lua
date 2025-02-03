@@ -211,17 +211,6 @@ function pui.unit_tooltip(pop_id)
 	if unit_type_id ~= INVALID_ID then
 		local fat_unit = DATA.fatten_unit_type(unit_type_id)
 		return strings.title(fat_unit.name)
-			.. "\n " .. strings.title(fat_unit.description)
-			.. "\n\tSpotting\t" .. ut.to_fixed_point2(fat_unit.spotting)
-				.. "\tVisibility\t" .. ut.to_fixed_point2(fat_unit.visibility)
-			.. "\n\tHealth\t" .. ut.to_fixed_point2(fat_unit.base_health)
-				.. "\tArmor\t" .. ut.to_fixed_point2(fat_unit.base_armor)
-			.. "\n\tAttack\t" .. ut.to_fixed_point2(fat_unit.base_attack)
-				.. "\tSpeed\t" .. ut.to_fixed_point2(fat_unit.speed) .. "%"
-			.. "\n\tForaging\t" .. ut.to_fixed_point2(fat_unit.foraging) .. "%"
-				.. "\tSupply Capacity\t" .. ut.to_fixed_point2(fat_unit.supply_capacity)
-			.. "\n\tUpkeep\t" .. MONEY_SYMBOL .. ut.to_fixed_point2(fat_unit.upkeep)
-				.. "\tSupply Used\t" .. ut.to_fixed_point2(fat_unit.supply_used)
 	else
 		return strings.title(rank_name(pop_id))
 	end

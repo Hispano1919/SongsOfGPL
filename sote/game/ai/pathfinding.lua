@@ -307,7 +307,7 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 			PATHFINDING_CACHE[cache_index][starting_province][ending_province] = path
 		end
 
-		return total_cost, path
+		return total_cost, tabb.copy(path)
 	else
 		PROFILER:start_timer("path cost calculation")
 		local current = origin
