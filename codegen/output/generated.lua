@@ -383,40 +383,43 @@ function DATA.test_set_get_0()
     fat_id.is_coast = false
     fat_id.has_river = false
     fat_id.has_marsh = false
-    fat_id.elevation = 10
-    fat_id.slope = 2
-    fat_id.grass = 17
-    fat_id.shrub = -7
-    fat_id.conifer = 12
-    fat_id.broadleaf = -12
-    fat_id.ideal_grass = -2
-    fat_id.ideal_shrub = -12
-    fat_id.ideal_conifer = -14
-    fat_id.ideal_broadleaf = 19
-    fat_id.silt = -4
-    fat_id.clay = 14
-    fat_id.sand = 18
-    fat_id.soil_minerals = -11
-    fat_id.soil_organics = -1
-    fat_id.january_waterflow = -14
-    fat_id.january_rain = -16
-    fat_id.january_temperature = 1
-    fat_id.july_waterflow = 10
-    fat_id.july_rain = 15
-    fat_id.july_temperature = -14
-    fat_id.waterlevel = 2
-    fat_id.ice = 7
-    fat_id.ice_age_ice = 0
-    fat_id.debug_r = 19
-    fat_id.debug_g = 20
-    fat_id.debug_b = -7
-    fat_id.real_r = 15
-    fat_id.real_g = 10
-    fat_id.real_b = 8
-    fat_id.pathfinding_index = 16
-    fat_id.resource = -4
-    fat_id.bedrock = -17
-    fat_id.biome = 15
+    fat_id.x = 10
+    fat_id.y = 2
+    fat_id.z = 17
+    fat_id.elevation = -7
+    fat_id.slope = 12
+    fat_id.grass = -12
+    fat_id.shrub = -2
+    fat_id.conifer = -12
+    fat_id.broadleaf = -14
+    fat_id.ideal_grass = 19
+    fat_id.ideal_shrub = -4
+    fat_id.ideal_conifer = 14
+    fat_id.ideal_broadleaf = 18
+    fat_id.silt = -11
+    fat_id.clay = -1
+    fat_id.sand = -14
+    fat_id.soil_minerals = -16
+    fat_id.soil_organics = 1
+    fat_id.january_waterflow = 10
+    fat_id.january_rain = 15
+    fat_id.january_temperature = -14
+    fat_id.july_waterflow = 2
+    fat_id.july_rain = 7
+    fat_id.july_temperature = 0
+    fat_id.waterlevel = 19
+    fat_id.ice = 20
+    fat_id.ice_age_ice = -7
+    fat_id.debug_r = 15
+    fat_id.debug_g = 10
+    fat_id.debug_b = 8
+    fat_id.real_r = 13
+    fat_id.real_g = -4
+    fat_id.real_b = -17
+    fat_id.pathfinding_index = 17
+    fat_id.resource = -20
+    fat_id.bedrock = -15
+    fat_id.biome = 5
     local test_passed = true
     test_passed = test_passed and fat_id.world_id == 12
     if not test_passed then print("world_id", 12, fat_id.world_id) end
@@ -432,74 +435,80 @@ function DATA.test_set_get_0()
     if not test_passed then print("has_river", false, fat_id.has_river) end
     test_passed = test_passed and fat_id.has_marsh == false
     if not test_passed then print("has_marsh", false, fat_id.has_marsh) end
-    test_passed = test_passed and fat_id.elevation == 10
-    if not test_passed then print("elevation", 10, fat_id.elevation) end
-    test_passed = test_passed and fat_id.slope == 2
-    if not test_passed then print("slope", 2, fat_id.slope) end
-    test_passed = test_passed and fat_id.grass == 17
-    if not test_passed then print("grass", 17, fat_id.grass) end
-    test_passed = test_passed and fat_id.shrub == -7
-    if not test_passed then print("shrub", -7, fat_id.shrub) end
-    test_passed = test_passed and fat_id.conifer == 12
-    if not test_passed then print("conifer", 12, fat_id.conifer) end
-    test_passed = test_passed and fat_id.broadleaf == -12
-    if not test_passed then print("broadleaf", -12, fat_id.broadleaf) end
-    test_passed = test_passed and fat_id.ideal_grass == -2
-    if not test_passed then print("ideal_grass", -2, fat_id.ideal_grass) end
-    test_passed = test_passed and fat_id.ideal_shrub == -12
-    if not test_passed then print("ideal_shrub", -12, fat_id.ideal_shrub) end
-    test_passed = test_passed and fat_id.ideal_conifer == -14
-    if not test_passed then print("ideal_conifer", -14, fat_id.ideal_conifer) end
-    test_passed = test_passed and fat_id.ideal_broadleaf == 19
-    if not test_passed then print("ideal_broadleaf", 19, fat_id.ideal_broadleaf) end
-    test_passed = test_passed and fat_id.silt == -4
-    if not test_passed then print("silt", -4, fat_id.silt) end
-    test_passed = test_passed and fat_id.clay == 14
-    if not test_passed then print("clay", 14, fat_id.clay) end
-    test_passed = test_passed and fat_id.sand == 18
-    if not test_passed then print("sand", 18, fat_id.sand) end
-    test_passed = test_passed and fat_id.soil_minerals == -11
-    if not test_passed then print("soil_minerals", -11, fat_id.soil_minerals) end
-    test_passed = test_passed and fat_id.soil_organics == -1
-    if not test_passed then print("soil_organics", -1, fat_id.soil_organics) end
-    test_passed = test_passed and fat_id.january_waterflow == -14
-    if not test_passed then print("january_waterflow", -14, fat_id.january_waterflow) end
-    test_passed = test_passed and fat_id.january_rain == -16
-    if not test_passed then print("january_rain", -16, fat_id.january_rain) end
-    test_passed = test_passed and fat_id.january_temperature == 1
-    if not test_passed then print("january_temperature", 1, fat_id.january_temperature) end
-    test_passed = test_passed and fat_id.july_waterflow == 10
-    if not test_passed then print("july_waterflow", 10, fat_id.july_waterflow) end
-    test_passed = test_passed and fat_id.july_rain == 15
-    if not test_passed then print("july_rain", 15, fat_id.july_rain) end
-    test_passed = test_passed and fat_id.july_temperature == -14
-    if not test_passed then print("july_temperature", -14, fat_id.july_temperature) end
-    test_passed = test_passed and fat_id.waterlevel == 2
-    if not test_passed then print("waterlevel", 2, fat_id.waterlevel) end
-    test_passed = test_passed and fat_id.ice == 7
-    if not test_passed then print("ice", 7, fat_id.ice) end
-    test_passed = test_passed and fat_id.ice_age_ice == 0
-    if not test_passed then print("ice_age_ice", 0, fat_id.ice_age_ice) end
-    test_passed = test_passed and fat_id.debug_r == 19
-    if not test_passed then print("debug_r", 19, fat_id.debug_r) end
-    test_passed = test_passed and fat_id.debug_g == 20
-    if not test_passed then print("debug_g", 20, fat_id.debug_g) end
-    test_passed = test_passed and fat_id.debug_b == -7
-    if not test_passed then print("debug_b", -7, fat_id.debug_b) end
-    test_passed = test_passed and fat_id.real_r == 15
-    if not test_passed then print("real_r", 15, fat_id.real_r) end
-    test_passed = test_passed and fat_id.real_g == 10
-    if not test_passed then print("real_g", 10, fat_id.real_g) end
-    test_passed = test_passed and fat_id.real_b == 8
-    if not test_passed then print("real_b", 8, fat_id.real_b) end
-    test_passed = test_passed and fat_id.pathfinding_index == 16
-    if not test_passed then print("pathfinding_index", 16, fat_id.pathfinding_index) end
-    test_passed = test_passed and fat_id.resource == -4
-    if not test_passed then print("resource", -4, fat_id.resource) end
-    test_passed = test_passed and fat_id.bedrock == -17
-    if not test_passed then print("bedrock", -17, fat_id.bedrock) end
-    test_passed = test_passed and fat_id.biome == 15
-    if not test_passed then print("biome", 15, fat_id.biome) end
+    test_passed = test_passed and fat_id.x == 10
+    if not test_passed then print("x", 10, fat_id.x) end
+    test_passed = test_passed and fat_id.y == 2
+    if not test_passed then print("y", 2, fat_id.y) end
+    test_passed = test_passed and fat_id.z == 17
+    if not test_passed then print("z", 17, fat_id.z) end
+    test_passed = test_passed and fat_id.elevation == -7
+    if not test_passed then print("elevation", -7, fat_id.elevation) end
+    test_passed = test_passed and fat_id.slope == 12
+    if not test_passed then print("slope", 12, fat_id.slope) end
+    test_passed = test_passed and fat_id.grass == -12
+    if not test_passed then print("grass", -12, fat_id.grass) end
+    test_passed = test_passed and fat_id.shrub == -2
+    if not test_passed then print("shrub", -2, fat_id.shrub) end
+    test_passed = test_passed and fat_id.conifer == -12
+    if not test_passed then print("conifer", -12, fat_id.conifer) end
+    test_passed = test_passed and fat_id.broadleaf == -14
+    if not test_passed then print("broadleaf", -14, fat_id.broadleaf) end
+    test_passed = test_passed and fat_id.ideal_grass == 19
+    if not test_passed then print("ideal_grass", 19, fat_id.ideal_grass) end
+    test_passed = test_passed and fat_id.ideal_shrub == -4
+    if not test_passed then print("ideal_shrub", -4, fat_id.ideal_shrub) end
+    test_passed = test_passed and fat_id.ideal_conifer == 14
+    if not test_passed then print("ideal_conifer", 14, fat_id.ideal_conifer) end
+    test_passed = test_passed and fat_id.ideal_broadleaf == 18
+    if not test_passed then print("ideal_broadleaf", 18, fat_id.ideal_broadleaf) end
+    test_passed = test_passed and fat_id.silt == -11
+    if not test_passed then print("silt", -11, fat_id.silt) end
+    test_passed = test_passed and fat_id.clay == -1
+    if not test_passed then print("clay", -1, fat_id.clay) end
+    test_passed = test_passed and fat_id.sand == -14
+    if not test_passed then print("sand", -14, fat_id.sand) end
+    test_passed = test_passed and fat_id.soil_minerals == -16
+    if not test_passed then print("soil_minerals", -16, fat_id.soil_minerals) end
+    test_passed = test_passed and fat_id.soil_organics == 1
+    if not test_passed then print("soil_organics", 1, fat_id.soil_organics) end
+    test_passed = test_passed and fat_id.january_waterflow == 10
+    if not test_passed then print("january_waterflow", 10, fat_id.january_waterflow) end
+    test_passed = test_passed and fat_id.january_rain == 15
+    if not test_passed then print("january_rain", 15, fat_id.january_rain) end
+    test_passed = test_passed and fat_id.january_temperature == -14
+    if not test_passed then print("january_temperature", -14, fat_id.january_temperature) end
+    test_passed = test_passed and fat_id.july_waterflow == 2
+    if not test_passed then print("july_waterflow", 2, fat_id.july_waterflow) end
+    test_passed = test_passed and fat_id.july_rain == 7
+    if not test_passed then print("july_rain", 7, fat_id.july_rain) end
+    test_passed = test_passed and fat_id.july_temperature == 0
+    if not test_passed then print("july_temperature", 0, fat_id.july_temperature) end
+    test_passed = test_passed and fat_id.waterlevel == 19
+    if not test_passed then print("waterlevel", 19, fat_id.waterlevel) end
+    test_passed = test_passed and fat_id.ice == 20
+    if not test_passed then print("ice", 20, fat_id.ice) end
+    test_passed = test_passed and fat_id.ice_age_ice == -7
+    if not test_passed then print("ice_age_ice", -7, fat_id.ice_age_ice) end
+    test_passed = test_passed and fat_id.debug_r == 15
+    if not test_passed then print("debug_r", 15, fat_id.debug_r) end
+    test_passed = test_passed and fat_id.debug_g == 10
+    if not test_passed then print("debug_g", 10, fat_id.debug_g) end
+    test_passed = test_passed and fat_id.debug_b == 8
+    if not test_passed then print("debug_b", 8, fat_id.debug_b) end
+    test_passed = test_passed and fat_id.real_r == 13
+    if not test_passed then print("real_r", 13, fat_id.real_r) end
+    test_passed = test_passed and fat_id.real_g == -4
+    if not test_passed then print("real_g", -4, fat_id.real_g) end
+    test_passed = test_passed and fat_id.real_b == -17
+    if not test_passed then print("real_b", -17, fat_id.real_b) end
+    test_passed = test_passed and fat_id.pathfinding_index == 17
+    if not test_passed then print("pathfinding_index", 17, fat_id.pathfinding_index) end
+    test_passed = test_passed and fat_id.resource == -20
+    if not test_passed then print("resource", -20, fat_id.resource) end
+    test_passed = test_passed and fat_id.bedrock == -15
+    if not test_passed then print("bedrock", -15, fat_id.bedrock) end
+    test_passed = test_passed and fat_id.biome == 5
+    if not test_passed then print("biome", 5, fat_id.biome) end
     print("SET_GET_TEST_0_tile:")
     if test_passed then print("PASSED") else print("ERROR") end
     local id = DATA.create_plate()

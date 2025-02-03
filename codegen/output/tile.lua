@@ -16,6 +16,9 @@ local ffi = require("ffi")
 ---@field is_coast boolean 
 ---@field has_river boolean 
 ---@field has_marsh boolean 
+---@field x number 
+---@field y number 
+---@field z number 
 ---@field elevation number 
 ---@field slope number 
 ---@field grass number 
@@ -59,6 +62,9 @@ local ffi = require("ffi")
 ---@field is_coast boolean 
 ---@field has_river boolean 
 ---@field has_marsh boolean 
+---@field x number 
+---@field y number 
+---@field z number 
 ---@field elevation number 
 ---@field slope number 
 ---@field grass number 
@@ -110,6 +116,12 @@ void dcon_tile_set_has_river(int32_t, bool);
 bool dcon_tile_get_has_river(int32_t);
 void dcon_tile_set_has_marsh(int32_t, bool);
 bool dcon_tile_get_has_marsh(int32_t);
+void dcon_tile_set_x(int32_t, float);
+float dcon_tile_get_x(int32_t);
+void dcon_tile_set_y(int32_t, float);
+float dcon_tile_get_y(int32_t);
+void dcon_tile_set_z(int32_t, float);
+float dcon_tile_get_z(int32_t);
 void dcon_tile_set_elevation(int32_t, float);
 float dcon_tile_get_elevation(int32_t);
 void dcon_tile_set_slope(int32_t, float);
@@ -292,6 +304,57 @@ end
 ---@param value boolean valid boolean
 function DATA.tile_set_has_marsh(tile_id, value)
     DCON.dcon_tile_set_has_marsh(tile_id - 1, value)
+end
+---@param tile_id tile_id valid tile id
+---@return number x 
+function DATA.tile_get_x(tile_id)
+    return DCON.dcon_tile_get_x(tile_id - 1)
+end
+---@param tile_id tile_id valid tile id
+---@param value number valid number
+function DATA.tile_set_x(tile_id, value)
+    DCON.dcon_tile_set_x(tile_id - 1, value)
+end
+---@param tile_id tile_id valid tile id
+---@param value number valid number
+function DATA.tile_inc_x(tile_id, value)
+    ---@type number
+    local current = DCON.dcon_tile_get_x(tile_id - 1)
+    DCON.dcon_tile_set_x(tile_id - 1, current + value)
+end
+---@param tile_id tile_id valid tile id
+---@return number y 
+function DATA.tile_get_y(tile_id)
+    return DCON.dcon_tile_get_y(tile_id - 1)
+end
+---@param tile_id tile_id valid tile id
+---@param value number valid number
+function DATA.tile_set_y(tile_id, value)
+    DCON.dcon_tile_set_y(tile_id - 1, value)
+end
+---@param tile_id tile_id valid tile id
+---@param value number valid number
+function DATA.tile_inc_y(tile_id, value)
+    ---@type number
+    local current = DCON.dcon_tile_get_y(tile_id - 1)
+    DCON.dcon_tile_set_y(tile_id - 1, current + value)
+end
+---@param tile_id tile_id valid tile id
+---@return number z 
+function DATA.tile_get_z(tile_id)
+    return DCON.dcon_tile_get_z(tile_id - 1)
+end
+---@param tile_id tile_id valid tile id
+---@param value number valid number
+function DATA.tile_set_z(tile_id, value)
+    DCON.dcon_tile_set_z(tile_id - 1, value)
+end
+---@param tile_id tile_id valid tile id
+---@param value number valid number
+function DATA.tile_inc_z(tile_id, value)
+    ---@type number
+    local current = DCON.dcon_tile_get_z(tile_id - 1)
+    DCON.dcon_tile_set_z(tile_id - 1, current + value)
 end
 ---@param tile_id tile_id valid tile id
 ---@return number elevation 
@@ -860,6 +923,9 @@ local fat_tile_id_metatable = {
         if (k == "is_coast") then return DATA.tile_get_is_coast(t.id) end
         if (k == "has_river") then return DATA.tile_get_has_river(t.id) end
         if (k == "has_marsh") then return DATA.tile_get_has_marsh(t.id) end
+        if (k == "x") then return DATA.tile_get_x(t.id) end
+        if (k == "y") then return DATA.tile_get_y(t.id) end
+        if (k == "z") then return DATA.tile_get_z(t.id) end
         if (k == "elevation") then return DATA.tile_get_elevation(t.id) end
         if (k == "slope") then return DATA.tile_get_slope(t.id) end
         if (k == "grass") then return DATA.tile_get_grass(t.id) end
@@ -923,6 +989,18 @@ local fat_tile_id_metatable = {
         end
         if (k == "has_marsh") then
             DATA.tile_set_has_marsh(t.id, v)
+            return
+        end
+        if (k == "x") then
+            DATA.tile_set_x(t.id, v)
+            return
+        end
+        if (k == "y") then
+            DATA.tile_set_y(t.id, v)
+            return
+        end
+        if (k == "z") then
+            DATA.tile_set_z(t.id, v)
             return
         end
         if (k == "elevation") then

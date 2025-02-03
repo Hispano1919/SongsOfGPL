@@ -41,6 +41,21 @@ object {
         tag { scenario }
     }
     property{
+        name { x }
+        type { float }
+        tag { scenario }
+    }
+    property{
+        name { y }
+        type { float }
+        tag { scenario }
+    }
+    property{
+        name { z }
+        type { float }
+        tag { scenario }
+    }
+    property{
         name { elevation }
         type { float }
         tag { scenario }
