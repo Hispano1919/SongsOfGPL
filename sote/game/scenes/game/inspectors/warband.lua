@@ -708,7 +708,7 @@ function window.draw(gamescene)
 						rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"),
 						text, control_warband
 					) then
-						WORLD:emit_immediate_event('pick-commander-unit', player_character, warband)
+						warband_utils.set_commander(warband, player_character, UNIT_TYPE.WARRIOR)
 					end
 				else
 					ut.render_icon(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)

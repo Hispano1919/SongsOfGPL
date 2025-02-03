@@ -77,7 +77,7 @@ local function load()
 			if warband == INVALID_ID then
 				warband = RECRUITER_OF_WARBAND(root)
 			end
-			WORLD:emit_immediate_event("pick-commander-unit", root, warband)
+			warband_utils.set_commander(warband, root, UNIT_TYPE.WARRIOR)
 		end
 	}
 
