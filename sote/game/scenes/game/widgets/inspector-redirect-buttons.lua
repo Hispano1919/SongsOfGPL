@@ -50,7 +50,7 @@ function ib.icon_button_to_realm(gamescene, realm, rect, tooltip)
             ut.coa(realm, center)
         end
     else
-        ut.icon_button(ASSETS.icons["uncertainty"],center,"Unknown realm!",false)
+        ut.icon_button(ASSETS.icons["uncertainty.png"],center,"Unknown realm!",false)
     end
     if tooltip then
         ui.tooltip(tooltip,rect)
