@@ -998,7 +998,7 @@ local function technology_tab(gam, tile_id, panel)
 						re.researched_technologies_scrollbar = uit.scrollview(rect, function(number, rect)
 								if number > 0 then
 									---@type Technology
-									local tech = tabb.nth(technologies, number)
+									local tech = technologies[number]
 									require "game.scenes.game.widgets.technology" (tech, rect, gam)
 								end
 							end,
