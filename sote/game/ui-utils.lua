@@ -872,9 +872,11 @@ function ut.calendar(gam)
 
 	if ut.icon_button(ASSETS.icons["fast-forward-button.png"], speed_up, "Speed up") or ui.is_key_pressed("+") or
 		ui.is_key_pressed("kp+") then
-		gam.speed = math.min(5, gam.speed + 1)
+		gam.speed = math.min(6, gam.speed + 1)
 	end
 	ui.panel(speed)
+	local cr, cg, cb, ca = love.graphics.getColor()
+
 	local speed_text = tostring(gam.speed)
 	if gam.turbo then
 		speed_text = ">>"

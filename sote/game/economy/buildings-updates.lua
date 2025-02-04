@@ -4,7 +4,6 @@ local bld = {}
 local economy_values = require "game.raws.values.economy"
 local economy_effects = require "game.raws.effects.economy"
 
-local building_utils = require "game.entities.building".Building
 local method_utils = require "game.raws.production-methods"
 
 ---@class (exact) CandidateBuilding

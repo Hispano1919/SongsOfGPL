@@ -7,7 +7,6 @@ local et = require "game.raws.triggers.economy"
 
 local message_effects = require "game.raws.effects.messages"
 
-local building_utils = require "game.entities.building".Building
 local pop_utils = require "game.entities.pop".POP
 local province_utils = require "game.entities.province".Province
 local warband_utils = require "game.entities.warband"
@@ -295,7 +294,9 @@ function EconomicEffects.construct_building(building_type, province, owner)
 		end
 	end
 
-	local result_building = building_utils.new(estate, building_type)
+	local result_building = DATA.create_building()
+	DATA.building_set_current_type(result_building, building_type)
+	DATA.force_create_building_estate(estate, result_building)
 
 	local name_building = DATA.building_type_get_name(building_type)
 	local province_name = DATA.province_get_name(province)
@@ -304,12 +305,32 @@ function EconomicEffects.construct_building(building_type, province, owner)
 		WORLD:emit_notification(name_building .. " was constructed in " .. province_name .. ".")
 	end
 
+	for i = 1, MAX_REQUIREMENTS_BUILDING_TYPE do
+		local resource = DATA.building_type_get_required_resource(building_type, i)
+		if resource == INVALID_ID then
+			break
+		end
+		DATA.province_inc_used_resources(province, resource, 1)
+	end
+
 	return result_building
 end
 
 ---comment
 ---@param building Building
 function EconomicEffects.destroy_building(building)
+	local estate = DATA.building_estate_get_estate(DATA.get_building_estate_from_building(building))
+	local province = DATA.estate_location_get_province(DATA.get_estate_location_from_estate(estate))
+
+	local building_type = DATA.building_get_current_type(building)
+	for i = 1, MAX_REQUIREMENTS_BUILDING_TYPE do
+		local resource = DATA.building_type_get_required_resource(building_type, i)
+		if resource == INVALID_ID then
+			break
+		end
+		DATA.province_inc_used_resources(province, resource, -1)
+	end
+
 	DATA.delete_building(building)
 end
 

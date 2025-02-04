@@ -42,7 +42,6 @@ return function(do_logging, load_save)
 	require "game.raws.use-case-loader".load()
 	require "game.raws.trade-goods-loader".load()
 
-	RECALCULATE_WEIGHTS_TABLE()
 
 	print("Loading races")
 	require "game.raws.race-loader".load()
@@ -71,5 +70,8 @@ return function(do_logging, load_save)
 	end
 	require "game.raws.events-loader".load()
 
+	require "game.raws.production-chain-description._loader"()
+
+	RECALCULATE_WEIGHTS_TABLE()
 	print('raws done')
 end

@@ -577,7 +577,7 @@ function gam.update(dt)
 			-- the game is unpaused, call tick on world!
 			--print("-- tick start --")
 			local start = love.timer.getTime()
-			if gam.turbo then
+			if gam.turbo or gam.speed == 6 then
 				while true do
 					WORLD:tick()
 					if love.timer.getTime() - start > 1 / 10 then

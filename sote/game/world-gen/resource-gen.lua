@@ -17,6 +17,7 @@ function ge.run()
 					if ith_resource == INVALID_ID then
 						DATA.province_set_local_resources_location(province, i, tile_id)
 						DATA.province_set_local_resources_resource(province, i, res)
+						DATA.province_inc_total_resources(province, res, 3)
 						break
 					end
 				end

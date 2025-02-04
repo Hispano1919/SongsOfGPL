@@ -213,7 +213,7 @@ function d.load()
 	ProductionMethod:new {
 		name = "native-copper-gathering",
 		description = "mining native ore close to the surface",
-		icon = "gold-nugget.png",
+		icon = "gold-nuggets.png",
 		r = 0.65,
 		g = 0.65,
 		b = 0.65,
@@ -284,7 +284,6 @@ function d.load()
 		job_type = JOBTYPE.ARTISAN,
 		self_sourcing_fraction = 0.75
 	}
-
 	ProductionMethod:new {
 		name = "clay-extraction",
 		description = "clay extraction",

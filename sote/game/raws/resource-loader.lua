@@ -5,6 +5,9 @@ function d.load()
 	local bio = require "game.raws.raws-utils".biome
 	local bedrock = require "game.raws.raws-utils".bedrock
 
+	-- NETR: commenting out unused resources: they are confusing during actual gameplay
+
+	-- used in tools production
 	Resource:new {
 		name = 'flint',
 		icon = 'stone-stack.png',
@@ -24,6 +27,7 @@ function d.load()
 		--maximum_elevation
 		--ice_age
 	}
+	-- used in tools production
 	Resource:new {
 		name = 'obsidian',
 		icon = 'stone-stack.png',
@@ -35,6 +39,9 @@ function d.load()
 		required_bedrock = { bedrock('rhyolite') },
 		base_frequency = 50
 	}
+
+	-- unused
+	--[[
 	Resource:new {
 		name = 'cowry-shells',
 		icon = 'sewed-shell.png',
@@ -47,6 +54,10 @@ function d.load()
 		required_bedrock = {},
 		base_frequency = 333,
 	}
+	--]]
+
+	-- easily available deposits:
+	---used for tools
 	Resource:new {
 		name = 'meteoric-iron',
 		icon = 'asteroid.png',
@@ -54,21 +65,11 @@ function d.load()
 		r = 0.6,
 		g = 0.35,
 		b = 1,
-		base_frequency = 10000,
+		base_frequency = 5000,
 		required_biome = {},
 		required_bedrock = {},
 	}
-	Resource:new {
-		name = 'iron',
-		icon = 'asteroid.png',
-		description = 'meteoric iron',
-		r = 0.6,
-		g = 0.35,
-		b = 1,
-		base_frequency = 6000,
-		required_biome = {},
-		required_bedrock = {},
-	}
+	---used for tools
 	Resource:new {
 		name = 'native-copper',
 		icon = 'ore.png',
@@ -80,6 +81,7 @@ function d.load()
 		required_biome = {},
 		required_bedrock = {},
 	}
+	---jewelry
 	Resource:new {
 		name = 'native-gold',
 		icon = 'gold-nuggets.png',
@@ -91,6 +93,24 @@ function d.load()
 		required_biome = {},
 		required_bedrock = {},
 	}
+	---jewelry
+	Resource:new {
+		name = 'native-silver',
+		icon = 'gold-nuggets.png',
+		description = "Native silver",
+		r = 1,
+		g = 0.84,
+		b = 1,
+		base_frequency = 9000,
+		required_biome = {},
+		required_bedrock = {},
+	}
+
+	-- deposits which require advanced extraction techiniques
+
+	-- metals which would be used in isolation
+
+	---jewelry
 	Resource:new {
 		name = 'gold',
 		icon = 'gold-nuggets.png',
@@ -102,6 +122,7 @@ function d.load()
 		required_biome = {},
 		required_bedrock = {},
 	}
+	---jewelry
 	Resource:new {
 		name = 'silver',
 		icon = 'gold-nuggets.png',
@@ -113,17 +134,7 @@ function d.load()
 		required_biome = {},
 		required_bedrock = {},
 	}
-	Resource:new {
-		name = 'arsenic',
-		icon = 'ore.png',
-		description = "Arsenic",
-		r = 0.6,
-		g = 0.84,
-		b = 0.9,
-		base_frequency = 3000,
-		required_biome = {},
-		required_bedrock = {},
-	}
+	----tools
 	Resource:new {
 		name = 'copper',
 		icon = 'ore.png',
@@ -135,17 +146,21 @@ function d.load()
 		required_biome = {},
 		required_bedrock = {},
 	}
+
+	--- metals which would be mostly used as parts of alloys
+	-- arsenic bronze
 	Resource:new {
-		name = 'native-bronze',
+		name = 'arsenic',
 		icon = 'ore.png',
-		description = "Native bronze",
-		r = 0.36,
-		g = 0.125,
-		b = 0.025,
-		base_frequency = 4000,
+		description = "Arsenic",
+		r = 0.6,
+		g = 0.84,
+		b = 0.9,
+		base_frequency = 3000,
 		required_biome = {},
 		required_bedrock = {},
 	}
+	-- bronze
 	Resource:new {
 		name = 'tin',
 		icon = 'ore.png',
@@ -157,6 +172,7 @@ function d.load()
 		required_biome = {},
 		required_bedrock = {},
 	}
+	-- brass
 	Resource:new {
 		name = 'zinc',
 		icon = 'ore.png',
@@ -168,6 +184,9 @@ function d.load()
 		required_biome = {},
 		required_bedrock = {},
 	}
+
+	-- other minerals
+	-- structural material
 	Resource:new {
 		name = 'stone',
 		icon = 'stone-block.png',
@@ -175,10 +194,12 @@ function d.load()
 		r = 0.8,
 		g = 0.8,
 		b = 0.8,
-		base_frequency = 10000,
+		base_frequency = 3000,
 		required_biome = {},
 		required_bedrock = {},
 	}
+
+	-- used only for technology development so far
 	Resource:new {
 		name = 'gems',
 		icon = 'gems.png',
@@ -190,6 +211,8 @@ function d.load()
 		required_biome = {},
 		required_bedrock = {},
 	}
+
+	-- used only for technology development so far
 	Resource:new {
 		name = 'quality-clay',
 		icon = 'powder.png',

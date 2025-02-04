@@ -4,22 +4,7 @@ function d.load()
 	local TradeGood = require "game.raws.trade-goods"
 	local retrieve_good = require "game.raws.raws-utils".trade_good
 	local retrieve_use_case = require "game.raws.raws-utils".trade_good_use_case
-
-	---Adds a trade good to a use case
-	---@param trade_good string
-	---@param use_case string
-	---@param weight number
-	local function add_use_case(trade_good, use_case, weight)
-		print("use case:", trade_good, use_case, weight)
-
-		local retrieved_use_case = retrieve_use_case(use_case)
-		local retrieved_trade_good = retrieve_good(trade_good)
-		local use_weight = DATA.force_create_use_weight(retrieved_trade_good, retrieved_use_case)
-		print(retrieved_use_case, retrieved_trade_good, use_weight)
-
-		DATA.use_weight_set_weight(use_weight, weight)
-	end
-
+	local add_use_case = require "game.raws.raws-utils".add_use_case
 
 	-- BASE GOODS
 	TradeGood:new {
@@ -457,7 +442,6 @@ function d.load()
 	}
 	add_use_case("copper-native", "copper-source", 1)
 	add_use_case("copper-native", "copper-native", 1)
-
 end
 
 return d

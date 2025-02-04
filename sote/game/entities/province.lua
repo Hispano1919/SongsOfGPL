@@ -491,9 +491,10 @@ function prov.Province.research(province, researched_technology)
 			end
 		end
 
+
 		local has_required_resource = true
 
-		for i = 1, MAX_REQUIREMENTS_TECHNOLOGY - 1 do
+		for i = 1, MAX_REQUIREMENTS_BUILDING_TYPE - 1 do
 			local required_resource = DATA.building_type_get_required_resource(building_type, i)
 			if required_resource == INVALID_ID then
 				break
@@ -618,27 +619,19 @@ end
 ---@return boolean
 ---@return BuildingAttemptFailureReason
 function prov.Province.can_build(province, funds, building, overseer, public)
-	local resource_check_passed = true
 
+	local resource_check_passed = true
 	for i = 1, MAX_REQUIREMENTS_BUILDING_TYPE do
 		local resource = DATA.building_type_get_required_resource(building, i)
 		if resource == INVALID_ID then
-			goto RESOURCE_CHECK_ENDED
+			break
 		end
-
-		resource_check_passed = false
-		-- print("check for resource")
-		-- print("required res is " .. resource)
-		for _, tile_membership_id in pairs(DATA.get_tile_province_membership_from_province(province)) do
-			local tile_id = DATA.tile_province_membership_get_tile(tile_membership_id)
-			-- print(DATA.tile_get_resource(tile_id))
-			if DATA.tile_get_resource(tile_id) == resource then
-				resource_check_passed = true
-				goto RESOURCE_CHECK_ENDED
-			end
+		local required_resource_amount = DATA.province_get_used_resources(province, resource) + 1
+		local current_amount = DATA.province_get_total_resources(province, resource)
+		if required_resource_amount > current_amount then
+			resource_check_passed = false
 		end
 	end
-	::RESOURCE_CHECK_ENDED::
 
 	local construction_cost = economy_values.building_cost(building, overseer, public)
 

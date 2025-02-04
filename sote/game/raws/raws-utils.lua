@@ -160,4 +160,17 @@ function ut.constant_string(x)
 	return function() return x end
 end
 
+---Adds a trade good to a use case
+---@param trade_good string
+---@param use_case string
+---@param weight number
+function ut.add_use_case(trade_good, use_case, weight)
+	print("use case:", trade_good, use_case, weight)
+	local retrieved_use_case = ut.trade_good_use_case(use_case)
+	local retrieved_trade_good = ut.trade_good(trade_good)
+	local use_weight = DATA.force_create_use_weight(retrieved_trade_good, retrieved_use_case)
+	print(retrieved_use_case, retrieved_trade_good, use_weight)
+	DATA.use_weight_set_weight(use_weight, weight)
+end
+
 return ut

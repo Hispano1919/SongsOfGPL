@@ -76,6 +76,8 @@ local ffi = require("ffi")
 ---@field forage_efficiency number 
 ---@field foragers_targets table<number, struct_forage_container> 
 ---@field local_resources table<number, struct_resource_location> An array of local resources and their positions
+---@field total_resources table<resource_id, number> 
+---@field used_resources table<resource_id, number> 
 ---@field mood number how local population thinks about the state
 ---@field unit_types table<unit_type_id, number> 
 ---@field throughput_boosts table<production_method_id, number> 
@@ -184,6 +186,12 @@ void dcon_province_resize_foragers_targets(uint32_t);
 forage_container* dcon_province_get_foragers_targets(int32_t, int32_t);
 void dcon_province_resize_local_resources(uint32_t);
 resource_location* dcon_province_get_local_resources(int32_t, int32_t);
+void dcon_province_resize_total_resources(uint32_t);
+void dcon_province_set_total_resources(int32_t, int32_t, uint32_t);
+uint32_t dcon_province_get_total_resources(int32_t, int32_t);
+void dcon_province_resize_used_resources(uint32_t);
+void dcon_province_set_used_resources(int32_t, int32_t, uint32_t);
+uint32_t dcon_province_get_used_resources(int32_t, int32_t);
 void dcon_province_set_mood(int32_t, float);
 float dcon_province_get_mood(int32_t);
 void dcon_province_resize_unit_types(uint32_t);
@@ -238,6 +246,8 @@ DCON.dcon_province_resize_local_merchants_demand(101)
 DCON.dcon_province_resize_local_prices(101)
 DCON.dcon_province_resize_foragers_targets(26)
 DCON.dcon_province_resize_local_resources(26)
+DCON.dcon_province_resize_total_resources(301)
+DCON.dcon_province_resize_used_resources(301)
 DCON.dcon_province_resize_unit_types(5)
 DCON.dcon_province_resize_throughput_boosts(251)
 DCON.dcon_province_resize_input_efficiency_boosts(251)
@@ -1078,6 +1088,48 @@ end
 ---@param value tile_id valid tile_id
 function DATA.province_set_local_resources_location(province_id, index, value)
     DCON.dcon_province_get_local_resources(province_id - 1, index - 1)[0].location = value
+end
+---@param province_id province_id valid province id
+---@param index resource_id valid
+---@return number total_resources 
+function DATA.province_get_total_resources(province_id, index)
+    assert(index ~= 0)
+    return DCON.dcon_province_get_total_resources(province_id - 1, index - 1)
+end
+---@param province_id province_id valid province id
+---@param index resource_id valid index
+---@param value number valid number
+function DATA.province_set_total_resources(province_id, index, value)
+    DCON.dcon_province_set_total_resources(province_id - 1, index - 1, value)
+end
+---@param province_id province_id valid province id
+---@param index resource_id valid index
+---@param value number valid number
+function DATA.province_inc_total_resources(province_id, index, value)
+    ---@type number
+    local current = DCON.dcon_province_get_total_resources(province_id - 1, index - 1)
+    DCON.dcon_province_set_total_resources(province_id - 1, index - 1, current + value)
+end
+---@param province_id province_id valid province id
+---@param index resource_id valid
+---@return number used_resources 
+function DATA.province_get_used_resources(province_id, index)
+    assert(index ~= 0)
+    return DCON.dcon_province_get_used_resources(province_id - 1, index - 1)
+end
+---@param province_id province_id valid province id
+---@param index resource_id valid index
+---@param value number valid number
+function DATA.province_set_used_resources(province_id, index, value)
+    DCON.dcon_province_set_used_resources(province_id - 1, index - 1, value)
+end
+---@param province_id province_id valid province id
+---@param index resource_id valid index
+---@param value number valid number
+function DATA.province_inc_used_resources(province_id, index, value)
+    ---@type number
+    local current = DCON.dcon_province_get_used_resources(province_id - 1, index - 1)
+    DCON.dcon_province_set_used_resources(province_id - 1, index - 1, current + value)
 end
 ---@param province_id province_id valid province id
 ---@return number mood how local population thinks about the state

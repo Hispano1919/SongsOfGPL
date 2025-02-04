@@ -62,6 +62,12 @@ function d.load()
 	make_use_case("copper-source", "copper-source", "ore.png", 1, 0.71, 0.25, 0.05)
 	make_use_case("copper-native", "copper-native", "ore.png", 1, 0.71, 0.25, 0.05)
 
+	-- iron
+	make_use_case("meteoric-iron", "meteoric iron", "ore.png", 1, 0.2, 0.2, 0.3)
+
+	-- luxury
+	make_use_case("jewelry", "jewelry", "tribal-pendant.png", 0, 1, 1, 1)
+
 	-- structural materials
 	make_use_case("structural-material", "structural-material", "stone-block.png", 1, 0.262, 0.241, 0.222)
 

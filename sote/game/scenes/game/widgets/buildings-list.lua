@@ -1,6 +1,7 @@
 local ut = require "game.ui-utils"
 local ui = require "engine.ui"
 local buildings_utils = require "game.entities.building".Building
+local economy_values = require "game.raws.values.economy"
 
 ---draws a list of local estates
 ---@param gam GameScene
@@ -41,7 +42,7 @@ return function (gam, rect, estate)
 
 		icon_rect.x = icon_rect.x + icon_rect.width
 
-		if buildings_utils.amount_of_workers(building) < 1 then
+		if economy_values.amount_of_workers(building) < 1 then
 			ui.text("0/1", icon_rect, "center", "center")
 		else
 			ui.text("1/1", icon_rect, "center", "center")

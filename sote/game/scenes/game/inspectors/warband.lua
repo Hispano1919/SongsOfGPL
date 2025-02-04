@@ -1174,6 +1174,9 @@ function window.draw(gamescene)
 					return
 				end
 				local province = PROVINCE(WARBAND_LEADER(warband))
+				if recruiter == player_character then
+					province = PROVINCE(WARBAND_RECRUITER(warband))
+				end
 				if province == INVALID_ID then
 					ui.text("Can't hire units outside of settlement", unit_panel, "center", "center")
 					return

@@ -39,6 +39,8 @@ foragers_limit float amount of calories foraged by pops and characters
 forage_efficiency float
 foragers_targets forage_container[25]
 local_resources resource_location[25] An array of local resources and their positions
+total_resources uint32_t[resource_id]
+used_resources uint32_t[resource_id]
 mood float how local population thinks about the state
 unit_types uint8_t[unit_type_id]
 throughput_boosts float[production_method_id]

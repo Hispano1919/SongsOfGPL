@@ -68,6 +68,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = 1,
+				[retrieve_use_case('jewelry')] = 1,
 			},
 		},
 		male_needs = {
@@ -88,6 +89,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = 1,
+				[retrieve_use_case('jewelry')] = 1,
 			},
 		},
 		female_efficiency = {
@@ -200,6 +202,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = large_size,
+				[retrieve_use_case('jewelry')] = large_size,
 			}
 		},
 		female_infrastructure_needs = large_size,
@@ -231,6 +234,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = largest_size,
+				[retrieve_use_case('jewelry')] = largest_size,
 			}
 		},
 		male_infrastructure_needs = largest_size,
@@ -297,6 +301,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = largest_size,
+				[retrieve_use_case('jewelry')] = largest_size,
 			},
 
 		},
@@ -329,6 +334,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = large_size,
+				[retrieve_use_case('jewelry')] = large_size,
 			},
 
 		},
@@ -396,6 +402,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = large_size,
+				[retrieve_use_case('jewelry')] = large_size,
 			},
 
 		},
@@ -427,6 +434,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = large_size,
+				[retrieve_use_case('jewelry')] = large_size,
 			},
 
 		},
@@ -508,6 +516,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = medium_size,
+				[retrieve_use_case('jewelry')] = medium_size,
 			},
 
 		},
@@ -541,6 +550,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = medium_size,
+				[retrieve_use_case('jewelry')] = medium_size,
 			},
 
 		},
@@ -610,6 +620,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = large_size, -- a short, sturdy creature fond of drink and industry
+				[retrieve_use_case('jewelry')] = largest_size,
 			},
 
 		},
@@ -643,6 +654,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = large_size, -- a short, sturdy creature fond of drink and industry
+				[retrieve_use_case('jewelry')] = largest_size,
 			},
 
 		},
@@ -713,6 +725,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = small_size,
+				[retrieve_use_case('jewelry')] = small_size,
 			},
 
 		},
@@ -746,6 +759,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = small_size,
+				[retrieve_use_case('jewelry')] = small_size,
 			},
 
 		},
@@ -814,6 +828,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = small_size,
+				[retrieve_use_case('jewelry')] = largest_size,
 			},
 
 		},
@@ -846,6 +861,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = small_size,
+				[retrieve_use_case('jewelry')] = largest_size,
 			},
 
 		},
@@ -925,6 +941,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = medium_size,
+				[retrieve_use_case('jewelry')] = medium_size,
 			},
 
 		},
@@ -958,6 +975,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = dwarf_size,
+				[retrieve_use_case('jewelry')] = medium_size,
 			},
 
 		},
@@ -1025,6 +1043,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = small_size,
+				[retrieve_use_case('jewelry')] = small_size,
 			},
 
 		},
@@ -1057,6 +1076,7 @@ function ll.load()
 			},
 			[NEED.LUXURY] = {
 				[retrieve_use_case('liquors')] = dwarf_size,
+				[retrieve_use_case('jewelry')] = small_size,
 			},
 
 		},

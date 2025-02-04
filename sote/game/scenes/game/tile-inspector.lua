@@ -958,7 +958,7 @@ end
 
 local function technology_tab(gam, tile_id, panel)
 	local base_unit = uit.BASE_HEIGHT
-	local province = tile_utils.province(tile_id)
+	local province = TILE_PROVINCE(tile_id)
 
 	---@type technology_id[]
 	local technologies = {}

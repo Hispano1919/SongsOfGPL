@@ -796,19 +796,23 @@ function DATA.test_set_get_0()
     for j = 1, 25 do
         DATA.province_set_local_resources_location(id, j, -15)
     end
-    fat_id.mood = 5
+    for j = 1, 300 do
+        DATA.province_set_total_resources(id, j --[[@as resource_id]],  12)    end
+    for j = 1, 300 do
+        DATA.province_set_used_resources(id, j --[[@as resource_id]],  20)    end
+    fat_id.mood = -20
     for j = 1, 4 do
-        DATA.province_set_unit_types(id, j --[[@as unit_type_id]],  20)    end
+        DATA.province_set_unit_types(id, j --[[@as unit_type_id]],  19)    end
     for j = 1, 250 do
-        DATA.province_set_throughput_boosts(id, j --[[@as production_method_id]],  -20)    end
+        DATA.province_set_throughput_boosts(id, j --[[@as production_method_id]],  11)    end
     for j = 1, 250 do
-        DATA.province_set_input_efficiency_boosts(id, j --[[@as production_method_id]],  19)    end
+        DATA.province_set_input_efficiency_boosts(id, j --[[@as production_method_id]],  1)    end
     for j = 1, 250 do
-        DATA.province_set_local_efficiency_boosts(id, j --[[@as production_method_id]],  11)    end
+        DATA.province_set_local_efficiency_boosts(id, j --[[@as production_method_id]],  -5)    end
     for j = 1, 250 do
-        DATA.province_set_output_efficiency_boosts(id, j --[[@as production_method_id]],  1)    end
+        DATA.province_set_output_efficiency_boosts(id, j --[[@as production_method_id]],  0)    end
     fat_id.on_a_river = true
-    fat_id.on_a_forest = false
+    fat_id.on_a_forest = true
     local test_passed = true
     test_passed = test_passed and fat_id.r == 4
     if not test_passed then print("r", 4, fat_id.r) end
@@ -944,32 +948,40 @@ function DATA.test_set_get_0()
         test_passed = test_passed and DATA.province_get_local_resources_location(id, j) == -15
     end
     if not test_passed then print("local_resources.location", -15, DATA.province[id].local_resources[0].location) end
-    test_passed = test_passed and fat_id.mood == 5
-    if not test_passed then print("mood", 5, fat_id.mood) end
+    for j = 1, 300 do
+        test_passed = test_passed and DATA.province_get_total_resources(id, j --[[@as resource_id]]) == 12
+    end
+    if not test_passed then print("total_resources", 12, DATA.province[id].total_resources[0]) end
+    for j = 1, 300 do
+        test_passed = test_passed and DATA.province_get_used_resources(id, j --[[@as resource_id]]) == 20
+    end
+    if not test_passed then print("used_resources", 20, DATA.province[id].used_resources[0]) end
+    test_passed = test_passed and fat_id.mood == -20
+    if not test_passed then print("mood", -20, fat_id.mood) end
     for j = 1, 4 do
-        test_passed = test_passed and DATA.province_get_unit_types(id, j --[[@as unit_type_id]]) == 20
+        test_passed = test_passed and DATA.province_get_unit_types(id, j --[[@as unit_type_id]]) == 19
     end
-    if not test_passed then print("unit_types", 20, DATA.province[id].unit_types[0]) end
+    if not test_passed then print("unit_types", 19, DATA.province[id].unit_types[0]) end
     for j = 1, 250 do
-        test_passed = test_passed and DATA.province_get_throughput_boosts(id, j --[[@as production_method_id]]) == -20
+        test_passed = test_passed and DATA.province_get_throughput_boosts(id, j --[[@as production_method_id]]) == 11
     end
-    if not test_passed then print("throughput_boosts", -20, DATA.province[id].throughput_boosts[0]) end
+    if not test_passed then print("throughput_boosts", 11, DATA.province[id].throughput_boosts[0]) end
     for j = 1, 250 do
-        test_passed = test_passed and DATA.province_get_input_efficiency_boosts(id, j --[[@as production_method_id]]) == 19
+        test_passed = test_passed and DATA.province_get_input_efficiency_boosts(id, j --[[@as production_method_id]]) == 1
     end
-    if not test_passed then print("input_efficiency_boosts", 19, DATA.province[id].input_efficiency_boosts[0]) end
+    if not test_passed then print("input_efficiency_boosts", 1, DATA.province[id].input_efficiency_boosts[0]) end
     for j = 1, 250 do
-        test_passed = test_passed and DATA.province_get_local_efficiency_boosts(id, j --[[@as production_method_id]]) == 11
+        test_passed = test_passed and DATA.province_get_local_efficiency_boosts(id, j --[[@as production_method_id]]) == -5
     end
-    if not test_passed then print("local_efficiency_boosts", 11, DATA.province[id].local_efficiency_boosts[0]) end
+    if not test_passed then print("local_efficiency_boosts", -5, DATA.province[id].local_efficiency_boosts[0]) end
     for j = 1, 250 do
-        test_passed = test_passed and DATA.province_get_output_efficiency_boosts(id, j --[[@as production_method_id]]) == 1
+        test_passed = test_passed and DATA.province_get_output_efficiency_boosts(id, j --[[@as production_method_id]]) == 0
     end
-    if not test_passed then print("output_efficiency_boosts", 1, DATA.province[id].output_efficiency_boosts[0]) end
+    if not test_passed then print("output_efficiency_boosts", 0, DATA.province[id].output_efficiency_boosts[0]) end
     test_passed = test_passed and fat_id.on_a_river == true
     if not test_passed then print("on_a_river", true, fat_id.on_a_river) end
-    test_passed = test_passed and fat_id.on_a_forest == false
-    if not test_passed then print("on_a_forest", false, fat_id.on_a_forest) end
+    test_passed = test_passed and fat_id.on_a_forest == true
+    if not test_passed then print("on_a_forest", true, fat_id.on_a_forest) end
     print("SET_GET_TEST_0_province:")
     if test_passed then print("PASSED") else print("ERROR") end
     local id = DATA.create_warband()

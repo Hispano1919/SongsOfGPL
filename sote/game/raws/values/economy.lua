@@ -212,6 +212,16 @@ function eco_values.get_local_amount_of_use(province, use)
     return total_amount
 end
 
+---@param building building_id
+---@return number
+function eco_values.amount_of_workers(building)
+	local worker = DATA.employment_get_worker(DATA.get_employment_from_building(building))
+	if worker == INVALID_ID then
+		return 0
+	end
+	return 1
+end
+
 ---Returns total food supply from warband
 ---@param warband warband_id
 ---@return number

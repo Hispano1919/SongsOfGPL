@@ -1,4 +1,3 @@
-local building_utils = require "game.entities.building".Building
 local province_utils = require "game.entities.province".Province
 
 local economic_effects = require "game.raws.effects.economy"

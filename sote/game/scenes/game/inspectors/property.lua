@@ -4,6 +4,8 @@ local ui = require "engine.ui";
 local ut = require "game.ui-utils"
 local ib = require "game.scenes.game.widgets.inspector-redirect-buttons"
 
+local economy_values = require "game.raws.values.economy"
+
 local inspector = {}
 
 ---@return Rect
@@ -176,11 +178,8 @@ function inspector.draw(gamescene)
 
                 DATA.for_each_building_estate_from_estate(v, function (item)
                     local building = DATA.building_estate_get_building(item)
-                    local worker = DATA.employment_get_worker(DATA.get_employment_from_building(building))
+                    workers_total = workers_total + economy_values.amount_of_workers(building)
                     workers_needed = workers_needed + 1
-                    if worker ~= INVALID_ID then
-                        workers_total = workers_total + 1
-                    end
                 end)
 
                 ut.data_entry(
@@ -194,12 +193,7 @@ function inspector.draw(gamescene)
                 local workers_total = 0
 
                 DATA.for_each_building_estate_from_estate(v, function (item)
-                    local building = DATA.building_estate_get_building(item)
-                    local worker = DATA.employment_get_worker(DATA.get_employment_from_building(building))
                     workers_total = workers_total + 1
-                    if worker ~= INVALID_ID then
-                        workers_total = workers_total + 1
-                    end
                 end)
 
                 return workers_total
