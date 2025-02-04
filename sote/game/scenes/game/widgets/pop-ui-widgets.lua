@@ -823,6 +823,10 @@ end
 
 function pui.render_location_buttons(game,rect,pop_id)
 	local province_id = PROVINCE(pop_id)
+	if province_id == INVALID_ID then
+		ui.centered_text("Unknown", rect)
+		return
+	end
 	local realm_id = PROVINCE_REALM(province_id)
 	local icon_size = math.max(ut.BASE_HEIGHT,rect.height)
 	ib.icon_button_to_realm(game,realm_id,rect:subrect(0,0,icon_size,rect.height,"right","up"),
