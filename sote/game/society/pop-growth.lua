@@ -39,7 +39,7 @@ function pg.growth(province_id)
 		end
 	end)
 
-	local starvation_check = min_life_need * 2
+	local starvation_check = min_life_need
 	---@type pop_id[]
 	local pops_and_characters = {}
 	DATA.for_each_pop_location_from_location(province_id, function (item)
@@ -57,7 +57,7 @@ function pg.growth(province_id)
 		local min_life_satisfaction = 3
 		for index = 1, MAX_NEED_SATISFACTION_POSITIONS_INDEX do
 			local use_case = DATA.pop_get_need_satisfaction_use_case(pop, index)
-			if use_case == 0 then
+			if use_case == INVALID_ID then
 				break
 			end
 			local need = DATA.pop_get_need_satisfaction_need(pop, index)

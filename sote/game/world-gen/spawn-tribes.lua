@@ -60,7 +60,7 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 	local male_percentage = race.males_per_hundred_females / (100 + race.males_per_hundred_females)
 
 	-- We also need to spawn in some population...
-	local pop_to_spawn = math.max(5, capitol.foragers_limit / race.carrying_capacity_weight * race.fecundity * 0.5)
+	local pop_to_spawn = math.max(20, capitol.foragers_limit / race.carrying_capacity_weight * race.fecundity * 0.5)
 	for _ = 1, pop_to_spawn do
 		local age = math.floor(math.abs(love.math.randomNormal(race.adult_age, race.adult_age)) + 1)
 		local new_pop = pop_utils.new(
@@ -85,7 +85,7 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 	end
 
 	-- spawn nobles
-	for i = 1, pop_to_spawn / 5 + 1 do
+	for i = 1, pop_to_spawn / 10 do
 		local contender = pe.generate_new_noble(r, capitol_id, race_id, faith, culture)
 		local popularity = DATA.force_create_popularity(contender, r)
 		local fat_popularity = DATA.fatten_popularity(popularity)

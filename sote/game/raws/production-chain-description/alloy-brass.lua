@@ -15,9 +15,9 @@ local add_use_case = require "game.raws.raws-utils".add_use_case
 --- TODO: add mining of ores to allow trade
 
 return function ()
-	local r = 0.90
-	local g = 0.80
-	local b = 0.90
+	local r = 0.70
+	local g = 0.60
+	local b = 0.10
 
 	local material_icon = "cubes.png"
 
