@@ -4,7 +4,10 @@ Help()
     echo
     echo "Build .dll or .so for this operating system and cpu architecture."
     echo
-    echo " -b     (re)build oneTBB and generators"
+    echo " -b     (re)build oneTBB"
+    echo " -d     (re)build dcon generator"
+    echo " -l     (re)build lua generator"
+    echo " -g     run generator script"
     echo " -f     fetch repositories and (re)build all"
     echo " -c     clean build folder"
     echo
@@ -16,6 +19,7 @@ FetchDCon=false
 CompileTBB=false
 CompileLua=false
 CompileDCon=false
+GenerateScript=false
 
 # match bash OSTYPE to python platform.machine()
 case "$OSTYPE" in
@@ -29,13 +33,19 @@ Machine="$(uname -p)"
 echo "sh $System $Machine"
 
 #check for optional rebuilding options
-while getopts ":hbfc" option; do
+while getopts ":hbdlgfc" option; do
     case $option in
         h) # display Help
             Help
             exit;;
         b) # build generators
             CompileTBB=true;;
+        d) # build dcon
+            CompileDCon=true;;
+        l) # compile lua
+            CompileLua=true;;
+        g) # run generator
+            GenerateScript=true;;
         f) # update and build
             rm -rf ./build
             rm -rf ./lib/$System/$Machine
@@ -94,6 +104,10 @@ fi
 if [[ $CompileDCon || $CompileLua ]] && ! [ -d "./build/DataContainer/.git" ]; then
     echo "Fetching DataContainer repository..."
     git clone https://github.com/ineveraskedforthis/DataContainer.git ./build/DataContainer --depth 1
+fi
+if [ $GenerateScript || $CompileDCon || $CompileLua ]]; then
+    echo "Running python build script..."
+    python3 codegen/generator.py $CompileDCon $CompileLua true true
 fi
 
 echo "Running python build script..."
