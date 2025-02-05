@@ -478,6 +478,8 @@ function world.World:tick()
 		WORLD.sub_daily_tick = 0
 	end
 	WORLD.current_tick_in_month = WORLD.current_tick_in_month + 1
+	WORLD.current_tick_in_year = WORLD.current_tick_in_year + 1
+	DCON.set_world_current_tick(WORLD.current_tick_in_year)
 
 
 	if WORLD.current_tick_in_month == 1 then
@@ -838,6 +840,9 @@ function world.World:tick()
 				if WORLD.month == 12 then
 					WORLD.month = 0
 					WORLD.year = WORLD.year + 1
+					WORLD.current_tick_in_year = 0
+					DCON.set_world_current_year(WORLD.year)
+					DCON.set_world_current_tick(WORLD.current_tick_in_year)
 					-- yearly tick
 					--print("Yearly tick!")
 

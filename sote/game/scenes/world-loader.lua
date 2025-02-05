@@ -614,6 +614,10 @@ function wl.load_save()
 	require "game.entities.world".reset_metatable(WORLD)
 	require "game.raws.raws"(true, true)
 
+	DCON.set_world_current_year(WORLD.year)
+	DCON.set_world_ticks_per_month(WORLD.ticks_per_month)
+	DCON.set_world_current_tick(WORLD.current_tick_in_year)
+
 	print("loading options")
 	OPTIONS = require "game.options".load()
 	require "game.options".verify()

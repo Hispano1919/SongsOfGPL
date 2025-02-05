@@ -87,6 +87,14 @@ ffi.cdef[[
 
     void ai_update_price_belief(int32_t trader_raw_id);
 	void ai_trade(int32_t trader_raw_id);
+
+	// backend time tracking
+	void set_world_current_year(uint32_t year);
+	uint32_t get_world_current_year();
+	void set_world_current_tick(uint32_t tick);
+	uint32_t get_world_current_tick();
+	void set_world_ticks_per_month(uint32_t tick);
+	uint32_t get_world_ticks_per_month();
 ]]
 
 

@@ -29,6 +29,30 @@ struct tile_cube_coord {
 	int32_t f;
 };
 
+// backend time tracking
+uint32_t WORLD_CURRENT_YEAR = 0;
+uint32_t WORLD_CURRENT_TICK = 0;
+uint32_t WORLD_TICKS_PER_MONTH = 1;
+
+void set_world_current_year(uint32_t year) {
+	WORLD_CURRENT_YEAR = year;
+}
+uint32_t get_world_current_year(void) {
+	return WORLD_CURRENT_YEAR;
+}
+void set_world_current_tick(uint32_t tick) {
+	WORLD_CURRENT_TICK = tick;
+}
+uint32_t get_world_current_tick(void) {
+	return WORLD_CURRENT_TICK;
+}
+void set_world_ticks_per_month(uint32_t tick) {
+	WORLD_TICKS_PER_MONTH = tick;
+}
+uint32_t get_world_ticks_per_month(void) {
+	return WORLD_TICKS_PER_MONTH;
+}
+
 // Given a tile ID, returns x/y/f coordinates.
 tile_cube_coord id_to_coords(int32_t tile_id, uint32_t world_size) {
 	auto adjusted_id = (double)(tile_id - 1);

@@ -47,4 +47,13 @@ extern "C" {
 
 	DCON_LUADLL_API void ai_update_price_belief(int32_t trader_raw_id);
 	DCON_LUADLL_API void ai_trade(int32_t trader_raw_id);
+
+	// backend time tracking
+	DCON_LUADLL_API void set_world_current_year(uint32_t year);
+	DCON_LUADLL_API uint32_t get_world_current_year();
+	DCON_LUADLL_API void set_world_current_tick(uint32_t tick);
+	DCON_LUADLL_API uint32_t get_world_current_tick();
+	DCON_LUADLL_API void set_world_ticks_per_month(uint32_t tick);
+	DCON_LUADLL_API uint32_t get_world_ticks_per_month();
+
 }
