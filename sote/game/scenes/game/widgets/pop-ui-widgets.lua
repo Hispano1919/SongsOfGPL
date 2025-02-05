@@ -7,6 +7,7 @@ local ut = require "game.ui-utils"
 local ib = require "game.scenes.game.widgets.inspector-redirect-buttons"
 
 local pop_utils = require "game.entities.pop".POP
+local warband_utils = require "game.entities.warband"
 
 local rank_name = require "game.raws.ranks.localisation"
 
@@ -289,6 +290,7 @@ function pui.render_warband_income(rect, pop_id)
 		local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 		local wage, unit = 0, "noncombatant"
 		if unit_type_id ~= INVALID_ID then
+			wage = warband_utils.upkeep_per_unit
 			unit = strings.title(DATA.unit_type_get_name(unit_type_id))
 		end
 		ut.generic_number_field(
