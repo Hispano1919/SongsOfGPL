@@ -289,7 +289,6 @@ function pui.render_warband_income(rect, pop_id)
 		local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 		local wage, unit = 0, "noncombatant"
 		if unit_type_id ~= INVALID_ID then
-			wage = DATA.unit_type_get_upkeep(unit_type_id)
 			unit = strings.title(DATA.unit_type_get_name(unit_type_id))
 		end
 		ut.generic_number_field(
