@@ -350,6 +350,21 @@ function AGE(pop_id)
 end
 
 ---@param pop_id pop_id
+---@return number year
+---@return number month
+---@return number day
+---@return number hour
+---@return number minute
+function BIRTHDATE(pop_id)
+	local year = WORLD.year - AGE(pop_id)
+	local birth_tick = DATA.pop_get_birth_tick(pop_id)
+	if birth_tick > WORLD.current_tick_in_year then
+		year = year - 1
+	end
+	return year, DCON.birth_month(pop_id), DCON.birth_day(pop_id), DCON.birth_hour(pop_id), DCON.birth_minute(pop_id)
+end
+
+---@param pop_id pop_id
 function SET_BUSY(pop_id)
 	DATA.pop_set_busy(pop_id, true)
 end

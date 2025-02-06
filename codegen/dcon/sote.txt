@@ -429,6 +429,11 @@ object {
         tag { scenario }
     }
     property{
+        name { birth_tick }
+        type { uint32_t }
+        tag { scenario }
+    }
+    property{
         name { traits }
         type { array{uint32_t}{uint8_t} }
         tag { scenario }

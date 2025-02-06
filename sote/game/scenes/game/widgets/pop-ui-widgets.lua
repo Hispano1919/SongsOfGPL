@@ -31,11 +31,20 @@ local pui = {}
 ---@param alignment "left" | "right" | nil
 function pui.render_age(rect, pop_id, alignment)
 	local age = AGE(pop_id)
+	local birth_year, birth_month, birth_day, birth_hour, birth_minute
+		= BIRTHDATE(pop_id)
+	local birth_minute_string = tostring(birth_minute)
+	if string.len(birth_minute_string) < 2 then
+		birth_minute_string = "0" .. birth_minute_string
+	end
+
 	ut.generic_string_field(
 		"",
 		tostring(age),
 		rect,
-		NAME(pop_id) .. " is " .. age .. " years old.",
+		NAME(pop_id) .. " was born " .. birth_hour .. ":" .. birth_minute_string
+			.. " " .. ut.months[birth_month+1] .. " " .. birth_day
+			.. ", " .. birth_year .. " and is " .. age .. " years old.",
 		ut.NAME_MODE.NAME,
 		false,
 		alignment)

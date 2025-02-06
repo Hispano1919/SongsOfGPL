@@ -9,8 +9,9 @@ rtab.POP = {}
 ---@param culture culture_id
 ---@param female boolean
 ---@param age number
+---@param birth_tick number
 ---@return pop_id
-function rtab.POP.new(race, faith, culture, female, age)
+function rtab.POP.new(race, faith, culture, female, age, birth_tick)
 	local r = DATA.fatten_pop(DATA.create_pop())
 
 	assert(faith ~= nil)
@@ -28,6 +29,7 @@ function rtab.POP.new(race, faith, culture, female, age)
 	r.culture = culture
 	r.female = female
 	r.age = age
+	r.birth_tick = birth_tick
 
 	r.name = language_utils.get_random_name(DATA.culture_get_language(culture))
 	r.busy                     = false

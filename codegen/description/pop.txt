@@ -3,6 +3,7 @@ race race_id
 faith faith_id
 culture culture_id
 age uint32_t
+birth_tick uint32_t
 name string
 traits TRAIT[10]
 need_satisfaction need_satisfaction[20]

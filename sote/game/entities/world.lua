@@ -60,7 +60,9 @@ local dbm              = require "game.economy.diet-breadth-model"
 ---@field current_tick_in_month number
 ---@field current_tick_in_year number
 ---@field current_tick_in_decade number
+---@field ticks_per_minute number
 ---@field ticks_per_hour number
+---@field ticks_per_day number
 ---@field ticks_per_month number
 ---@field ticks_per_year number
 ---@field ticks_per_decade number
@@ -153,12 +155,14 @@ function world.World:new()
 	w.climate_grid_size = 256
 	w.sub_hourly_tick = 0
 	w.sub_daily_tick = 0
-	w.ticks_per_hour = 120
-	w.ticks_per_month = 30 * 24 * w.ticks_per_hour
+	w.ticks_per_minute = 2
+	w.ticks_per_hour = w.ticks_per_minute * 60
+	w.ticks_per_day = w.ticks_per_hour * 24
+	w.ticks_per_month = w.ticks_per_day * 30
 	w.ticks_per_year = w.ticks_per_month * 12
 	w.ticks_per_decade = w.ticks_per_year * 10
 	w.hour = 0
-	w.day = 0
+	w.day = 1
 	w.month = 0
 	w.year = 0
 	w.current_tick_in_month = 0
@@ -249,6 +253,11 @@ end
 function world.empty()
 	print("World allocated!")
 	world.World:new()
+	-- trasfer world time to backend
+	DCON.set_world_tick_definitions(WORLD.ticks_per_minute, WORLD.ticks_per_hour, WORLD.ticks_per_day, WORLD.ticks_per_month)
+--	print(DCON.get_world_ticks_per_minute(),DCON.get_world_ticks_per_hour(),DCON.get_world_ticks_per_day(),DCON.get_world_ticks_per_month())
+	DCON.set_world_current_tick(WORLD.current_tick_in_year)
+	DCON.set_world_current_year(WORLD.year)
 end
 
 ---Schedules an event
@@ -830,7 +839,7 @@ function world.World:tick()
 			PROFILER:end_timer("events_queue")
 
 			if WORLD.day == 31 then
-				WORLD.day = 0
+				WORLD.day = 1
 				WORLD.current_tick_in_month = 0
 				WORLD.month = WORLD.month + 1
 				-- monthly tick

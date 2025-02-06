@@ -50,10 +50,22 @@ extern "C" {
 
 	// backend time tracking
 	DCON_LUADLL_API void set_world_current_year(uint32_t year);
-	DCON_LUADLL_API uint32_t get_world_current_year();
+	DCON_LUADLL_API uint32_t get_world_current_year(void);
 	DCON_LUADLL_API void set_world_current_tick(uint32_t tick);
-	DCON_LUADLL_API uint32_t get_world_current_tick();
-	DCON_LUADLL_API void set_world_ticks_per_month(uint32_t tick);
-	DCON_LUADLL_API uint32_t get_world_ticks_per_month();
-
+	DCON_LUADLL_API uint32_t get_world_current_tick(void);
+	DCON_LUADLL_API void set_world_tick_definitions(uint32_t minute, uint32_t hour, uint32_t day, uint32_t month);
+	DCON_LUADLL_API uint32_t get_world_ticks_per_minute(void);
+	DCON_LUADLL_API uint32_t get_world_ticks_per_hour(void);
+	DCON_LUADLL_API uint32_t get_world_ticks_per_day(void);
+	DCON_LUADLL_API uint32_t get_world_ticks_per_month(void);
+	// birthdate values
+	DCON_LUADLL_API uint32_t birth_month(dcon::pop_id);
+	DCON_LUADLL_API uint32_t birth_day(dcon::pop_id);
+	DCON_LUADLL_API uint32_t birth_hour(dcon::pop_id);
+	DCON_LUADLL_API uint32_t birth_minute(dcon::pop_id);
+	// age calculations
+	DCON_LUADLL_API uint32_t age_months(dcon::pop_id);
+	DCON_LUADLL_API uint32_t age_years(dcon::pop_id);
+	DCON_LUADLL_API uint32_t age_ticks(dcon::pop_id);
+	DCON_LUADLL_API float age_multiplier(dcon::pop_id);
 }

@@ -451,7 +451,8 @@ function PoliticalEffects.generate_new_noble(realm, province, race, faith, cultu
 		faith,
 		culture,
 		love.math.random() > fat_race.males_per_hundred_females / (100 + fat_race.males_per_hundred_females),
-		love.math.random(fat_race.adult_age, fat_race.max_age)
+		love.math.random(fat_race.adult_age, fat_race.max_age),
+		love.math.random(1,WORLD.ticks_per_year)
 	)
 
 	local fat = DATA.fatten_pop(character)

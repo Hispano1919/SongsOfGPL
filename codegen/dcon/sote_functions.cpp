@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
+#include <iostream>
 #include "objs.hpp"
 #define DCON_LUADLL_EXPORTS
 #include "sote_functions.hpp"
@@ -30,9 +31,12 @@ struct tile_cube_coord {
 };
 
 // backend time tracking
-uint32_t WORLD_CURRENT_YEAR = 0;
-uint32_t WORLD_CURRENT_TICK = 0;
-uint32_t WORLD_TICKS_PER_MONTH = 1;
+static uint32_t WORLD_CURRENT_YEAR;
+static uint32_t WORLD_CURRENT_TICK;
+static uint32_t WORLD_TICKS_PER_MINUTE;
+static uint32_t WORLD_TICKS_PER_HOUR;
+static uint32_t WORLD_TICKS_PER_DAY;
+static uint32_t WORLD_TICKS_PER_MONTH;
 
 void set_world_current_year(uint32_t year) {
 	WORLD_CURRENT_YEAR = year;
@@ -46,8 +50,20 @@ void set_world_current_tick(uint32_t tick) {
 uint32_t get_world_current_tick(void) {
 	return WORLD_CURRENT_TICK;
 }
-void set_world_ticks_per_month(uint32_t tick) {
-	WORLD_TICKS_PER_MONTH = tick;
+void set_world_tick_definitions(uint32_t minute, uint32_t hour, uint32_t day, uint32_t month) {
+	WORLD_TICKS_PER_MINUTE = minute;
+	WORLD_TICKS_PER_HOUR = hour;
+	WORLD_TICKS_PER_DAY = day;
+	WORLD_TICKS_PER_MONTH = month;
+}
+uint32_t get_world_ticks_per_minute(void) {
+	return WORLD_TICKS_PER_MINUTE;
+}
+uint32_t get_world_ticks_per_hour(void) {
+	return WORLD_TICKS_PER_HOUR;
+}
+uint32_t get_world_ticks_per_day(void) {
+	return WORLD_TICKS_PER_DAY;
 }
 uint32_t get_world_ticks_per_month(void) {
 	return WORLD_TICKS_PER_MONTH;
@@ -325,6 +341,76 @@ void load_state(char const* name) {
 		close(file_descriptor);
 	}
 #endif
+}
+
+// converting birth tick into human readable values
+uint32_t birth_month(dcon::pop_id pop) {
+	auto birthtick = state.pop_get_birth_tick(pop);
+	auto month = birthtick / WORLD_TICKS_PER_MONTH;
+//	std::cout << std::to_string(month) + " = " + std::to_string(birthtick) + " / " + std::to_string(WORLD_TICKS_PER_MONTH) + "\n";
+	return month;
+}
+uint32_t birth_day(dcon::pop_id pop) {
+	auto birthtick = state.pop_get_birth_tick(pop);
+	auto month = birthtick / WORLD_TICKS_PER_MONTH;
+	auto day_tick = birthtick - month * WORLD_TICKS_PER_MONTH;
+	auto day = day_tick / WORLD_TICKS_PER_DAY;
+//	std::cout << std::to_string(day) + " = " + std::to_string(day_tick) + " / " + std::to_string(WORLD_TICKS_PER_DAY) + "\n";
+	return day+1; // since day cycles between 1 and 30
+}
+uint32_t birth_hour(dcon::pop_id pop) {
+	auto birthtick = state.pop_get_birth_tick(pop);
+	auto month = birthtick / WORLD_TICKS_PER_MONTH;
+	auto day_tick = birthtick - month * WORLD_TICKS_PER_MONTH;
+	auto day = day_tick / WORLD_TICKS_PER_DAY;
+	auto hour_tick = day_tick - day * WORLD_TICKS_PER_DAY;
+	auto hour = hour_tick / WORLD_TICKS_PER_HOUR;
+//	std::cout << std::to_string(hour) + " = " + std::to_string(hour_tick) + " / " + std::to_string(WORLD_TICKS_PER_HOUR) + "\n";
+	return hour;
+}
+uint32_t birth_minute(dcon::pop_id pop) {
+	auto birthtick = state.pop_get_birth_tick(pop);
+	auto month = birthtick / WORLD_TICKS_PER_MONTH;
+	auto day_tick = birthtick - month * WORLD_TICKS_PER_MONTH;
+	auto day = day_tick / WORLD_TICKS_PER_DAY;
+	auto hour_tick = day_tick - day * WORLD_TICKS_PER_DAY;
+	auto hour = hour_tick / WORLD_TICKS_PER_HOUR;
+	auto minute_tick = hour_tick - hour * WORLD_TICKS_PER_HOUR;
+	auto minute = minute_tick / WORLD_TICKS_PER_MINUTE;
+//	std::cout << std::to_string(minute) + " = " + std::to_string(minute_tick) + " / " + std::to_string(WORLD_TICKS_PER_MINUTE) + "\n";
+	return minute;
+}
+
+uint32_t age_years(dcon::pop_id pop) {
+	auto years = state.pop_get_age(pop);
+	auto birth_tick = state.pop_get_birth_tick(pop);
+	if (birth_tick > WORLD_CURRENT_TICK) {
+		years = years - 1;
+	}
+	return years;
+}
+uint32_t age_months(dcon::pop_id pop) {
+	auto years = state.pop_get_age(pop);
+	auto birth_tick = state.pop_get_birth_tick(pop);
+	auto months = 0;
+	if (birth_tick > WORLD_CURRENT_TICK) {
+		years = years - 1;
+		months = 12 - (birth_tick - WORLD_CURRENT_TICK) / WORLD_TICKS_PER_MONTH;
+	} else {
+		months = (WORLD_CURRENT_TICK - birth_tick) / WORLD_TICKS_PER_MONTH;
+	}
+	return months + years * 12;
+}
+uint32_t age_ticks(dcon::pop_id pop) {
+	auto years = state.pop_get_age(pop);
+	auto birth_tick = state.pop_get_birth_tick(pop);
+	if (birth_tick > WORLD_CURRENT_TICK) {
+		years = years - 1;
+		birth_tick = 12 * WORLD_TICKS_PER_MONTH + WORLD_CURRENT_TICK - birth_tick;
+	} else {
+		birth_tick = WORLD_CURRENT_TICK - birth_tick;
+	}
+	return years * WORLD_TICKS_PER_MONTH * 12 + birth_tick;
 }
 
 float age_multiplier(dcon::pop_id pop) {

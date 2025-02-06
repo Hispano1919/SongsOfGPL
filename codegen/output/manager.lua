@@ -90,11 +90,24 @@ ffi.cdef[[
 
 	// backend time tracking
 	void set_world_current_year(uint32_t year);
-	uint32_t get_world_current_year();
+	uint32_t get_world_current_year(void);
 	void set_world_current_tick(uint32_t tick);
-	uint32_t get_world_current_tick();
-	void set_world_ticks_per_month(uint32_t tick);
-	uint32_t get_world_ticks_per_month();
+	uint32_t get_world_current_tick(void);
+	void set_world_tick_definitions(uint32_t minute, uint32_t hour, uint32_t day, uint32_t month);
+	uint32_t get_world_ticks_per_minute(void);
+	uint32_t get_world_ticks_per_hour(void);
+	uint32_t get_world_ticks_per_day(void);
+	uint32_t get_world_ticks_per_month(void);
+	// birthdate values
+	uint32_t birth_month(uint32_t pop_id);
+	uint32_t birth_day(uint32_t pop_id);
+	uint32_t birth_hour(uint32_t pop_id);
+	uint32_t birth_minute(uint32_t pop_id);
+	// age calculations
+	uint32_t age_months(uint32_t);
+	uint32_t age_years(uint32_t);
+	uint32_t age_ticks(uint32_t);
+	float age_multiplier(uint32_t);
 ]]
 
 

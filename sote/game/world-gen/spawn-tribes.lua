@@ -68,7 +68,8 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 			faith,
 			culture,
 			love.math.random() > male_percentage,
-			age
+			age,
+			love.math.random(1,WORLD.ticks_per_year)
 		)
 		province_utils.add_pop(capitol_id, new_pop)
 		province_utils.set_home(capitol_id, new_pop)
@@ -190,7 +191,7 @@ function ProvinceCheck(race, province)
 	if (not fat_province.on_a_forest) and fat_race.requires_large_forest then return false end
 	local ja_r, ja_t, ju_r, ju_t = tile.get_climate_data(center)
 	if fat_race.minimum_comfortable_temperature > (ja_t + ju_t) / 2 then return false end
-	if fat_race.minimum_absolute_temperature > ja_r then return false end
+	if fat_race.minimum_absolute_temperature > math.min(ja_t,ju_t) then return false end
 	local elev = fat_center.elevation
 	if fat_race.minimum_comfortable_elevation > elev then return false end
 	return true

@@ -152,32 +152,33 @@ function pg.growth(province_id)
 		-- TODO figure out beter way to keep character count lower
 		-- spawn orphan pop instead of character child if too many nobles to home pop
 
-		local nobles = province_utils.home_characters(province_id)
-		local total_pop = province_utils.home_population(province_id)
-		local ratio = (nobles + 3) / (total_pop + 3)
 		local newborn = INVALID_ID
-		if character and ratio > 0.3 then -- if twice more than ideal noble percentage
-			newborn = pop_utils.new(
-				race,
-				faith,
-				culture,
-				love.math.random() > fat_race.males_per_hundred_females / (100 + fat_race.males_per_hundred_females),
-				fat_race.teen_age -- otherwise fails at foraging and instantly dies without market surplus
-			)
-			province_utils.set_home(parent_home_province, newborn)
-			province_utils.add_character(parent_province, newborn)
-		else
-			character = false
-			newborn = pop_utils.new(
-				race,
-				faith,
-				culture,
-				love.math.random() > fat_race.males_per_hundred_females / (100 + fat_race.males_per_hundred_females),
-				0
-			)
-			province_utils.set_home(parent_home_province, newborn)
-			province_utils.add_pop(parent_province, newborn)
+		local birth_year = WORLD.year
+		-- pop is born sometime between monthly ticks
+		local birthtick = WORLD.current_tick_in_year -1-- math.random(0,WORLD.ticks_per_month)
+		-- case where pop was calculated to have been born late december but spawns in january
+		if birthtick < 0 then
+			birthtick = birthtick + WORLD.ticks_per_year
+			birth_year = birth_year - 1
 		end
+
+		newborn = pop_utils.new(
+			race,
+			faith,
+			culture,
+			love.math.random() > fat_race.males_per_hundred_females / (100 + fat_race.males_per_hundred_females),
+			0,
+			birthtick
+		)
+--[[
+		local year,month,day,hour,minute = BIRTHDATE(newborn)
+		assert(year==WORLD.year,"FAILED TO STORE YEAR ".. year .. " ~= " .. WORLD.year .. " ( " .. birthtick .. " )")
+		assert(month==WORLD.month,"FAILED TO STORE MONTH ".. month .. " ~= " .. WORLD.month .. " ( " .. birthtick .. " )")
+		assert(day==WORLD.day,"FAILED TO STORE DAY ".. day .. " ~= " .. WORLD.day .. " ( " .. birthtick .. " )")
+		assert(hour==WORLD.hour,"FAILED TO STORE HOUR " .. hour .. " ~= " .. WORLD.hour .. " ( " .. birthtick .. " )")
+--]]
+		province_utils.set_home(parent_home_province, newborn)
+		province_utils.add_pop(parent_province, newborn)
 
 		DATA.force_create_parent_child_relation(pp, newborn)
 

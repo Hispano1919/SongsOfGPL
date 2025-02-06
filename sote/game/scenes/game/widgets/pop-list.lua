@@ -110,7 +110,7 @@ return function(gam, rect, base_unit, province)
                 end,
                 width = 1,
                 value = function(k, v)
-                    return DATA.pop_get_age(v)
+                    return DCON.age_ticks(v)
                 end
             },
             {
