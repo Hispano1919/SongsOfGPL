@@ -41,7 +41,7 @@ function pui.render_age(rect, pop_id, alignment)
 
 	ut.generic_string_field(
 		"",
-		tostring(AGE(pop_id)),
+		tostring(age_years),
 		rect,
 		NAME(pop_id) .. " is " .. age_years .. " years and " .. age_months .. " months old. "
 			.. strings.title(HESHE(pop_id)) .. " was born " .. birth_hour .. ":" .. birth_minute_string
@@ -153,7 +153,7 @@ end
 ---@param pop_id pop_id
 ---@return string
 function pui.occupation_name(pop_id)
-	local age = AGE(pop_id)
+	local age = AGE_YEARS(pop_id)
 	local teen_age = DATA.race_get_teen_age(DATA.pop_get_race(pop_id))
 	local occupation_id = DATA.get_employment_from_worker(pop_id)
     local employer = DATA.employment_get_building(occupation_id)
@@ -322,7 +322,7 @@ end
 ---@param pop_id pop_id
 ---@return string
 function pui.occupation_tooltip(pop_id)
-	local age = AGE(pop_id)
+	local age = AGE_YEARS(pop_id)
 	local teen_age = DATA.race_get_teen_age(DATA.pop_get_race(pop_id))
 	local occupation = DATA.get_employment_from_worker(pop_id)
     local employer_id = DATA.employment_get_building(occupation)
@@ -372,7 +372,7 @@ function pui.render_occupation_icon(rect, pop_id, tooltip)
     local center_square = rect:centered_square()
 
 	-- fetching data
-	local age = AGE(pop_id)
+	local age = AGE_YEARS(pop_id)
 	local teen_age = DATA.race_get_teen_age(DATA.pop_get_race(pop_id))
 	local occupation = DATA.get_employment_from_worker(pop_id)
     local employer_id = DATA.employment_get_building(occupation)
@@ -551,7 +551,7 @@ function pui.pop_tooltip(pop_id)
 		local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 		local unit_type = unit_type_id ~= INVALID_ID and DATA.unit_type_get_name(unit_type_id) or strings.title(rank_name(pop_id))
 		local tooltip = NAME(pop_id)
-			.. "\n " .. AGE(pop_id) .. " y.o." .. (FEMALE(pop_id) and " female " or " male ")
+			.. "\n " .. AGE_YEARS(pop_id) .. " y.o." .. (FEMALE(pop_id) and " female " or " male ")
 				.. DATA.race_get_name(RACE(pop_id)) .. " " .. pop_utils.get_age_string(pop_id)
 			.. "\n  Member of " .. strings.title(DATA.culture_get_name(CULTURE(pop_id))) .. " culture"
 			.. "\n  Follower of " .. strings.title(DATA.faith_get_name(DATA.pop_get_faith(pop_id))) .. " faith"
@@ -590,7 +590,7 @@ function pui.render_job_efficiency(rect, pop_id, job_type_id)
 		race_efficiency = DATA.race_get_male_efficiency(race_id,job_type_id)
 	end
 	local age, teen_age, middle_age =
-		AGE(pop_id),
+		AGE_YEARS(pop_id),
 		DATA.race_get_teen_age(race_id),
 		DATA.race_get_middle_age(race_id)
 	local efficiency = pop_utils.job_efficiency(pop_id,job_type_id)
@@ -627,7 +627,7 @@ function pui.render_size(rect,pop_id)
 		.. "\n\t" .. ut.to_fixed_point2(race_base).. " (" .. strings.title(DATA.race_get_name(race_id)) .. ")"
 
 	local age, teen_age, middle_age =
-		AGE(pop_id),
+		AGE_YEARS(pop_id),
 		DATA.race_get_teen_age(race_id),
 		DATA.race_get_middle_age(race_id)
 	if (age < teen_age) or (age >= middle_age) then
@@ -655,7 +655,7 @@ function pui.render_spotting(rect,pop_id)
 		.. "\n\t" .. ut.to_fixed_point2(race_mod).. " (" .. strings.title(DATA.race_get_name(race_id)) .. ")"
 
 	local age, teen_age, middle_age =
-		AGE(pop_id),
+		AGE_YEARS(pop_id),
 		DATA.race_get_teen_age(race_id),
 		DATA.race_get_middle_age(race_id)
 	if (age < teen_age) or (age >= middle_age) then
@@ -754,7 +754,7 @@ function pui.render_speed(rect,pop_id)
 
 	local race_id = RACE(pop_id)
 	local age, teen_age, middle_age =
-		AGE(pop_id),
+		AGE_YEARS(pop_id),
 		DATA.race_get_teen_age(race_id),
 		DATA.race_get_middle_age(race_id)
 	if (age < teen_age) or (age >= middle_age) then

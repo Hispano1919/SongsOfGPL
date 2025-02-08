@@ -12,7 +12,7 @@ function values.unemployed_pops(province)
 			local building = DATA.employment_get_building(employment)
 			local race = DATA.pop_get_race(pop)
 			local teen_age = DATA.race_get_teen_age(race)
-			return DATA.pop_get_age(pop) > teen_age and building == INVALID_ID and not IS_CHARACTER(pop)
+			return AGE_YEARS(pop) > teen_age and building == INVALID_ID and not IS_CHARACTER(pop)
 		end
 	)
 end

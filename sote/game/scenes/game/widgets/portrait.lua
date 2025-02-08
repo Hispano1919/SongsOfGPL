@@ -43,6 +43,8 @@ return function(rect, character_id)
         portrait_set = race.female_portrait
     end
 
+    local character_age = AGE_YEARS(character_id)
+
     if portrait_set then
         local portrait = portrait_set.fallback
 
@@ -50,25 +52,25 @@ return function(rect, character_id)
             portrait = portrait_set.elder
         end
 
-        if character.age < race.elder_age then
+        if character_age < race.elder_age then
             if portrait_set.middle then
                 portrait = portrait_set.middle
             end
         end
 
-        if character.age < race.middle_age then
+        if character_age < race.middle_age then
             if portrait_set.adult then
                 portrait = portrait_set.adult
             end
         end
 
-        if character.age < race.adult_age then
+        if character_age < race.adult_age then
             if portrait_set.teen then
                 portrait = portrait_set.teen
             end
         end
 
-        if character.age < race.teen_age then
+        if character_age < race.teen_age then
             if portrait_set.child then
                 portrait = portrait_set.child
             end

@@ -168,11 +168,8 @@ return function ()
 		---@param associated_data MigrationData
 		event_text = function(self, character, associated_data)
 			local name = NAME(associated_data.leader)
-			local temp = 'He'
-			if DATA.pop_get_female(associated_data.leader) then
-				temp = 'She'
-			end
-			return name .. " requested to split off from out tribe and colonize " .. PROVINCE_NAME(associated_data.target_province) "." .. temp .. " promises to pay tribute to us. What should I do?"
+			return name .. " requested to split off from out tribe and colonize " .. PROVINCE_NAME(associated_data.target_province) ". "
+				.. HESHE(associated_data.leader) .. " promises to pay tribute to us. What should I do?"
 		end,
 		event_background_path = "data/gfx/backgrounds/background.png",
 		automatic = false,

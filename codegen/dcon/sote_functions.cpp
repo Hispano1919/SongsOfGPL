@@ -1179,7 +1179,7 @@ void pops_sell() {
 
 		auto race = state.pop_get_race(pop);
 		auto max_age = state.race_get_max_age(race);
-		auto age = state.pop_get_age(pop);
+		auto age = age_years(pop);
 
 		auto base_income = 10.f * age / max_age;
 

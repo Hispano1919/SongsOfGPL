@@ -317,11 +317,11 @@ function re.draw(gam)
 								{
 									header = "age",
 									render_closure = function (rect, k, v)
-										ui.centered_text(tostring(AGE(v)), rect)
+										ui.centered_text(tostring(AGE_YEARS(v)), rect)
 									end,
 									width = 2,
 									value = function(k, v)
-										return AGE(v)
+										return AGE_TICKS(v)
 									end
 								},
 								{

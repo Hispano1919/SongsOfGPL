@@ -13,7 +13,6 @@ local ffi = require("ffi")
 ---@field race race_id 
 ---@field faith faith_id 
 ---@field culture culture_id 
----@field age number 
 ---@field birth_year number 
 ---@field birth_tick number 
 ---@field name string 
@@ -39,7 +38,6 @@ local ffi = require("ffi")
 ---@field race race_id 
 ---@field faith faith_id 
 ---@field culture culture_id 
----@field age number 
 ---@field birth_year number 
 ---@field birth_tick number 
 ---@field traits table<number, TRAIT> 
@@ -74,8 +72,6 @@ void dcon_pop_set_faith(int32_t, int32_t);
 int32_t dcon_pop_get_faith(int32_t);
 void dcon_pop_set_culture(int32_t, int32_t);
 int32_t dcon_pop_get_culture(int32_t);
-void dcon_pop_set_age(int32_t, uint32_t);
-uint32_t dcon_pop_get_age(int32_t);
 void dcon_pop_set_birth_year(int32_t, int32_t);
 int32_t dcon_pop_get_birth_year(int32_t);
 void dcon_pop_set_birth_tick(int32_t, uint32_t);
@@ -227,23 +223,6 @@ end
 ---@param value culture_id valid culture_id
 function DATA.pop_set_culture(pop_id, value)
     DCON.dcon_pop_set_culture(pop_id - 1, value - 1)
-end
----@param pop_id pop_id valid pop id
----@return number age 
-function DATA.pop_get_age(pop_id)
-    return DCON.dcon_pop_get_age(pop_id - 1)
-end
----@param pop_id pop_id valid pop id
----@param value number valid number
-function DATA.pop_set_age(pop_id, value)
-    DCON.dcon_pop_set_age(pop_id - 1, value)
-end
----@param pop_id pop_id valid pop id
----@param value number valid number
-function DATA.pop_inc_age(pop_id, value)
-    ---@type number
-    local current = DCON.dcon_pop_get_age(pop_id - 1)
-    DCON.dcon_pop_set_age(pop_id - 1, current + value)
 end
 ---@param pop_id pop_id valid pop id
 ---@return number birth_year 
@@ -677,7 +656,6 @@ local fat_pop_id_metatable = {
         if (k == "race") then return DATA.pop_get_race(t.id) end
         if (k == "faith") then return DATA.pop_get_faith(t.id) end
         if (k == "culture") then return DATA.pop_get_culture(t.id) end
-        if (k == "age") then return DATA.pop_get_age(t.id) end
         if (k == "birth_year") then return DATA.pop_get_birth_year(t.id) end
         if (k == "birth_tick") then return DATA.pop_get_birth_tick(t.id) end
         if (k == "name") then return DATA.pop_get_name(t.id) end
@@ -714,10 +692,6 @@ local fat_pop_id_metatable = {
         end
         if (k == "culture") then
             DATA.pop_set_culture(t.id, v)
-            return
-        end
-        if (k == "age") then
-            DATA.pop_set_age(t.id, v)
             return
         end
         if (k == "birth_year") then

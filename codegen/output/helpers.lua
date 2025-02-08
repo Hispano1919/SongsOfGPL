@@ -389,12 +389,6 @@ end
 
 ---@param pop_id pop_id
 ---@return number
-function AGE(pop_id)
-	return DATA.pop_get_age(pop_id)
-end
-
----@param pop_id pop_id
----@return number
 function AGE_YEARS(pop_id)
 	return DCON.age_years(pop_id)
 end

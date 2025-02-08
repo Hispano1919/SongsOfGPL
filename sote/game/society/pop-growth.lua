@@ -32,7 +32,7 @@ function pg.growth(province_id)
 	DATA.for_each_outlaw_location_from_location(province_id, function (item)
 		local pop = DATA.outlaw_location_get_outlaw(item)
 		local race = DATA.pop_get_race(pop)
-		local age = DATA.pop_get_age(pop)
+		local age = AGE_YEARS(pop)
 		local max_age = DATA.race_get_max_age(race)
 		if age > max_age then
 			to_remove[#to_remove + 1] = pop
@@ -72,7 +72,7 @@ function pg.growth(province_id)
 		end
 
 		local race = DATA.pop_get_race(pop)
-		local age = DATA.pop_get_age(pop)
+		local age = AGE_YEARS(pop)
 		local max_age = DATA.race_get_max_age(race)
 		local teen_age = DATA.race_get_teen_age(race)
 		local elder_age = DATA.race_get_elder_age(race)
@@ -101,7 +101,7 @@ function pg.growth(province_id)
 		pop = pop
 
 		local race = DATA.pop_get_race(pop)
-		local age = DATA.pop_get_age(pop)
+		local age = AGE_YEARS(pop)
 		local middle_age = DATA.race_get_middle_age(race)
 		local adult_age = DATA.race_get_adult_age(race)
 		local teen_age = DATA.race_get_teen_age(race)
@@ -167,7 +167,7 @@ function pg.growth(province_id)
 			faith,
 			culture,
 			love.math.random() > fat_race.males_per_hundred_females / (100 + fat_race.males_per_hundred_females),
-			0,
+			WORLD.year,
 			birthtick
 		)
 ---[[

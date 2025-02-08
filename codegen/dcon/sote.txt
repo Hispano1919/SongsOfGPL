@@ -424,11 +424,6 @@ object {
         tag { scenario }
     }
     property{
-        name { age }
-        type { uint32_t }
-        tag { scenario }
-    }
-    property{
         name { birth_year }
         type { int32_t }
         tag { scenario }

@@ -101,8 +101,8 @@ function load()
 					local race = F_RACE(pop)
 					if
 						home_province == province
-						and AGE(pop) >= race.teen_age
-						and AGE(pop) < race.middle_age
+						and AGE_YEARS(pop) >= race.teen_age
+						and AGE_YEARS(pop) < race.middle_age
 					then
 						table.insert(family_units, pop)
 					end

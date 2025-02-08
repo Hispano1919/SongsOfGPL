@@ -858,8 +858,6 @@ function world.World:tick()
 					---#logging LOGS:write("aging\n")
 					---#logging LOGS:flush()
 
-					local pop_aging = require "game.society.pop-aging"
-					pop_aging.age()
 					DATA.for_each_realm(function (realm)
 						DATA.realm_set_budget_tax_collected_this_year(realm, 0)
 					end)

@@ -68,7 +68,7 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 			faith,
 			culture,
 			love.math.random() > male_percentage,
-			age,
+			-age,
 			love.math.random(1,WORLD.ticks_per_year)
 		)
 		province_utils.add_pop(capitol_id, new_pop)
@@ -81,7 +81,7 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 		local elite_character = pe.generate_new_noble(r, capitol_id, race_id, faith, culture)
 		local popularity = DATA.force_create_popularity(elite_character, r)
 		local fat_popularity = DATA.fatten_popularity(popularity)
-		fat_popularity.value = DATA.pop_get_age(elite_character) / 10
+		fat_popularity.value = AGE_YEARS(elite_character) / 10
 		pe.transfer_power(r, elite_character, POLITICS_REASON.INITIALRULER)
 	end
 
@@ -90,7 +90,7 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 		local contender = pe.generate_new_noble(r, capitol_id, race_id, faith, culture)
 		local popularity = DATA.force_create_popularity(contender, r)
 		local fat_popularity = DATA.fatten_popularity(popularity)
-		fat_popularity.value = DATA.pop_get_age(contender) / 15
+		fat_popularity.value = AGE_YEARS(contender) / 15
 	end
 
 	-- set up capitol
@@ -130,25 +130,25 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 	-- match children pop to some possible parent
 	DATA.for_each_pop_location_from_location(capitol_id, function (item)
 		local child = DATA.pop_location_get_pop(item)
-		local fat_child = DATA.fatten_pop(child)
+		local child_age = AGE_YEARS(child)
 
-		if fat_child.age > race.teen_age then
+		if child_age > race.adult_age then
 			return
 		end
-		if IS_CHARACTER(child) then
-			return
-		end
+		local child_rank = IS_CHARACTER(child)
 
 		---@type pop_id[]
 		local parents = {}
 
 		DATA.for_each_pop_location_from_location(capitol_id, function (parent_location)
 			local potential_parent_id = DATA.pop_location_get_pop(parent_location)
-			local fat_potential_parent = DATA.fatten_pop(potential_parent_id)
-			if fat_potential_parent.age <= fat_child.age + race.adult_age then
+			local age = AGE_YEARS(potential_parent_id)
+			local rank = IS_CHARACTER(potential_parent_id)
+			if rank ~= child_rank then
 				return
-			end
-			if fat_potential_parent.age >= fat_child.age + race.elder_age then
+			elseif age <= child_age + race.adult_age then
+				return
+			elseif age >= child_age + race.elder_age then
 				return
 			end
 			table.insert(parents, potential_parent_id)

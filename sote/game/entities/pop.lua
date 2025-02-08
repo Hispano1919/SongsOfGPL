@@ -8,10 +8,10 @@ rtab.POP = {}
 ---@param faith faith_id
 ---@param culture culture_id
 ---@param female boolean
----@param age number
----@param birth_tick number
+---@param year number year pop was born
+---@param birth_tick number tick in year pop was born
 ---@return pop_id
-function rtab.POP.new(race, faith, culture, female, age, birth_tick)
+function rtab.POP.new(race, faith, culture, female, year, birth_tick)
 	local r = DATA.fatten_pop(DATA.create_pop())
 
 	assert(faith ~= nil)
@@ -28,8 +28,7 @@ function rtab.POP.new(race, faith, culture, female, age, birth_tick)
 	r.faith = faith
 	r.culture = culture
 	r.female = female
-	r.age = age
-	r.birth_year = WORLD.year - age
+	r.birth_year = year
 	r.birth_tick = birth_tick
 
 	r.name = language_utils.get_random_name(DATA.culture_get_language(culture))
@@ -88,37 +87,13 @@ end
 
 ---@param pop_id pop_id
 function rtab.POP.get_age_multiplier(pop_id)
-	local age_multiplier = 1
-	local age = DATA.pop_get_age(pop_id)
-	local race = DATA.pop_get_race(pop_id)
-
-	local child_age = DATA.race_get_child_age(race)
-	local teen_age = DATA.race_get_teen_age(race)
-	local adult_age = DATA.race_get_adult_age(race)
-	local middle_age = DATA.race_get_middle_age(race)
-	local elder_age = DATA.race_get_elder_age(race)
-	local max_age = DATA.race_get_max_age(race)
-
-	if age < child_age then
-		age_multiplier = 0.25 -- baby
-	elseif age < teen_age then
-		age_multiplier = 0.5 -- child
-	elseif age < adult_age then
-		age_multiplier = 0.75 -- teen
-	elseif age < middle_age then
-		age_multiplier = 1 -- adult
-	elseif age < elder_age then
-		age_multiplier = 0.95 -- middle age
-	elseif age < max_age then
-		age_multiplier = 0.9 -- elder
-	end
-	return age_multiplier
+	return DCON.age_multiplier(pop_id)
 end
 
 ---@param pop_id pop_id
 ---@return string age_range
 function rtab.POP.get_age_string(pop_id)
-	local age = DATA.pop_get_age(pop_id)
+	local age = AGE_YEARS(pop_id)
 	local race = DATA.pop_get_race(pop_id)
 
 	local child_age = DATA.race_get_child_age(race)
@@ -237,7 +212,7 @@ end
 function rtab.POP.get_time_allocation(pop_id)
 	local free_time, forage_time, warband_time, learning_time = 1, 0, 0, 0
 	-- first remove time spend growing and learning
-	local age = AGE(pop_id)
+	local age = AGE_YEARS(pop_id)
 	local teen_age = DATA.race_get_teen_age(RACE(pop_id))
 	if age < teen_age then
 		free_time = age / teen_age

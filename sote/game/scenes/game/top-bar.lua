@@ -273,10 +273,10 @@ function tb.draw(gam)
 
 	local race = F_RACE(character);
 
-	if AGE(character) > race.elder_age then
+	if AGE_YEARS(character) > race.elder_age then
 		table.insert(alerts, {
 			["icon"] = "tombstone.png",
-			["tooltip"] = "You have reached elder age age will make a death roll of " .. uit.to_fixed_point2((race.max_age - AGE(character)) / (race.max_age - race.elder_age) * race.fecundity / 12 / 7).. "% each month. This chance increases each year you continue to live.",
+			["tooltip"] = "You have reached elder age age will make a death roll of " .. uit.to_fixed_point2((race.max_age - AGE_YEARS(character)) / (race.max_age - race.elder_age) * race.fecundity / 12 / 7).. "% each month. This chance increases each year you continue to live.",
 		})
 	end
 

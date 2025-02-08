@@ -11,7 +11,7 @@ function load()
         event_background_path = "data/gfx/backgrounds/background.png",
         base_probability = 1 / 24,
         trigger = function(self, character)
-            local age = DATA.pop_get_age(character);
+            local age = AGE_YEARS(character);
             local race = DATA.pop_get_race(character);
             local max_age = DATA.race_get_max_age(race)
             return age > max_age
@@ -61,12 +61,7 @@ function load()
         ---@param root Character
         ---@param data Character
         function (root, data)
-            local s = "he"
-            local female = DATA.pop_get_female(data)
-            if female then
-                s = "she"
-            end
-            return "May " .. s .. " live a long and prosperous life!"
+            return "May " .. HESHE(data) .. " live a long and prosperous life!"
         end,
         ---@param root Character
         ---@param data Character

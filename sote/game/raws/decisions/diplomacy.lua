@@ -416,13 +416,13 @@ local function load()
 	local function valid_home_family_units(province)
 		local all_pops = tabb.map_array(DATA.get_pop_location_from_location(province), DATA.pop_location_get_pop)
 		local family_units = tabb.filter_array(all_pops, function (item)
-			local a = DATA.fatten_pop(item)
-			local race = DATA.fatten_race(a.race)
+			local race = DATA.fatten_race(RACE(item))
 			local home_location = DATA.get_home_from_pop(item)
 			local home = DATA.home_get_home(home_location)
 			local unit_of_warband = DATA.get_warband_unit_from_unit(item)
+			local age = AGE_YEARS(item)
 
-			return home == province and a.age >= race.teen_age and a.age < race.middle_age and unit_of_warband == INVALID_ID
+			return home == province and age >= race.teen_age and age < race.middle_age and unit_of_warband == INVALID_ID
 		end)
 		local family_count = tabb.size(family_units)
 		return family_units, family_count
@@ -532,7 +532,7 @@ local function load()
 		pretrigger = function(root)
 			-- need at least so many family units to migrate
 			local realm = REALM(root)
-			local age = DATA.pop_get_age(root)
+			local age = AGE_YEARS(root)
 			local race = RACE(root)
 			local teen_age = DATA.race_get_teen_age(race)
 
@@ -650,7 +650,7 @@ local function load()
 			local realm = REALM(root)
 			local capitol = CAPITOL(realm)
 			local province = PROVINCE(root)
-			local age = DATA.pop_get_age(root)
+			local age = AGE_YEARS(root)
 			local race = RACE(root)
 			local teen_age = DATA.race_get_teen_age(race)
 

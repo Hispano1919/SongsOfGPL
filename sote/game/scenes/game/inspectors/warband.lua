@@ -989,13 +989,13 @@ function window.draw(gamescene)
 					---@param k POP
 					---@param v unit_type_id
 					render_closure = function (rect, k, v)
-						ui.text(tostring(AGE(k)), rect, "center", "center")
+						ui.text(tostring(AGE_YEARS(k)), rect, "center", "center")
 					end,
 					width = icon_width * 2,
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return AGE(k)
+						return AGE_TICKS(k)
 					end
 				},
 				{
