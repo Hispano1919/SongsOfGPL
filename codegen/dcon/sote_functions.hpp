@@ -64,8 +64,8 @@ extern "C" {
 	DCON_LUADLL_API uint32_t birth_hour(dcon::pop_id);
 	DCON_LUADLL_API uint32_t birth_minute(dcon::pop_id);
 	// age calculations
+	DCON_LUADLL_API uint32_t age_ticks(dcon::pop_id);
 	DCON_LUADLL_API uint32_t age_months(dcon::pop_id);
 	DCON_LUADLL_API uint32_t age_years(dcon::pop_id);
-	DCON_LUADLL_API uint32_t age_ticks(dcon::pop_id);
 	DCON_LUADLL_API float age_multiplier(dcon::pop_id);
 }

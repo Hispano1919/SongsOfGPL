@@ -29,6 +29,7 @@ function rtab.POP.new(race, faith, culture, female, age, birth_tick)
 	r.culture = culture
 	r.female = female
 	r.age = age
+	r.birth_year = WORLD.year - age
 	r.birth_tick = birth_tick
 
 	r.name = language_utils.get_random_name(DATA.culture_get_language(culture))

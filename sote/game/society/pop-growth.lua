@@ -170,7 +170,7 @@ function pg.growth(province_id)
 			0,
 			birthtick
 		)
---[[
+---[[
 		local year,month,day,hour,minute = BIRTHDATE(newborn)
 		assert(year==WORLD.year,"FAILED TO STORE YEAR ".. year .. " ~= " .. WORLD.year .. " ( " .. birthtick .. " )")
 		assert(month==WORLD.month,"FAILED TO STORE MONTH ".. month .. " ~= " .. WORLD.month .. " ( " .. birthtick .. " )")

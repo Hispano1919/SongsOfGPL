@@ -343,10 +343,72 @@ function BUSY(pop_id)
 	return DATA.pop_get_busy(pop_id)
 end
 
+
+---@param pop_id pop_id
+---@return boolean
+function FEMALE(pop_id)
+	return DATA.pop_get_female(pop_id)
+end
+
+---@param pop_id pop_id
+---@return string
+function HESHE(pop_id)
+	if FEMALE(pop_id) then
+		return "she"
+	else
+		return "he"
+	end
+end
+---@param pop_id pop_id
+---@return string
+function HIMHER(pop_id)
+	if FEMALE(pop_id) then
+		return "her"
+	else
+		return "him"
+	end
+end
+---@param pop_id pop_id
+---@return string
+function HISHER(pop_id)
+	if FEMALE(pop_id) then
+		return "her"
+	else
+		return "his"
+	end
+end
+---@param pop_id pop_id
+---@return string
+function HISHERS(pop_id)
+	if FEMALE(pop_id) then
+		return "hers"
+	else
+		return "his"
+	end
+end
+
 ---@param pop_id pop_id
 ---@return number
 function AGE(pop_id)
 	return DATA.pop_get_age(pop_id)
+end
+
+---@param pop_id pop_id
+---@return number
+function AGE_YEARS(pop_id)
+	return DCON.age_years(pop_id)
+end
+
+---@param pop_id pop_id
+---@return number
+function AGE_MONTHS(pop_id)
+	return DCON.age_months(pop_id)
+end
+
+---@param pop_id pop_id
+---@return number
+function AGE_TICKS(pop_id)
+	return DCON.age_ticks(pop_id)
 end
 
 ---@param pop_id pop_id
@@ -356,12 +418,12 @@ end
 ---@return number hour
 ---@return number minute
 function BIRTHDATE(pop_id)
-	local year = WORLD.year - AGE(pop_id)
-	local birth_tick = DATA.pop_get_birth_tick(pop_id)
-	if birth_tick > WORLD.current_tick_in_year then
-		year = year - 1
-	end
-	return year, DCON.birth_month(pop_id), DCON.birth_day(pop_id), DCON.birth_hour(pop_id), DCON.birth_minute(pop_id)
+	return
+		DATA.pop_get_birth_year(pop_id),
+		DCON.birth_month(pop_id),
+		DCON.birth_day(pop_id),
+		DCON.birth_hour(pop_id),
+		DCON.birth_minute(pop_id)
 end
 
 ---@param pop_id pop_id

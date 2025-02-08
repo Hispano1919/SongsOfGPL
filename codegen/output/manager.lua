@@ -104,9 +104,9 @@ ffi.cdef[[
 	uint32_t birth_hour(uint32_t pop_id);
 	uint32_t birth_minute(uint32_t pop_id);
 	// age calculations
+	uint32_t age_ticks(uint32_t);
 	uint32_t age_months(uint32_t);
 	uint32_t age_years(uint32_t);
-	uint32_t age_ticks(uint32_t);
 	float age_multiplier(uint32_t);
 ]]
 

@@ -605,44 +605,45 @@ function DATA.test_set_get_0()
     fat_id.faith = -18
     fat_id.culture = -4
     fat_id.age = 16
-    fat_id.birth_tick = 15
+    fat_id.birth_year = 11
+    fat_id.birth_tick = 12
     for j = 1, 10 do
-        DATA.pop_set_traits(id, j --[[@as number]],  6)    end
+        DATA.pop_set_traits(id, j --[[@as number]],  4)    end
     for j = 1, 20 do
-        DATA.pop_set_need_satisfaction_need(id, j, 4)
+        DATA.pop_set_need_satisfaction_need(id, j, 7)
     end
     for j = 1, 20 do
-        DATA.pop_set_need_satisfaction_use_case(id, j, 10)
+        DATA.pop_set_need_satisfaction_use_case(id, j, 2)
     end
     for j = 1, 20 do
-        DATA.pop_set_need_satisfaction_consumed(id, j, 2)
+        DATA.pop_set_need_satisfaction_consumed(id, j, 17)
     end
     for j = 1, 20 do
-        DATA.pop_set_need_satisfaction_demanded(id, j, 17)
+        DATA.pop_set_need_satisfaction_demanded(id, j, -7)
     end
     for j = 1, 100 do
-        DATA.pop_set_inventory(id, j --[[@as trade_good_id]],  -7)    end
+        DATA.pop_set_inventory(id, j --[[@as trade_good_id]],  12)    end
     for j = 1, 100 do
-        DATA.pop_set_price_belief_sell(id, j --[[@as trade_good_id]],  12)    end
+        DATA.pop_set_price_belief_sell(id, j --[[@as trade_good_id]],  -12)    end
     for j = 1, 100 do
-        DATA.pop_set_price_belief_buy(id, j --[[@as trade_good_id]],  -12)    end
-    fat_id.savings = -2
-    fat_id.expected_wage = -12
-    fat_id.life_needs_satisfaction = -14
-    fat_id.basic_needs_satisfaction = 19
-    fat_id.pending_economy_income = -4
-    fat_id.forage_ratio = 14
-    fat_id.work_ratio = 18
-    fat_id.spend_savings_ratio = -11
-    fat_id.female = false
+        DATA.pop_set_price_belief_buy(id, j --[[@as trade_good_id]],  -2)    end
+    fat_id.savings = -12
+    fat_id.expected_wage = -14
+    fat_id.life_needs_satisfaction = 19
+    fat_id.basic_needs_satisfaction = -4
+    fat_id.pending_economy_income = 14
+    fat_id.forage_ratio = 18
+    fat_id.work_ratio = -11
+    fat_id.spend_savings_ratio = -1
+    fat_id.female = true
     fat_id.busy = true
-    fat_id.former_pop = true
+    fat_id.former_pop = false
     fat_id.dead = false
-    fat_id.free_will = false
-    fat_id.is_player = true
-    fat_id.rank = 2
+    fat_id.free_will = true
+    fat_id.is_player = false
+    fat_id.rank = 3
     for j = 1, 20 do
-        DATA.pop_set_dna(id, j --[[@as number]],  7)    end
+        DATA.pop_set_dna(id, j --[[@as number]],  0)    end
     local test_passed = true
     test_passed = test_passed and fat_id.unique_id == 12
     if not test_passed then print("unique_id", 12, fat_id.unique_id) end
@@ -654,74 +655,76 @@ function DATA.test_set_get_0()
     if not test_passed then print("culture", -4, fat_id.culture) end
     test_passed = test_passed and fat_id.age == 16
     if not test_passed then print("age", 16, fat_id.age) end
-    test_passed = test_passed and fat_id.birth_tick == 15
-    if not test_passed then print("birth_tick", 15, fat_id.birth_tick) end
+    test_passed = test_passed and fat_id.birth_year == 11
+    if not test_passed then print("birth_year", 11, fat_id.birth_year) end
+    test_passed = test_passed and fat_id.birth_tick == 12
+    if not test_passed then print("birth_tick", 12, fat_id.birth_tick) end
     for j = 1, 10 do
-        test_passed = test_passed and DATA.pop_get_traits(id, j --[[@as number]]) == 6
+        test_passed = test_passed and DATA.pop_get_traits(id, j --[[@as number]]) == 4
     end
-    if not test_passed then print("traits", 6, DATA.pop[id].traits[0]) end
+    if not test_passed then print("traits", 4, DATA.pop[id].traits[0]) end
     for j = 1, 20 do
-        test_passed = test_passed and DATA.pop_get_need_satisfaction_need(id, j) == 4
+        test_passed = test_passed and DATA.pop_get_need_satisfaction_need(id, j) == 7
     end
-    if not test_passed then print("need_satisfaction.need", 4, DATA.pop[id].need_satisfaction[0].need) end
+    if not test_passed then print("need_satisfaction.need", 7, DATA.pop[id].need_satisfaction[0].need) end
     for j = 1, 20 do
-        test_passed = test_passed and DATA.pop_get_need_satisfaction_use_case(id, j) == 10
+        test_passed = test_passed and DATA.pop_get_need_satisfaction_use_case(id, j) == 2
     end
-    if not test_passed then print("need_satisfaction.use_case", 10, DATA.pop[id].need_satisfaction[0].use_case) end
+    if not test_passed then print("need_satisfaction.use_case", 2, DATA.pop[id].need_satisfaction[0].use_case) end
     for j = 1, 20 do
-        test_passed = test_passed and DATA.pop_get_need_satisfaction_consumed(id, j) == 2
+        test_passed = test_passed and DATA.pop_get_need_satisfaction_consumed(id, j) == 17
     end
-    if not test_passed then print("need_satisfaction.consumed", 2, DATA.pop[id].need_satisfaction[0].consumed) end
+    if not test_passed then print("need_satisfaction.consumed", 17, DATA.pop[id].need_satisfaction[0].consumed) end
     for j = 1, 20 do
-        test_passed = test_passed and DATA.pop_get_need_satisfaction_demanded(id, j) == 17
+        test_passed = test_passed and DATA.pop_get_need_satisfaction_demanded(id, j) == -7
     end
-    if not test_passed then print("need_satisfaction.demanded", 17, DATA.pop[id].need_satisfaction[0].demanded) end
+    if not test_passed then print("need_satisfaction.demanded", -7, DATA.pop[id].need_satisfaction[0].demanded) end
     for j = 1, 100 do
-        test_passed = test_passed and DATA.pop_get_inventory(id, j --[[@as trade_good_id]]) == -7
+        test_passed = test_passed and DATA.pop_get_inventory(id, j --[[@as trade_good_id]]) == 12
     end
-    if not test_passed then print("inventory", -7, DATA.pop[id].inventory[0]) end
+    if not test_passed then print("inventory", 12, DATA.pop[id].inventory[0]) end
     for j = 1, 100 do
-        test_passed = test_passed and DATA.pop_get_price_belief_sell(id, j --[[@as trade_good_id]]) == 12
+        test_passed = test_passed and DATA.pop_get_price_belief_sell(id, j --[[@as trade_good_id]]) == -12
     end
-    if not test_passed then print("price_belief_sell", 12, DATA.pop[id].price_belief_sell[0]) end
+    if not test_passed then print("price_belief_sell", -12, DATA.pop[id].price_belief_sell[0]) end
     for j = 1, 100 do
-        test_passed = test_passed and DATA.pop_get_price_belief_buy(id, j --[[@as trade_good_id]]) == -12
+        test_passed = test_passed and DATA.pop_get_price_belief_buy(id, j --[[@as trade_good_id]]) == -2
     end
-    if not test_passed then print("price_belief_buy", -12, DATA.pop[id].price_belief_buy[0]) end
-    test_passed = test_passed and fat_id.savings == -2
-    if not test_passed then print("savings", -2, fat_id.savings) end
-    test_passed = test_passed and fat_id.expected_wage == -12
-    if not test_passed then print("expected_wage", -12, fat_id.expected_wage) end
-    test_passed = test_passed and fat_id.life_needs_satisfaction == -14
-    if not test_passed then print("life_needs_satisfaction", -14, fat_id.life_needs_satisfaction) end
-    test_passed = test_passed and fat_id.basic_needs_satisfaction == 19
-    if not test_passed then print("basic_needs_satisfaction", 19, fat_id.basic_needs_satisfaction) end
-    test_passed = test_passed and fat_id.pending_economy_income == -4
-    if not test_passed then print("pending_economy_income", -4, fat_id.pending_economy_income) end
-    test_passed = test_passed and fat_id.forage_ratio == 14
-    if not test_passed then print("forage_ratio", 14, fat_id.forage_ratio) end
-    test_passed = test_passed and fat_id.work_ratio == 18
-    if not test_passed then print("work_ratio", 18, fat_id.work_ratio) end
-    test_passed = test_passed and fat_id.spend_savings_ratio == -11
-    if not test_passed then print("spend_savings_ratio", -11, fat_id.spend_savings_ratio) end
-    test_passed = test_passed and fat_id.female == false
-    if not test_passed then print("female", false, fat_id.female) end
+    if not test_passed then print("price_belief_buy", -2, DATA.pop[id].price_belief_buy[0]) end
+    test_passed = test_passed and fat_id.savings == -12
+    if not test_passed then print("savings", -12, fat_id.savings) end
+    test_passed = test_passed and fat_id.expected_wage == -14
+    if not test_passed then print("expected_wage", -14, fat_id.expected_wage) end
+    test_passed = test_passed and fat_id.life_needs_satisfaction == 19
+    if not test_passed then print("life_needs_satisfaction", 19, fat_id.life_needs_satisfaction) end
+    test_passed = test_passed and fat_id.basic_needs_satisfaction == -4
+    if not test_passed then print("basic_needs_satisfaction", -4, fat_id.basic_needs_satisfaction) end
+    test_passed = test_passed and fat_id.pending_economy_income == 14
+    if not test_passed then print("pending_economy_income", 14, fat_id.pending_economy_income) end
+    test_passed = test_passed and fat_id.forage_ratio == 18
+    if not test_passed then print("forage_ratio", 18, fat_id.forage_ratio) end
+    test_passed = test_passed and fat_id.work_ratio == -11
+    if not test_passed then print("work_ratio", -11, fat_id.work_ratio) end
+    test_passed = test_passed and fat_id.spend_savings_ratio == -1
+    if not test_passed then print("spend_savings_ratio", -1, fat_id.spend_savings_ratio) end
+    test_passed = test_passed and fat_id.female == true
+    if not test_passed then print("female", true, fat_id.female) end
     test_passed = test_passed and fat_id.busy == true
     if not test_passed then print("busy", true, fat_id.busy) end
-    test_passed = test_passed and fat_id.former_pop == true
-    if not test_passed then print("former_pop", true, fat_id.former_pop) end
+    test_passed = test_passed and fat_id.former_pop == false
+    if not test_passed then print("former_pop", false, fat_id.former_pop) end
     test_passed = test_passed and fat_id.dead == false
     if not test_passed then print("dead", false, fat_id.dead) end
-    test_passed = test_passed and fat_id.free_will == false
-    if not test_passed then print("free_will", false, fat_id.free_will) end
-    test_passed = test_passed and fat_id.is_player == true
-    if not test_passed then print("is_player", true, fat_id.is_player) end
-    test_passed = test_passed and fat_id.rank == 2
-    if not test_passed then print("rank", 2, fat_id.rank) end
+    test_passed = test_passed and fat_id.free_will == true
+    if not test_passed then print("free_will", true, fat_id.free_will) end
+    test_passed = test_passed and fat_id.is_player == false
+    if not test_passed then print("is_player", false, fat_id.is_player) end
+    test_passed = test_passed and fat_id.rank == 3
+    if not test_passed then print("rank", 3, fat_id.rank) end
     for j = 1, 20 do
-        test_passed = test_passed and DATA.pop_get_dna(id, j --[[@as number]]) == 7
+        test_passed = test_passed and DATA.pop_get_dna(id, j --[[@as number]]) == 0
     end
-    if not test_passed then print("dna", 7, DATA.pop[id].dna[0]) end
+    if not test_passed then print("dna", 0, DATA.pop[id].dna[0]) end
     print("SET_GET_TEST_0_pop:")
     if test_passed then print("PASSED") else print("ERROR") end
     local id = DATA.create_province()

@@ -381,62 +381,31 @@ uint32_t birth_minute(dcon::pop_id pop) {
 	return minute;
 }
 
-uint32_t age_years(dcon::pop_id pop) {
-	auto years = state.pop_get_age(pop);
-	auto birth_tick = state.pop_get_birth_tick(pop);
-	if (birth_tick > WORLD_CURRENT_TICK) {
-		years = years - 1;
-	}
-	return years;
+uint32_t age_ticks(dcon::pop_id pop) {
+	return (WORLD_CURRENT_YEAR - state.pop_get_birth_year(pop))
+		* WORLD_TICKS_PER_MONTH * 12 + WORLD_CURRENT_TICK - state.pop_get_birth_tick(pop);
 }
 uint32_t age_months(dcon::pop_id pop) {
-	auto years = state.pop_get_age(pop);
-	auto birth_tick = state.pop_get_birth_tick(pop);
-	auto months = 0;
-	if (birth_tick > WORLD_CURRENT_TICK) {
-		years = years - 1;
-		months = 12 - (birth_tick - WORLD_CURRENT_TICK) / WORLD_TICKS_PER_MONTH;
-	} else {
-		months = (WORLD_CURRENT_TICK - birth_tick) / WORLD_TICKS_PER_MONTH;
-	}
-	return months + years * 12;
+	return age_ticks(pop) / WORLD_TICKS_PER_MONTH;
 }
-uint32_t age_ticks(dcon::pop_id pop) {
-	auto years = state.pop_get_age(pop);
-	auto birth_tick = state.pop_get_birth_tick(pop);
-	if (birth_tick > WORLD_CURRENT_TICK) {
-		years = years - 1;
-		birth_tick = 12 * WORLD_TICKS_PER_MONTH + WORLD_CURRENT_TICK - birth_tick;
-	} else {
-		birth_tick = WORLD_CURRENT_TICK - birth_tick;
-	}
-	return years * WORLD_TICKS_PER_MONTH * 12 + birth_tick;
+
+uint32_t age_years(dcon::pop_id pop) {
+	return age_ticks(pop) / WORLD_TICKS_PER_MONTH / 12;
 }
 
 float age_multiplier(dcon::pop_id pop) {
-	auto age_multiplier = 1.f;
-	auto age = state.pop_get_age(pop);
+	float age_multiplier = 1.f;
+	float age = age_ticks(pop) / WORLD_TICKS_PER_MONTH / 12;
 	auto race = state.pop_get_race(pop);
 
-	auto child_age = state.race_get_child_age(race);
-	auto teen_age = state.race_get_teen_age(race);
 	auto adult_age = state.race_get_adult_age(race);
 	auto middle_age = state.race_get_middle_age(race);
-	auto elder_age = state.race_get_elder_age(race);
 	auto max_age = state.race_get_max_age(race);
 
-	if (age < child_age) {
-		age_multiplier = 0.25;
-	} else if (age < teen_age) {
-		age_multiplier = 0.5;
-	} else if (age < adult_age) {
-		age_multiplier = 0.75;
-	} else if (age < middle_age) {
-		age_multiplier = 1;
-	} else if (age < elder_age) {
-		age_multiplier = 0.95;
-	} else if (age < max_age) {
-		age_multiplier = 0.9;
+	if (age < adult_age) {
+		age_multiplier = 0.25 + 0.75 * age / adult_age; // [.25,1.f)
+	} else if (age >= middle_age) {
+		age_multiplier = 1.f - 0.25 * (age - middle_age) / (max_age - middle_age); // [1.f,.75)
 	}
 	return age_multiplier;
 }

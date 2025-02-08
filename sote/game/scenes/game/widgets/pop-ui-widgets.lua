@@ -30,7 +30,8 @@ local pui = {}
 ---@param pop_id pop_id
 ---@param alignment "left" | "right" | nil
 function pui.render_age(rect, pop_id, alignment)
-	local age = AGE(pop_id)
+	local age_years = AGE_YEARS(pop_id)
+	local age_months = AGE_MONTHS(pop_id) - age_years * 12
 	local birth_year, birth_month, birth_day, birth_hour, birth_minute
 		= BIRTHDATE(pop_id)
 	local birth_minute_string = tostring(birth_minute)
@@ -40,11 +41,12 @@ function pui.render_age(rect, pop_id, alignment)
 
 	ut.generic_string_field(
 		"",
-		tostring(age),
+		tostring(AGE(pop_id)),
 		rect,
-		NAME(pop_id) .. " was born " .. birth_hour .. ":" .. birth_minute_string
+		NAME(pop_id) .. " is " .. age_years .. " years and " .. age_months .. " months old. "
+			.. strings.title(HESHE(pop_id)) .. " was born " .. birth_hour .. ":" .. birth_minute_string
 			.. " " .. ut.months[birth_month+1] .. " " .. birth_day
-			.. ", " .. birth_year .. " and is " .. age .. " years old.",
+			.. ", " .. birth_year .. ".",
 		ut.NAME_MODE.NAME,
 		false,
 		alignment)
@@ -55,7 +57,7 @@ end
 ---@param pop_id pop_id
 function pui.render_female_icon(rect, pop_id)
 	local centered_square = rect:centered_square()
-	if DATA.pop_get_female(pop_id) then
+	if FEMALE(pop_id) then
 		ut.render_icon(centered_square,"female.png",1, 0, 1, 0.5, true)
 		ui.tooltip(NAME(pop_id) .. " is female.",rect)
 	else
@@ -164,7 +166,7 @@ function pui.occupation_name(pop_id)
 		local job = DATA.employment_get_job(occupation_id)
 		return DATA.job_get_name(job)
 	elseif RANK(pop_id) > 1 then
-		return rank_name(DATA.pop_get_rank(pop_id))
+		return rank_name(pop_id)
 	else
 		return "unemployed"
 	end
@@ -549,7 +551,7 @@ function pui.pop_tooltip(pop_id)
 		local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 		local unit_type = unit_type_id ~= INVALID_ID and DATA.unit_type_get_name(unit_type_id) or strings.title(rank_name(pop_id))
 		local tooltip = NAME(pop_id)
-			.. "\n " .. AGE(pop_id) .. " y.o." .. (DATA.pop_get_female(pop_id) and " female " or " male ")
+			.. "\n " .. AGE(pop_id) .. " y.o." .. (FEMALE(pop_id) and " female " or " male ")
 				.. DATA.race_get_name(RACE(pop_id)) .. " " .. pop_utils.get_age_string(pop_id)
 			.. "\n  Member of " .. strings.title(DATA.culture_get_name(CULTURE(pop_id))) .. " culture"
 			.. "\n  Follower of " .. strings.title(DATA.faith_get_name(DATA.pop_get_faith(pop_id))) .. " faith"
@@ -582,7 +584,7 @@ end
 function pui.render_job_efficiency(rect, pop_id, job_type_id)
 	local race_id = RACE(pop_id)
 	local race_efficiency
-	if DATA.pop_get_female(pop_id) then
+	if FEMALE(pop_id) then
 		race_efficiency = DATA.race_get_female_efficiency(race_id,job_type_id)
 	else
 		race_efficiency = DATA.race_get_male_efficiency(race_id,job_type_id)
@@ -616,7 +618,7 @@ function pui.render_size(rect,pop_id)
 	local value = pop_utils.get_size(pop_id)
 	local race_id = RACE(pop_id)
 	local race_base
-	if DATA.pop_get_female(pop_id) then
+	if FEMALE(pop_id) then
 		race_base = DATA.race_get_female_body_size(race_id)
 	else
 		race_base = DATA.race_get_male_body_size(race_id)
