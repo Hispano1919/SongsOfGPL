@@ -100,8 +100,8 @@ function re.draw(gam)
 			else
 				ut.render_icon(owner_rect, "world.png", 1, 1, 1, 1)
 			end
-			ib.text_button_to_province(gam, province, button_owner_rect,
-				PROVINCE_NAME(province), "Public estates in" .. PROVINCE_NAME(province) .. ".")
+			ib.text_button_to_province_tile(gam, DATA.province_get_center(province), button_owner_rect,
+				"Public estates in" .. PROVINCE_NAME(province) .. ".")
 		end
 
 

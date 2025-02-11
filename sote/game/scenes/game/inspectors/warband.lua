@@ -70,7 +70,7 @@ end
 ---@param v unit_type_id
 local function render_unit_attack (rect, k, v)
 	local stat = pop_utils.get_attack(k)
-	local job = pop_utils.job_efficiency(k, JOBTYPE.WARRIOR)
+	local job = JOB_EFFICIENCY(k, JOBTYPE.WARRIOR)
 	local female, her = "male", "his"
 	if DATA.pop_get_female(k) then
 		female, her = "female", "her"
@@ -189,7 +189,7 @@ end
 ---@param v unit_type_id
 local function render_unit_hauling (rect, k, v)
 	local base = pop_utils.get_supply_capacity(k)
-	local job = pop_utils.job_efficiency(k, JOBTYPE.HAULING)
+	local job = JOB_EFFICIENCY(k, JOBTYPE.HAULING)
 	local female, her = "male", "his"
 	if DATA.pop_get_female(k) then
 		female, her = "female", "her"
@@ -405,7 +405,7 @@ function window.draw(gamescene)
 		local realm_rect = leader_rect:subrect(ut.BASE_HEIGHT*2,0,leader_rect.width-ut.BASE_HEIGHT*2,ut.BASE_HEIGHT,"left","center")
 		ui.text(REALM_NAME(guarding_realm),realm_rect)
 		ui.tooltip("This warband is the capitol guard of " .. REALM_NAME(guarding_realm) .. ".",realm_rect)
-		ib.text_button_to_province(gamescene, province, leader_rect:subrect(ut.BASE_HEIGHT * 2, 0,leader_rect.width - ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT, "left", "down"),
+		ib.text_button_to_province_tile(gamescene, WARBAND_TILE(warband), leader_rect:subrect(ut.BASE_HEIGHT * 2, 0,leader_rect.width - ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT, "left", "down"),
 			"This warband guards the province of " .. PROVINCE_NAME(province) .. ".")
 	end
 
@@ -606,8 +606,8 @@ function window.draw(gamescene)
 
 		local province = TILE_PROVINCE(location)
 
-		ib.text_button_to_province(gamescene, province, province_name_rect,
-			PROVINCE_NAME(province), "The warband is currently in the province of " .. PROVINCE_NAME(province) .. ".")
+		ib.text_button_to_province_tile(gamescene, location, province_name_rect,
+			"The warband is currently in the province of " .. PROVINCE_NAME(province) .. ".")
 		province_realm = PROVINCE_REALM(province)
 		if province_realm ~= INVALID_ID then
 			ib.icon_button_to_realm(gamescene, province_realm, realm_icon_rect)

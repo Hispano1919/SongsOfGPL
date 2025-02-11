@@ -245,7 +245,7 @@ function load()
 
 			political_effects.transfer_power(new_realm, expedition_leader, POLITICS_REASON.EXPEDITIONLEADER)
 
-			-- explore neighbour lands
+			-- explore neighbor lands
 			realm_utils.explore(new_realm, CAPITOL(new_realm))
 			diplomacy_events.set_tributary(colonizer_realm, new_realm)
 		end

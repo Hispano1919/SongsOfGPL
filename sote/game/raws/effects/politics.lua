@@ -463,7 +463,6 @@ function PoliticalEffects.generate_new_noble(realm, province, race, faith, cultu
 	roll_traits(character)
 	SET_REALM(character, realm)
 	province_utils.add_character(province, character)
-	province_utils.add_pop(province, character)
 	province_utils.set_home(province, character)
 
 	return character

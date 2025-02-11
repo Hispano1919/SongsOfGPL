@@ -19,7 +19,7 @@ function pg.growth(province_id)
 	-- First, get the carrying capacity...
 	local cc = province.foragers_limit
 	local cc_used = province_utils.population_weight(province_id)
-	local min_life_need = 0.125
+	local min_life_need = 0.2
 	local death_rate = 0.003333333 -- 4% per year
 	local birth_rate = 0.005833333 -- 7% per year
 
@@ -39,12 +39,22 @@ function pg.growth(province_id)
 		end
 	end)
 
-	local starvation_check = min_life_need * 2
+	-- local pops and characters
 	---@type pop_id[]
 	local pops_and_characters = {}
 	DATA.for_each_pop_location_from_location(province_id, function (item)
 		local pop = DATA.pop_location_get_pop(item)
 		table.insert(pops_and_characters, pop)
+	end)
+
+	-- warbands currently in province
+	DATA.for_each_tile_province_membership_from_province(province_id, function(tile_relation)
+		local tile_id = DATA.tile_province_membership_get_tile(tile_relation)
+		DATA.for_each_warband_location_from_location(tile_id, function (warband_relation)
+			DATA.for_each_warband_unit_from_warband(DATA.warband_location_get_warband(warband_relation), function(warband)
+				table.insert(pops_and_characters, DATA.warband_unit_get_unit(warband))
+			end)
+		end)
 	end)
 
 	---maps pops eligible to breed to their satisfaction
@@ -53,7 +63,6 @@ function pg.growth(province_id)
 
 	for _, pop in ipairs(pops_and_characters) do
 		assert(DCON.dcon_pop_is_valid(pop - 1), tostring(pop))
-		local age_adjusted_starvation_check = starvation_check / pop_utils.get_age_multiplier(pop)
 		local min_life_satisfaction = 3
 		for index = 1, MAX_NEED_SATISFACTION_POSITIONS_INDEX do
 			local use_case = DATA.pop_get_need_satisfaction_use_case(pop, index)
@@ -81,9 +90,8 @@ function pg.growth(province_id)
 		if age > max_age then
 			table.insert(to_remove, pop)
 		-- next check for starvation
-		elseif min_life_satisfaction < age_adjusted_starvation_check then -- prevent births if not at least 25% food and water
-			-- children are more likely to die of starvation
-			if (age_adjusted_starvation_check - min_life_satisfaction) / age_adjusted_starvation_check * love.math.random() < death_rate then
+		elseif min_life_satisfaction < min_life_need then -- prevent births if not at least min life needs
+			if (min_life_need - min_life_satisfaction) / min_life_need * love.math.random() < death_rate then
 				table.insert(to_remove, pop)
 			end
 		elseif age >= elder_age then
@@ -92,36 +100,22 @@ function pg.growth(province_id)
 			end
 		-- finally, pop is eligable to breed if old enough
 		elseif age >= teen_age then
-			eligible_to_breed[pop] = min_life_satisfaction
+			-- teens and older adults have reduced chance to conceive
+			local middle_age = DATA.race_get_middle_age(race)
+			local adult_age = DATA.race_get_adult_age(race)
+			local base = 1
+			if age < adult_age then
+				base = base * (age - teen_age) / (adult_age - teen_age)
+			elseif age >= middle_age then
+				base = base * (1 - (age - middle_age) / (elder_age - middle_age))
+			end
+			local fecundity = DATA.race_get_fecundity(race)
+			if love.math.random() < base * birth_rate * fecundity * min_life_satisfaction then
+				-- yay! spawn a new pop!
+				table.insert(to_add, pop)
+			end
 		end
 	end
-
-	tabb.accumulate(eligible_to_breed, to_add, function (a, pop, min_life_satisfaction)
-		---@type POP
-		pop = pop
-
-		local race = DATA.pop_get_race(pop)
-		local age = AGE_YEARS(pop)
-		local middle_age = DATA.race_get_middle_age(race)
-		local adult_age = DATA.race_get_adult_age(race)
-		local teen_age = DATA.race_get_teen_age(race)
-		local elder_age = DATA.race_get_elder_age(race)
-		local fecundity = DATA.race_get_fecundity(race)
-
-		-- teens and older adults have reduced chance to conceive
-		local base = 1
-		if age < adult_age then
-			base = base * (age - teen_age) / (adult_age - teen_age)
-		elseif age >= middle_age then
-			base = base * (1 - (age - middle_age) / (elder_age - middle_age))
-		end
-
-		if love.math.random() < base * birth_rate * fecundity then
-			-- yay! spawn a new pop!
-			table.insert(to_add, pop)
-		end
-		return a
-	end)
 
 	-- Kill old pops...
 	for _, pp in pairs(to_remove) do
@@ -146,9 +140,6 @@ function pg.growth(province_id)
 		local culture = DATA.pop_get_culture(pp)
 		local fat_race = DATA.fatten_race(race)
 
-		local parent_province = PROVINCE(pp)
-		local parent_home_province = HOME(pp)
-
 		-- TODO figure out beter way to keep character count lower
 		-- spawn orphan pop instead of character child if too many nobles to home pop
 
@@ -162,7 +153,7 @@ function pg.growth(province_id)
 			birth_year = birth_year - 1
 		end
 
-		newborn = pop_utils.new(
+		local newborn = pop_utils.new(
 			race,
 			faith,
 			culture,
@@ -177,11 +168,26 @@ function pg.growth(province_id)
 		assert(day==WORLD.day,"FAILED TO STORE DAY ".. day .. " ~= " .. WORLD.day .. " ( " .. birthtick .. " )")
 		assert(hour==WORLD.hour,"FAILED TO STORE HOUR " .. hour .. " ~= " .. WORLD.hour .. " ( " .. birthtick .. " )")
 --]]
-		province_utils.set_home(parent_home_province, newborn)
-		province_utils.add_pop(parent_province, newborn)
+
+		local parent_home_province = HOME(pp)
+		if parent_home_province ~= INVALID_ID then
+			province_utils.set_home(parent_home_province, newborn)
+		end
+		local parent_province = PROVINCE(pp)
+		if parent_province ~= INVALID_ID then
+			if character then
+				province_utils.add_character(parent_province, newborn)
+			else
+				province_utils.add_pop(parent_province, newborn)
+			end
+		else -- if not in a settlement, then part of a warband, add child to it
+			local warband = UNIT_OF(pp)
+			require "game.raws.effects.demography".recruit(newborn,warband,UNIT_TYPE.CIVILIAN)
+		end
 
 		DATA.force_create_parent_child_relation(pp, newborn)
 
+		-- TODO move into new pop?
 		-- set newborn to parents satisfaction
 		for index = 1, MAX_NEED_SATISFACTION_POSITIONS_INDEX do
 			local use_case = DATA.pop_get_need_satisfaction_use_case(pp, index)

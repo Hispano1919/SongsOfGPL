@@ -171,6 +171,7 @@ function DATA.save_state()
     current_lua_state.realm_known_provinces = DATA.realm_known_provinces
     current_lua_state.jobtype_name = DATA.jobtype_name
     current_lua_state.jobtype_action_word = DATA.jobtype_action_word
+    current_lua_state.jobtype_icon = DATA.jobtype_icon
     current_lua_state.need_name = DATA.need_name
     current_lua_state.character_rank_name = DATA.character_rank_name
     current_lua_state.character_rank_localisation = DATA.character_rank_localisation
@@ -180,6 +181,8 @@ function DATA.save_state()
     current_lua_state.trait_icon = DATA.trait_icon
     current_lua_state.trade_good_category_name = DATA.trade_good_category_name
     current_lua_state.warband_status_name = DATA.warband_status_name
+    current_lua_state.warband_status_description = DATA.warband_status_description
+    current_lua_state.warband_status_icon = DATA.warband_status_icon
     current_lua_state.warband_stance_name = DATA.warband_stance_name
     current_lua_state.building_archetype_name = DATA.building_archetype_name
     current_lua_state.forage_resource_name = DATA.forage_resource_name
@@ -321,6 +324,7 @@ function DATA.load_state()
     DATA.realm_known_provinces = loaded_lua_state.realm_known_provinces
     DATA.jobtype_name = loaded_lua_state.jobtype_name
     DATA.jobtype_action_word = loaded_lua_state.jobtype_action_word
+    DATA.jobtype_icon = loaded_lua_state.jobtype_icon
     DATA.need_name = loaded_lua_state.need_name
     DATA.character_rank_name = loaded_lua_state.character_rank_name
     DATA.character_rank_localisation = loaded_lua_state.character_rank_localisation
@@ -330,6 +334,8 @@ function DATA.load_state()
     DATA.trait_icon = loaded_lua_state.trait_icon
     DATA.trade_good_category_name = loaded_lua_state.trade_good_category_name
     DATA.warband_status_name = loaded_lua_state.warband_status_name
+    DATA.warband_status_description = loaded_lua_state.warband_status_description
+    DATA.warband_status_icon = loaded_lua_state.warband_status_icon
     DATA.warband_stance_name = loaded_lua_state.warband_stance_name
     DATA.building_archetype_name = loaded_lua_state.building_archetype_name
     DATA.forage_resource_name = loaded_lua_state.forage_resource_name

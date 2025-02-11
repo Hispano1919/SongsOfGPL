@@ -2472,8 +2472,8 @@ function gam.recalculate_smooth_data_map(data_function, data_id, provinces_to_up
 				local corner_pair = {0, 0, 0, 0}
 
 				slow_tiles = slow_tiles + 1
-				for n_index, neighbour in ipairs(neighbours) do
-					for neighbour_of_neighour in tile.iter_neighbors(neighbour) do
+				for n_index, neighbor in ipairs(neighbours) do
+					for neighbour_of_neighour in tile.iter_neighbors(neighbor) do
 						if neighbour_of_neighour == tile_id then
 							goto continue
 						end

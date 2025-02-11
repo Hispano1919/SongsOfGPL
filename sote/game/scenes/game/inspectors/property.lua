@@ -73,7 +73,7 @@ function inspector.draw(gamescene)
             header = "Name",
             ---@param v estate_id
             render_closure = function(rect, k, v)
-                ib.text_button_to_estate(gamescene, v, rect, "Estates in " .. PROVINCE_NAME(ESTATE_PROVINCE(v)))
+                ib.text_button_to_estate(gamescene, v, INVALID_ID, rect, "Estates in " .. PROVINCE_NAME(ESTATE_PROVINCE(v)))
             end,
             width = base_unit * 8,
             ---@param v estate_id

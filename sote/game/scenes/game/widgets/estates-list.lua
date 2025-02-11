@@ -50,7 +50,7 @@ return function(game, rect, table, state, title, compact)
                 header = "location",
                 render_closure = function(rect, k, v)
                     local province_id = ESTATE_PROVINCE(v)
-                    ib.text_button_to_province(game,province_id,rect,strings.title(DATA.building_type_get_name(DATA.building_get_current_type(v)))
+                    ib.text_button_to_province_tile(game,DATA.province_get_center(province_id),rect,strings.title(DATA.building_type_get_name(DATA.building_get_current_type(v)))
                         .. " is in the province of " .. PROVINCE_NAME(province_id) .. ".")
                 end,
                 width = 4,

@@ -85,10 +85,6 @@ function rtab.POP.new(race, faith, culture, female, year, birth_tick)
 	return r.id
 end
 
----@param pop_id pop_id
-function rtab.POP.get_age_multiplier(pop_id)
-	return DCON.age_multiplier(pop_id)
-end
 
 ---@param pop_id pop_id
 ---@return string age_range
@@ -161,7 +157,7 @@ end
 ---@return number size
 function rtab.POP.get_size(pop)
 	local race = RACE(pop)
-	local age_multiplier = rtab.POP.get_age_multiplier(pop)
+	local age_multiplier = AGE_MULTIPLIER(pop)
 	if DATA.pop_get_female(pop) then
 		return DATA.race_get_female_body_size(race) * age_multiplier
 	end
@@ -173,7 +169,7 @@ end
 ---@return number size
 function rtab.POP.get_carry_capacity_weight(pop)
 	local race = RACE(pop)
-	local age_multiplier = rtab.POP.get_age_multiplier(pop)
+	local age_multiplier = AGE_MULTIPLIER(pop)
 	return DATA.race_get_carrying_capacity_weight(race) * age_multiplier
 end
 
@@ -182,25 +178,11 @@ end
 ---@return number infrastructure_need
 function rtab.POP.get_infrastructure_need(pop)
 	local race = RACE(pop)
-	local age_multiplier = rtab.POP.get_age_multiplier(pop)
+	local age_multiplier = AGE_MULTIPLIER(pop)
 	if DATA.pop_get_female(pop) then
 		return DATA.race_get_female_infrastructure_needs(race) * age_multiplier
 	end
 	return DATA.race_get_male_infrastructure_needs(race) * age_multiplier
-end
-
----Returns age adjust racial efficiency
----@param pop pop_id
----@param jobtype JOBTYPE
----@return number
-function rtab.POP.job_efficiency(pop, jobtype)
-	local female = DATA.pop_get_female(pop)
-	local race = RACE(pop)
-	local age_multiplier = rtab.POP.get_age_multiplier(pop)
-	if female then
-		return DATA.race_get_female_efficiency(race, jobtype) * age_multiplier
-	end
-	return DATA.race_get_male_efficiency(race, jobtype) * age_multiplier
 end
 
 ---returns division of time for a given pop_id base on age, forage_ratio, employment and warband
@@ -219,18 +201,10 @@ function rtab.POP.get_time_allocation(pop_id)
 		learning_time = 1 - free_time
 	end
 	-- then work for warband if part of one
-	local warband_id = rtab.POP.get_warband_of(pop_id)
+	local warband_id = WARBAND(pop_id)
 	if warband_id ~= INVALID_ID then
-		if DATA.warband_get_current_status == WARBAND_STATUS.IDLE and DATA.warband_get_idle_stance == WARBAND_STANCE.FORAGE then
-			local unit_type_id = rtab.POP.get_unit_type_of(pop_id)
-			if unit_type_id ~= INVALID_ID then
-				warband_time = math.min(free_time, DATA.unit_type_get_foraging(unit_type_id))
-			else -- officers use a quarter time to forage
-				warband_time = 0.25
-			end
-		else
-			warband_time = DATA.warband_get_current_free_time_ratio(warband_id)
-		end
+		local status = DATA.warband_get_current_status(warband_id)
+		local warband_time = DATA.warband_status_get_time_used(status)
 		free_time = math.max(0,free_time - warband_time)
 	end
 	-- remaining time is used to forage for life needs
@@ -270,7 +244,7 @@ end
 ---@param pop pop_id
 ---@return number pop_adjusted attack modified by pop race and sex
 function rtab.POP.get_attack(pop)
-	return rtab.POP.job_efficiency(pop, JOBTYPE.WARRIOR)
+	return JOB_EFFICIENCY(pop, JOBTYPE.WARRIOR)
 end
 
 ---Returns the adjusted armor value for the provided pop.
@@ -286,7 +260,7 @@ end
 function rtab.POP.get_speed(pop)
 	---@type speed
 	local result = {
-		base = rtab.POP.get_age_multiplier(pop),
+		base = AGE_MULTIPLIER(pop),
 		can_fly = false,
 		forest_fast = DATA.race_get_requires_large_forest(DATA.pop_get_race(pop)),
 		river_fast = DATA.race_get_requires_large_river(DATA.pop_get_race(pop))
@@ -311,7 +285,7 @@ end
 function rtab.POP.get_spotting(pop)
 	local race = DATA.pop_get_race(pop)
 	local spotting = DATA.race_get_spotting(race)
-	return spotting * rtab.POP.get_age_multiplier(pop)
+	return spotting * AGE_MULTIPLIER(pop)
 end
 
 ---Returns the adjusted visibility value for the provided pop.
@@ -336,7 +310,7 @@ end
 ---@param pop pop_id
 ---@return number pop_adjusted hauling modified by pop race and sex
 function rtab.POP.get_supply_capacity(pop)
-	return rtab.POP.job_efficiency(pop, JOBTYPE.HAULING)
+	return JOB_EFFICIENCY(pop, JOBTYPE.HAULING)
 end
 
 
@@ -393,31 +367,6 @@ function rtab.POP.get_job_of(pop_id)
 	return INVALID_ID
 end
 
----returns warband_id if pop is in one or INVALID_ID if not
----@param pop_id pop_id
----@return warband_id
-function rtab.POP.get_warband_of(pop_id)
-	-- a little heavy on the if checks
-	if pop_id ~= INVALID_ID then
-		local warband_id = rtab.POP.get_warband_of_leader(pop_id)
-		if warband_id ~= INVALID_ID then
-			return warband_id
-		end
-		local warband_id = rtab.POP.get_warband_of_recruiter(pop_id)
-		if warband_id ~= INVALID_ID then
-			return warband_id
-		end
-		local warband_id = rtab.POP.get_warband_of_commander(pop_id)
-		if warband_id ~= INVALID_ID then
-			return warband_id
-		end
-		local warband_id = rtab.POP.get_warband_of_unit(pop_id)
-		if warband_id ~= INVALID_ID then
-			return warband_id
-		end
-	end
-	return INVALID_ID
-end
 ---returns warband_id if a pop is a leader of one or INVALID_ID
 ---@param pop_id pop_id
 ---@return warband_id

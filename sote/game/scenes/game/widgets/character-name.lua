@@ -50,7 +50,7 @@ local function name(character_id)
                 in_warband = warband_recruiter
                 title = title .. "Recruiter"
             else
-                local unit_of = pop_utils.get_unit_of(character_id)
+                local unit_of = UNIT_OF(character_id)
                 if unit_of ~= INVALID_ID then
                     in_warband = unit_of
                     if guard and guard == in_warband then

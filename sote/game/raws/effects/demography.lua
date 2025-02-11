@@ -9,14 +9,6 @@ function demo.kill_pop(pop)
 	-- print("kill " .. pop.name)
 	demo.fire_pop(pop)
 	warband_utils.unregister_military(pop)
-	-- remove parent child links
-	local parent = DATA.parent_child_relation_get_parent(DATA.get_parent_child_relation_from_child(pop))
-	if parent ~= INVALID_ID then
-		DATA.delete_parent_child_relation(DATA.get_parent_child_relation_from_child(pop))
-	end
-	DATA.for_each_parent_child_relation_from_parent(pop, function(item)
-		DATA.delete_parent_child_relation(item)
-	end)
 	DATA.delete_pop(pop)
 end
 

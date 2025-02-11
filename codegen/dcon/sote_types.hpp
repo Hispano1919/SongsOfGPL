@@ -59,7 +59,7 @@ enum class WARBAND_STATUS : uint8_t {
     PREPARING_PATROL = 4,
     PATROL = 5,
     ATTACKING = 6,
-    TRAVELLING = 7,
+    TRAVELING = 7,
     OFF_DUTY = 8,
 };
 

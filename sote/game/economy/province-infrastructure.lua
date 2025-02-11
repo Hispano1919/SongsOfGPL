@@ -24,7 +24,7 @@ function r.run(province)
 			n = race.female_infrastructure_needs
 		end
 		---@type number
-		inf = inf + n * pop_utils.get_age_multiplier(pop)
+		inf = inf + n * AGE_MULTIPLIER(pop)
 	end
 
 	-- From buildings

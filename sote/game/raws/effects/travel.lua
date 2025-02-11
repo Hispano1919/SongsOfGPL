@@ -66,15 +66,23 @@ function travel_effects.enter_settlement(character)
 		return
 	end
 
+	DATA.force_create_pop_location(local_province, character)
 	DATA.force_create_character_location(local_province, character)
 
 	DATA.for_each_warband_unit_from_warband(warband, function (item)
 		local unit = DATA.warband_unit_get_unit(item)
 
+		DATA.force_create_pop_location(local_province, unit)
 		if (IS_CHARACTER(unit)) then
 			DATA.force_create_character_location(local_province, unit)
-		else
-			DATA.force_create_pop_location(local_province, unit)
+		end
+		-- unrecruit children if at home
+		if local_province == HOME(unit) then
+			local age = AGE_YEARS(unit)
+			local teen_age = DATA.race_get_teen_age(RACE(unit))
+			if age < teen_age then
+				require "game.raws.effects.demography".unrecruit(unit)
+			end
 		end
 	end)
 end

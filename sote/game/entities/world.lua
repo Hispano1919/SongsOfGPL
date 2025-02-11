@@ -575,9 +575,9 @@ function world.World:tick()
 		PROFILER:end_timer("decisions travel")
 	end
 
-	PROFILER:start_timer("travelling")
+	PROFILER:start_timer("traveling")
 	require "game.ai.travels".run()
-	PROFILER:end_timer("travelling")
+	PROFILER:end_timer("traveling")
 
 	do
 		local index = WORLD.current_tick_in_month

@@ -85,19 +85,20 @@ function ib.text_button_to_character(gamescene, character, rect, text, tooltip, 
 end
 
 ---@param gamescene GameScene
----@param province Province
+---@param tile_id Province
 ---@param rect Rect
 ---@param tooltip string?
-function ib.text_button_to_province(gamescene, province, rect, tooltip)
+function ib.text_button_to_province_tile(gamescene, tile_id, rect, tooltip)
     local player = WORLD.player_character
     local potential = true
+    local province = TILE_PROVINCE(tile_id)
     if province ~= INVALID_ID then
         if player ~= INVALID_ID and not ib.is_visible_to_player(province,player) then
             potential = false
         end
         if ut.text_button(PROVINCE_NAME(province), rect, tooltip, potential) then
             gamescene.selected.province = province
-            gamescene.selected.tile = DATA.province_get_center(province)
+            gamescene.selected.tile = tile_id
             gamescene.inspector = "tile"
         end
     else
@@ -107,15 +108,50 @@ end
 
 ---@param gamescene GameScene
 ---@param estate estate_id
+---@param building building_id
 ---@param rect Rect
 ---@param tooltip string?
----@param potential boolean?
----@param active boolean?
-function ib.text_button_to_estate(gamescene, estate, rect, text, tooltip, potential, active)
-    if ut.text_button(text, rect, tooltip, potential, active) then
-        gamescene.selected.building = INVALID_ID
-        gamescene.selected.estate = estate
-        gamescene.inspector = "building"
+function ib.text_button_to_estate(gamescene, estate, building, rect, text, tooltip)
+    local player = WORLD.player_character
+    local potential = true
+    if estate ~= INVALID_ID then
+        local province = ESTATE_PROVINCE(estate)
+        if player ~= INVALID_ID and not ib.is_visible_to_player(province,player) then
+            potential = false
+        end
+        if ut.text_button(text, rect, tooltip, potential) then
+            gamescene.selected.building = building
+            gamescene.selected.estate = estate
+            gamescene.inspector = "building"
+        end
+    else
+        ut.text_button(text,rect,tooltip,false)
+    end
+end
+
+function ib.icon_button_to_building(gamescene,building_id,rect,tooltip,potential,active)
+    local player = WORLD.player_character
+    local potential = true
+    if building_id ~= INVALID_ID then
+        local estate_id = BUILDING_ESTATE(building_id)
+        local province = ESTATE_PROVINCE(estate_id)
+        if player ~= INVALID_ID and not ib.is_visible_to_player(province,player) then
+            potential = false
+        end
+        local building_type = DATA.building_get_current_type(building_id)
+        if ut.color_icon_button(
+            DATA.building_type_get_icon(building_type),
+            DATA.building_type_get_r(building_type),
+            DATA.building_type_get_g(building_type),
+            DATA.building_type_get_b(building_type),
+            1, rect,tooltip,potential)
+        then
+            gamescene.selected.building = building_id
+            gamescene.selected.estate = estate_id
+            gamescene.inspector = "building"
+        end
+    else
+        ut.icon_button(ASSETS.icons["uncertainty.png"],rect,tooltip,false)
     end
 end
 
@@ -128,7 +164,7 @@ function ib.icon_button_to_warband(gamescene, warband_id, rect, tooltip)
     local player = WORLD.player_character
     local potential = true
     if warband_id ~= INVALID_ID then
-        local province = warband_utils.location(warband_id)
+        local province = TILE_PROVINCE(warband_utils.location(warband_id))
         if player ~= INVALID_ID and not ib.is_visible_to_player(province,player) then
             potential = false
         end
@@ -137,7 +173,7 @@ function ib.icon_button_to_warband(gamescene, warband_id, rect, tooltip)
             gamescene.inspector = "warband"
         end
     else
-        ut.icon_button(ASSETS.icons["uncertainty.png"],rect,tooltip)
+        ut.icon_button(ASSETS.icons["uncertainty.png"],rect,tooltip,false)
     end
 end
 

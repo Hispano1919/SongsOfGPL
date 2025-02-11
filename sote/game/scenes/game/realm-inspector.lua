@@ -216,7 +216,7 @@ function re.draw(gam)
 						ib.text_button_to_character(gam, k, rect, name, tooltip)
 					end
 					local function render_province(rect, k, v)
-						ib.text_button_to_province(gam, PROVINCE(k), rect, PROVINCE_NAME(PROVINCE(v)))
+						ib.text_button_to_province_tile(gam, DATA.province_get_center(PROVINCE(v)), rect, PROVINCE_NAME(PROVINCE(v)))
 					end
 					local function pop_sex(pop)
 						local f = "m"

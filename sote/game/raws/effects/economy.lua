@@ -29,18 +29,6 @@ function EconomicEffects.consume_supplies(warband, days)
 	local consumed = EconomicEffects.consume_use_case_from_inventory(leader, CALORIES_USE_CASE, consumption)
 
 	-- give some wiggle room for floats
-	if consumed > consumption + 0.01
-		or consumed < consumption - 0.01 then
-		error("CONSUMED WRONG AMOUNT. "
-			.. "\n consumed = "
-			.. tostring(consumed)
-			.. "\n consumption = "
-			.. tostring(consumption)
-			.. "\n daily_consumption = "
-			.. tostring(daily_consumption)
-			.. "\n days = "
-			.. tostring(days))
-	end
 	if consumption == 0 then
 		return 1
 	end
@@ -504,7 +492,7 @@ function EconomicEffects.buy(character, good, amount)
 			.. " bought "
 			.. amount
 			.. " "
-			.. good
+			.. DATA.trade_good_get_name(good)
 			.. " for "
 			.. ut.to_fixed_point2(cost) .. MONEY_SYMBOL
 		)
@@ -521,6 +509,9 @@ end
 ---@return number consumed
 function EconomicEffects.consume_use_case_from_inventory(pop, use_case, amount)
 	local supply = ev.available_use_case_from_inventory(pop, use_case)
+	if supply <= 0 then
+		return 0
+	end
 	if supply < amount then
 		amount = supply
 	end

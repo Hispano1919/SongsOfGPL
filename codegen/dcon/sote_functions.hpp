@@ -68,4 +68,5 @@ extern "C" {
 	DCON_LUADLL_API uint32_t age_months(dcon::pop_id);
 	DCON_LUADLL_API uint32_t age_years(dcon::pop_id);
 	DCON_LUADLL_API float age_multiplier(dcon::pop_id);
+	DCON_LUADLL_API float job_efficiency(dcon::pop_id,uint8_t);
 }

@@ -933,11 +933,6 @@ void pops_produce(dcon::province_id province) {
 		state.province_get_foragers(province) += state.pop_get_forage_ratio(pop);
 	});
 
-	state.province_for_each_character_location(province, [&](auto location) {
-		auto pop = state.character_location_get_character(location);
-		state.province_get_foragers(province) += state.pop_get_forage_ratio(pop);
-	});
-
 	state.province_set_forage_efficiency(province, forage_efficiency(
 		state.province_get_foragers(province),
 		state.province_get_foragers_limit(province)
@@ -945,11 +940,6 @@ void pops_produce(dcon::province_id province) {
 
 	state.province_for_each_pop_location(province, [&](auto location) {
 		auto pop = state.pop_location_get_pop(location);
-		pop_forage_update(pop, province);
-	});
-
-	state.province_for_each_character_location(province, [&](auto location) {
-		auto pop = state.character_location_get_character(location);
 		pop_forage_update(pop, province);
 	});
 }

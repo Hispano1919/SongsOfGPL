@@ -215,11 +215,9 @@ local function load()
 				if parent == WORLD.player_character then
 					WORLD:emit_notification("My child, " .. NAME(character) .. ", has died at the age of " .. AGE_YEARS(character) .. ".")
 				end
-				DATA.delete_parent_child_relation(DATA.get_parent_child_relation_from_child(character))
 			end
 			DATA.for_each_parent_child_relation_from_parent(character, function(item)
 				WORLD:emit_notification("My parent, " .. NAME(character) .. ", has died at the age of " .. AGE_YEARS(character) .. ".")
-				DATA.delete_parent_child_relation(item)
 			end)
 
 			-- delete character

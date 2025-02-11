@@ -1764,6 +1764,11 @@ object {
     storage_type { contiguous }
     size { 10 }
     tag {scenario}
+    property{
+        name { time_used }
+        type { float }
+        tag { scenario }
+    }
 }
 object {
     name { warband_stance }

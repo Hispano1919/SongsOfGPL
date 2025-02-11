@@ -4,9 +4,9 @@ local pop_utils = require "game.entities.pop".POP
 local warband_utils = {}
 
 
-local base_unit_upkeep = 0.1
+BASE_UNIT_UPKEEP = 0.1
 
-warband_utils.upkeep_per_unit = base_unit_upkeep
+warband_utils.upkeep_per_unit = BASE_UNIT_UPKEEP
 warband_utils.base_unit_price = 50
 
 ---Returns a list of all officers
@@ -294,7 +294,7 @@ function warband_utils.hire_unit(warband, pop, unit)
 
 	local new_membership = DATA.fatten_warband_unit(DATA.force_create_warband_unit(pop, warband))
 	new_membership.type = unit
-	DATA.warband_inc_total_upkeep(warband, base_unit_upkeep)
+	DATA.warband_inc_total_upkeep(warband, BASE_UNIT_UPKEEP)
 end
 
 ---Handles pop firing logic on warband's side
@@ -308,7 +308,7 @@ function warband_utils.fire_unit(warband, pop)
 	assert(warband == fat_membership.warband, "INVALID OPERATION: POP WAS IN A WRONG WARBAND")
 
 	DATA.warband_inc_units_current(warband, fat_membership.type, -1)
-	DATA.warband_inc_total_upkeep(warband, -base_unit_upkeep)
+	DATA.warband_inc_total_upkeep(warband, -BASE_UNIT_UPKEEP)
 
 	DATA.delete_warband_unit(membership)
 end
@@ -344,7 +344,7 @@ function warband_utils.set_character_as_unit(warband, character, unit)
 	local fat_warband = DATA.fatten_warband(warband)
 	local fat_unit = DATA.fatten_unit_type(unit)
 
-	local new_upkeep = base_unit_upkeep
+	local new_upkeep = BASE_UNIT_UPKEEP
 
 	if current_warband == INVALID_ID then
 		---#logging LOGS:write("no current warband\n")
@@ -356,7 +356,7 @@ function warband_utils.set_character_as_unit(warband, character, unit)
 		---#logging LOGS:write("there is current warband but it's different\n")
 		---#logging LOGS:flush()
 
-		local current_upkeep = base_unit_upkeep
+		local current_upkeep = BASE_UNIT_UPKEEP
 
 		DATA.warband_inc_units_current(current_warband, unit, -1)
 		DATA.warband_inc_total_upkeep(current_warband, -current_upkeep)
@@ -367,7 +367,7 @@ function warband_utils.set_character_as_unit(warband, character, unit)
 		---#logging LOGS:write("there is current warband and it's the same\n")
 		---#logging LOGS:flush()
 
-		local current_upkeep = base_unit_upkeep
+		local current_upkeep = BASE_UNIT_UPKEEP
 
 		DATA.warband_inc_units_current(current_warband, unit, -1)
 		DATA.warband_inc_total_upkeep(current_warband, -current_upkeep)
@@ -375,7 +375,7 @@ function warband_utils.set_character_as_unit(warband, character, unit)
 		DATA.warband_unit_set_type(current_unit, unit)
 	end
 
-	fat_warband.total_upkeep = fat_warband.total_upkeep + base_unit_upkeep
+	fat_warband.total_upkeep = fat_warband.total_upkeep + BASE_UNIT_UPKEEP
 	DATA.warband_inc_units_current(warband, unit, 1)
 
 	---#logging LOGS:write("taking up command was successful\n")
@@ -394,7 +394,7 @@ function warband_utils.unset_character_as_unit(warband, character)
 		assert(old_warband.id == warband, "INVALID OPERATION")
 
 		local old_unit = DATA.fatten_unit_type(fat_membership.type)
-		old_warband.total_upkeep = old_warband.total_upkeep - base_unit_upkeep
+		old_warband.total_upkeep = old_warband.total_upkeep - BASE_UNIT_UPKEEP
 		DATA.warband_inc_units_current(old_warband.id, old_unit.id, -1)
 		DATA.delete_warband_unit(current_warband)
 	end
@@ -408,7 +408,7 @@ function warband_utils.predict_upkeep(warband)
 	for _, membership in ipairs(DATA.get_warband_unit_from_warband(warband)) do
 		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
-		result = result + base_unit_upkeep
+		result = result + BASE_UNIT_UPKEEP
 	end
 	return result
 end

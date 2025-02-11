@@ -10,19 +10,6 @@ local pop_utils = require "game.entities.pop".POP
 
 local rank_name = require "game.raws.ranks.localisation"
 
--- TODO GLOBALIZE
-local JOBTYPE_ICON = {
-    [JOBTYPE.INVALID] = "uncertainty.png",
-    [JOBTYPE.FORAGER] = "basket.png",
-    [JOBTYPE.FARMER] = "plow.png",
-    [JOBTYPE.LABOURER] = "miner.png",
-    [JOBTYPE.ARTISAN] = "stone-crafting.png",
-    [JOBTYPE.CLERK] = "bookmarklet.png",
-    [JOBTYPE.WARRIOR] = "guards.png",
-    [JOBTYPE.HAULING] = "cardboard-box.png",
-    [JOBTYPE.HUNTING] = "bow-arrow.png",
-}
-
 local pui = {}
 
 ---comment
@@ -91,7 +78,7 @@ function pui.render_forage_time(rect,pop_id)
 	end
 	if warband_time > 0 then
 		tooltip = tooltip .. " but " .. ut.to_fixed_point2(warband_time*100)
-			.. "% of its time is reserved for " .. strings.title(DATA.warband_get_name(pop_utils.get_warband_of(pop_id))) .. "."
+			.. "% of its time is reserved for " .. strings.title(DATA.warband_get_name(UNIT_OF(pop_id))) .. "."
 	else
 		tooltip = tooltip .. "."
 	end
@@ -103,7 +90,7 @@ end
 ---@param pop_id pop_id
 function pui.render_warband_time(rect,pop_id)
 	local pop_name = NAME(pop_id)
-	local warband_id = pop_utils.get_warband_of(pop_id)
+	local warband_id = UNIT_OF(pop_id)
 	if warband_id ~= INVALID_ID then
 		local _, warband_time, _, _ = pop_utils.get_time_allocation(pop_id)
 		local tooltip = pop_name .. " expects to spend " .. ut.to_fixed_point2(warband_time*100)
@@ -296,11 +283,11 @@ end
 ---@param rect Rect
 ---@param pop_id pop_id
 function pui.render_warband_income(rect, pop_id)
-	if pop_utils.get_warband_of(pop_id) ~= INVALID_ID then
+	if UNIT_OF(pop_id) ~= INVALID_ID then
 		local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 		local wage, unit = 0, "noncombatant"
 		if unit_type_id ~= INVALID_ID then
-			wage = DATA.unit_type_get_upkeep(unit_type_id)
+			wage = BASE_UNIT_UPKEEP
 			unit = strings.title(DATA.unit_type_get_name(unit_type_id))
 		end
 		ut.generic_number_field(
@@ -327,7 +314,7 @@ function pui.occupation_tooltip(pop_id)
 	local occupation = DATA.get_employment_from_worker(pop_id)
     local employer_id = DATA.employment_get_building(occupation)
 	local job_id = DATA.employment_get_job(occupation)
-	local warband_id = pop_utils.get_warband_of(pop_id)
+	local warband_id = UNIT_OF(pop_id)
 
 	-- first spend warband time, then attempt to forage, finally use remaining time to work
 	local forage_time, warband_time, work_time, learning_time = pop_utils.get_time_allocation(pop_id)
@@ -565,7 +552,7 @@ function pui.pop_tooltip(pop_id)
 				.. "\tSupply Capacity\t" .. ut.to_fixed_point2(pop_utils.get_supply_capacity(pop_id))
 			.. "\n Skills"
 		for i=1, tabb.size(JOBTYPE)-1 do
-			local skill = pop_utils.job_efficiency(pop_id, i)
+			local skill = JOB_EFFICIENCY(pop_id, i)
 			tooltip = tooltip .. "\n  " .. strings.title(DATA.jobtype_get_name(i))
 				.. "\t" .. ut.to_fixed_point2(skill*100) .. "%"
 		end
@@ -593,17 +580,17 @@ function pui.render_job_efficiency(rect, pop_id, job_type_id)
 		AGE_YEARS(pop_id),
 		DATA.race_get_teen_age(race_id),
 		DATA.race_get_middle_age(race_id)
-	local efficiency = pop_utils.job_efficiency(pop_id,job_type_id)
+	local efficiency = JOB_EFFICIENCY(pop_id,job_type_id)
 	local tooltip = strings.title(DATA.jobtype_get_action_word(job_type_id))
 		.. " efficiency is " .. ut.to_fixed_point2(efficiency*100) .. "%"
 		.. "\n\t" .. ut.to_fixed_point2(race_efficiency*100).. "% (" .. strings.title(DATA.race_get_name(race_id)) .. ")"
 	if (age < teen_age) or (age >= middle_age) then
-		local age_multiplier = pop_utils.get_age_multiplier(pop_id)
+		local age_multiplier = AGE_MULTIPLIER(pop_id)
 		tooltip = tooltip
 			.. "\n\t × " .. ut.to_fixed_point2(age_multiplier*100) .. "% (" .. pop_utils.get_age_string(pop_id) .. ")"
 	end
 	ut.generic_number_field(
-		JOBTYPE_ICON[job_type_id],
+		DATA.jobtype_get_icon(job_type_id),
 		efficiency,
 		rect,
 		tooltip,
@@ -631,7 +618,7 @@ function pui.render_size(rect,pop_id)
 		DATA.race_get_teen_age(race_id),
 		DATA.race_get_middle_age(race_id)
 	if (age < teen_age) or (age >= middle_age) then
-		local age_multiplier = pop_utils.get_age_multiplier(pop_id)
+		local age_multiplier = AGE_MULTIPLIER(pop_id)
 		tooltip = tooltip
 			.. "\n\t × " .. ut.to_fixed_point2(age_multiplier*100) .. "% (" .. pop_utils.get_age_string(pop_id) .. ")"
 	end
@@ -659,7 +646,7 @@ function pui.render_spotting(rect,pop_id)
 		DATA.race_get_teen_age(race_id),
 		DATA.race_get_middle_age(race_id)
 	if (age < teen_age) or (age >= middle_age) then
-		local age_multiplier = pop_utils.get_age_multiplier(pop_id)
+		local age_multiplier = AGE_MULTIPLIER(pop_id)
 		tooltip = tooltip
 			.. "\n\t × " .. ut.to_fixed_point2(age_multiplier*100) .. "% (" .. pop_utils.get_age_string(pop_id) .. ")"
 	end
@@ -715,7 +702,7 @@ end
 ---@param pop_id pop_id
 function pui.render_attack(rect,pop_id)
 	local value = pop_utils.get_attack(pop_id)
-	local base = pop_utils.job_efficiency(pop_id,JOBTYPE.WARRIOR)
+	local base = JOB_EFFICIENCY(pop_id,JOBTYPE.WARRIOR)
 	local tooltip = "Attack"
 		.. "\n\t" .. ut.to_fixed_point2(base) .. " (Warrior)"
 	ut.generic_number_field(
@@ -758,7 +745,7 @@ function pui.render_speed(rect,pop_id)
 		DATA.race_get_teen_age(race_id),
 		DATA.race_get_middle_age(race_id)
 	if (age < teen_age) or (age >= middle_age) then
-		local age_multiplier = pop_utils.get_age_multiplier(pop_id)
+		local age_multiplier = AGE_MULTIPLIER(pop_id)
 		tooltip = tooltip
 			.. "\n\t × " .. ut.to_fixed_point2(age_multiplier*100) .. "% (" .. pop_utils.get_age_string(pop_id) .. ")"
 	end
@@ -777,7 +764,7 @@ end
 ---@param pop_id pop_id
 function pui.render_supply_capacity(rect,pop_id)
 	local value = pop_utils.get_supply_capacity(pop_id)
-	local base = pop_utils.job_efficiency(pop_id, JOBTYPE.HAULING)
+	local base = JOB_EFFICIENCY(pop_id, JOBTYPE.HAULING)
 	local tooltip = "Supply Capacity"
 		.. "\n\t" .. ut.to_fixed_point2(base) .. " (Hauling)"
 	ut.generic_number_field(
@@ -833,12 +820,24 @@ function pui.render_infrastructure_needs(rect,pop_id)
 end
 
 function pui.render_location_buttons(game,rect,pop_id)
-	local province_id = PROVINCE(pop_id)
+	local province_id = LOCAL_PROVINCE(pop_id)
 	local realm_id = PROVINCE_REALM(province_id)
 	local icon_size = math.max(ut.BASE_HEIGHT,rect.height)
-	ib.icon_button_to_realm(game,realm_id,rect:subrect(0,0,icon_size,rect.height,"right","up"),
-		NAME(pop_id) .. " is currently in the capitol of " .. (realm_id ~= INVALID_ID and DATA.realm_get_name(realm_id) or " unclaimed wildlands."))
-	ib.text_button_to_province(game,province_id,rect:subrect(0,0,rect.width-icon_size,rect.height,"left","up"),
+	local icon_rect = rect:subrect(0,0,icon_size,rect.height,"right","up")
+	local tile_id
+	if PROVINCE(pop_id) == province_id then
+		tile_id = DATA.province_get_center(province_id)
+		ib.icon_button_to_realm(game,realm_id,icon_rect,
+			NAME(pop_id) .. " is currently in the capitol of " .. (realm_id ~= INVALID_ID and DATA.realm_get_name(realm_id) or " unclaimed wildlands."))
+	else -- has a warband location
+		ui.panel(icon_rect,2,true)
+		tile_id = WARBAND_TILE(WARBAND(pop_id))
+		local biome = DATA.tile_get_biome(tile_id)
+		local biome_tooltip = NAME(pop_id) .. " is currently roaming " .. DATA.biome_get_name(biome) .. "."
+		ut.render_icon(icon_rect,"horizon-road.png",DATA.biome_get_r(biome),DATA.biome_get_g(biome),DATA.biome_get_b(biome),1,true)
+		ui.tooltip(biome_tooltip,icon_rect)
+	end
+	ib.text_button_to_province_tile(game,tile_id,rect:subrect(0,0,rect.width-icon_size,rect.height,"left","up"),
 		NAME(pop_id) .. " is currently in the province of " .. PROVINCE_NAME(province_id) .. ".")
 end
 

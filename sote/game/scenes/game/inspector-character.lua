@@ -13,8 +13,6 @@ local list_widget = require "game.scenes.game.widgets.list-widget"
 local pop_utils = require "game.entities.pop".POP
 local warband_utils = require "game.entities.warband"
 
-
-
 local window = {}
 local selected_decision = nil
 local decision_target_primary = nil
@@ -36,19 +34,6 @@ local relations_loyalty_state = nil
 local property_tab = "INVENTORY"
 local property_inventory_state = nil
 local property_buildings_state  = nil
-
--- TODO GLOBALIZE
-WARBAND_STATUS_ICON = {
-    [WARBAND_STATUS.INVALID] = "uncertainty.png",
-    [WARBAND_STATUS.IDLE] = "guards.png",
-    [WARBAND_STATUS.RAIDING] = "stone-spear.png",
-    [WARBAND_STATUS.PREPARING_RAID] = "minions.png",
-    [WARBAND_STATUS.PREPARING_PATROL] = "ages.png",
-    [WARBAND_STATUS.PATROL] = "round-shield.png",
-    [WARBAND_STATUS.ATTACKING] = "stone-axe.png",
-    [WARBAND_STATUS.TRAVELLING] = "horizon-road.png",
-    [WARBAND_STATUS.OFF_DUTY] = "shrug.png",
-}
 
 ---family name stand in
 ---@param pop_id pop_id
@@ -99,7 +84,9 @@ local function render_pop_overview(game,rect,pop_id,player_id, title)
     line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
     line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
     pui.render_location_buttons(game,line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
-    pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id,PROVINCE_REALM(PROVINCE(pop_id)))
+    if PROVINCE(pop_id) ~= INVALID_ID then -- if in a settlement, display local popularity
+        pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id,PROVINCE_REALM(LOCAL_PROVINCE(pop_id)))
+    end
 
     -- home populatiry
     line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
@@ -132,28 +119,30 @@ local function render_employer_overview(game,rect,pop_id,player_id)
     if employer_id ~= INVALID_ID then
         local building_type_id = DATA.building_get_current_type(employer_id)
         local employer_name = strings.title(DATA.building_type_get_name(building_type_id))
-        local employer_tooltip = employer_name .. "\n " .. DATA.building_type_get_description(building_type_id)
-        ui.text("Employer: " .. employer_name,title_rect,"left","center")
-        ui.tooltip(employer_tooltip,title_rect)
-        ib.icon_button_to_building(game,employer_id,icon_rect,employer_tooltip)
-        pui.render_work_time(time_rect,pop_id)
-
         local owner_id = OWNER(BUILDING_ESTATE(employer_id))
-        local owner_name = ""
+        local employer_province = BUILDING_PROVINCE(employer_id)
+        local estate_tooltip
         if owner_id ~= INVALID_ID then
-            owner_name = NAME(owner_id) .. "'s "
+            estate_tooltip = NAME(owner_id) .. "'s " .. employer_name .. " in " .. PROVINCE_NAME(employer_province) .. "."
             ib.render_portrait_with_overlay(game,portrait_rect,owner_id,player_id,pui.pop_tooltip(pop_id))
         else -- public buildings controlled by overseer?
-            local realm_id = PROVINCE_REALM(BUILDING_PROVINCE(employer_id))
+            local realm_id = PROVINCE_REALM()
+            estate_tooltip = "Public estate of " .. REALM_NAME(realm_id) .. "."
             owner_id = require "game.raws.values.politics".overseer(realm_id)
             if owner_id ~= INVALID_ID then
-                owner_name = NAME(owner_id) .. "'s "
                 ib.render_portrait_with_overlay(game,portrait_rect,owner_id,player_id,pui.pop_tooltip(pop_id))
             else -- building in a realmless province
                 ut.render_icon(portrait_rect,"horizon-road.png",.8,.8,.8,1,true)
                 ui.tooltip("This building is unclaimed.", portrait_rect)
             end
         end
+
+        local estate_id = DATA.building_estate_get_estate(DATA.get_building_estate_from_building(employer_id))
+        local employer_tooltip = employer_name .. "\n " .. DATA.building_type_get_description(building_type_id)
+        ui.tooltip(employer_tooltip,title_rect)
+        ib.icon_button_to_building(game,employer_id,icon_rect,employer_tooltip)
+        pui.render_work_time(time_rect,pop_id)
+        ib.text_button_to_estate(game,estate_id,employer_id,title_rect,employer_name,estate_tooltip)
 
         local lines_rect = rect:subrect(0,0,rect.width-portrait_size,ut.BASE_HEIGHT*3,"right","down")
         local lines_layout = ui.layout_builder():position(lines_rect.x,lines_rect.y):vertical():build()
@@ -179,7 +168,7 @@ local function render_employer_overview(game,rect,pop_id,player_id)
         line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
         pui.render_location_buttons(game,line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
         if owner_id ~= INVALID_ID then
-            pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),owner_id,PROVINCE_REALM(PROVINCE(owner_id)))
+            pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),owner_id,PROVINCE_REALM(employer_province))
         end
 
         -- owner home populatiry
@@ -222,7 +211,7 @@ end
 local function render_warband_overview(game,rect,pop_id,player_id,title)
     ui.panel(rect,2,true)
 
-    local warband_id = pop_utils.get_warband_of(pop_id)
+    local warband_id = WARBAND(pop_id)
 
     local title_rect = rect:subrect(0,0,rect.width-ut.BASE_HEIGHT*4,ut.BASE_HEIGHT,"left","up")
     ui.panel(title_rect,2,true,true)
@@ -236,7 +225,7 @@ local function render_warband_overview(game,rect,pop_id,player_id,title)
         local warband_location = warband_utils.location(warband_id)
         local warband_name = strings.title(DATA.warband_get_name(warband_id))
         local status_name = DATA.warband_status_get_name(warband_status)
-        local province = TILE_PROVINCE(WARBAND_TILE(warband_id))
+        local province = LOCAL_PROVINCE(warband_utils.active_leader(warband_id))
         local warband_tooltip = warband_name .. " is currently " .. status_name .. " in " .. PROVINCE_NAME(province) .. "."
         ui.text("Party: " .. warband_name, title_rect)
         ui.tooltip(warband_tooltip,title_rect)
@@ -252,7 +241,7 @@ local function render_warband_overview(game,rect,pop_id,player_id,title)
                 ib.icon_button_to_realm(game,realm_id,portrait_rect,REALM_NAME(realm_id))
             else -- building in a realmless province
                 ut.render_icon(portrait_rect,"uncertainty.png",.8,.8,.8,1,true)
-                ui.tooltip("This building is unclaimed.", portrait_rect)
+                ui.tooltip("unknown.", portrait_rect)
             end
         end
 
@@ -277,9 +266,20 @@ local function render_warband_overview(game,rect,pop_id,player_id,title)
         -- warband location and leader local popularity
         line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
         line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-        ib.text_button_to_province(game,province,line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),warband_tooltip)
+        local warband_tile = WARBAND_TILE(warband_id)
+        ib.text_button_to_province_tile(game, warband_tile,line_layout:next(line_rect.width-ut.BASE_HEIGHT*4,ut.BASE_HEIGHT),warband_tooltip)
+        if warband_tile == DATA.province_get_center(TILE_PROVINCE(warband_tile)) then
+            ib.icon_button_to_realm(game,PROVINCE_REALM(province),line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT))
+        else
+            local icon_rect = line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT)
+            ui.panel(icon_rect,2,true)
+            local biome = DATA.tile_get_biome(warband_tile)
+            local biome_tooltip = NAME(pop_id) .. " is currently roaming " .. DATA.biome_get_name(biome) .. "."
+            ut.render_icon(icon_rect,"horizon-road.png",DATA.biome_get_r(biome),DATA.biome_get_g(biome),DATA.biome_get_b(biome),1,true)
+            ui.tooltip(biome_tooltip,icon_rect)
+        end
         if leader_id ~= INVALID_ID then
-            pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),leader_id,PROVINCE_REALM(PROVINCE(leader_id)))
+            pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),leader_id,PROVINCE_REALM(province))
         end
 
         -- leader home populatiry
@@ -452,7 +452,7 @@ local function draw_war_tab(game,rect,pop_id)
     pui.render_attack(attrib_layout:next(draw_width,ut.BASE_HEIGHT),pop_id)
     pui.render_speed(attrib_layout:next(draw_width,ut.BASE_HEIGHT),pop_id)
 
-    local warband_id = pop_utils.get_warband_of(pop_id)
+    local warband_id = WARBAND(pop_id)
     if warband_id ~= INVALID_ID then
         render_warband_overview(game,layout:next(rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT*4),pop_id)
     else
