@@ -164,8 +164,17 @@ local function render_employer_overview(game,rect,pop_id,player_id)
         -- building location and owner local popularity
         line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
         line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-        pui.render_location_buttons(game,line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
-        if owner_id ~= INVALID_ID then
+        local tile_id = DATA.province_get_center(employer_province)
+        ib.text_button_to_province_tile(game,tile_id,line_layout:next(line_rect.width-ut.BASE_HEIGHT*4,ut.BASE_HEIGHT))
+        local realm_id = PROVINCE_REALM(employer_province)
+        if realm_id ~= INVALID_ID then
+            ib.icon_button_to_realm(game,realm_id,line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),employer_name .. " is in the capitol of " .. REALM_NAME(realm_id))
+        else
+            local biome = DATA.tile_get_biome(tile_id)
+            ut.color_icon_button("horizon-road.png",DATA.biome_get_r(biome),DATA.biome_get_g(biome),DATA.biome_get_b(biome),1,
+                line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),employer_name .. " is on unclaimed lands.", false)
+        end
+        if owner_id ~= INVALID_ID and realm_id ~= INVALID_ID then
             pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),owner_id,PROVINCE_REALM(employer_province))
         end
 
