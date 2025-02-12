@@ -50,6 +50,7 @@ function WarbandEffects.set_as_unit(warband, character, unit)
 	---#logging LOGS:write("set character as a unit \n")
 	---#logging LOGS:flush()
 	local current_unit = DATA.get_warband_unit_from_unit(character)
+	local current_type = DATA.warband_unit_get_type(current_unit)
 	local current_warband = DATA.warband_unit_get_warband(current_unit)
 
 	local fat_warband = DATA.fatten_warband(warband)
@@ -68,7 +69,7 @@ function WarbandEffects.set_as_unit(warband, character, unit)
 
 		local current_upkeep = BASE_UNIT_UPKEEP
 
-		DATA.warband_inc_units_current(current_warband, current_unit, -1)
+		DATA.warband_inc_units_current(current_warband, current_type, -1)
 		DATA.warband_inc_total_upkeep(current_warband, -current_upkeep)
 
 		DATA.warband_unit_set_warband(current_unit, warband)
@@ -79,7 +80,7 @@ function WarbandEffects.set_as_unit(warband, character, unit)
 
 		local current_upkeep = BASE_UNIT_UPKEEP
 
-		DATA.warband_inc_units_current(current_warband, current_unit, -1)
+		DATA.warband_inc_units_current(current_warband, current_type, -1)
 		DATA.warband_inc_total_upkeep(current_warband, -current_upkeep)
 
 		DATA.warband_unit_set_type(current_unit, unit)

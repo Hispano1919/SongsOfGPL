@@ -52,14 +52,14 @@ function pg.growth(province_id)
 		local tile_id = DATA.tile_province_membership_get_tile(tile_relation)
 		DATA.for_each_warband_location_from_location(tile_id, function (warband_relation)
 			DATA.for_each_warband_unit_from_warband(DATA.warband_location_get_warband(warband_relation), function(warband)
-				table.insert(pops_and_characters, DATA.warband_unit_get_unit(warband))
+				local unit = DATA.warband_unit_get_unit(warband)
+				-- if not in settlement
+				if PROVINCE(unit) == INVALID_ID then
+					table.insert(pops_and_characters,unit)
+				end
 			end)
 		end)
 	end)
-
-	---maps pops eligible to breed to their satisfaction
-	---@type table<pop_id, number>
-	local eligible_to_breed = {}
 
 	for _, pop in ipairs(pops_and_characters) do
 		assert(DCON.dcon_pop_is_valid(pop - 1), tostring(pop))
