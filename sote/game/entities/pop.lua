@@ -201,7 +201,7 @@ function rtab.POP.get_time_allocation(pop_id)
 		learning_time = 1 - free_time
 	end
 	-- then work for warband if part of one
-	local warband_id = WARBAND(pop_id)
+	local warband_id = UNIT_OF(pop_id)
 	if warband_id ~= INVALID_ID then
 		local status = DATA.warband_get_current_status(warband_id)
 		local warband_time = DATA.warband_status_get_time_used(status)

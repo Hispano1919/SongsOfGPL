@@ -1,5 +1,6 @@
 local pop_utils = require "game.entities.pop".POP
 local warband_utils = require "game.entities.warband"
+local warband_effects = require "game.raws.effects.warband"
 
 local army_utils = {}
 
@@ -37,7 +38,7 @@ end
 ---@param army warband_id[]
 function army_utils.decimate(army)
 	for _, warband in pairs(army) do
-		warband_utils.decimate(warband)
+		warband_effects.decimate(warband)
 	end
 end
 

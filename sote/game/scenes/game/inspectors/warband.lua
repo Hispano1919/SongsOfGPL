@@ -682,7 +682,7 @@ function window.draw(gamescene)
 						rect:subrect(0, -ut.BASE_HEIGHT, ut.BASE_HEIGHT , ut.BASE_HEIGHT, "right", "up"),
 						text, control_warband
 					) then
-						warband_utils.unset_commander(warband)
+						demography_effects.unset_commander(warband)
 					end
 				else
 					ut.render_icon(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
@@ -708,7 +708,7 @@ function window.draw(gamescene)
 						rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"),
 						text, control_warband
 					) then
-						warband_utils.set_commander(warband, player_character, UNIT_TYPE.WARRIOR)
+						demography_effects.set_commander(warband, player_character)
 					end
 				else
 					ut.render_icon(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
@@ -1131,9 +1131,9 @@ function window.draw(gamescene)
 							if ut.icon_button(icon, rect, text, can_recruit) then
 								-- check if trying to fire commander first
 								if commander ~= INVALID_ID and commander == k then
-									warband_utils.unset_commander(warband)
+									demography_effects.unset_commander(warband)
 								else
-									warband_utils.fire_unit(warband, k)
+									demography_effects.unrecruit(warband, k)
 								end
 							end
 						end
@@ -1173,7 +1173,7 @@ function window.draw(gamescene)
 					ui.text("No permission to hire units for this warband", unit_panel, "center", "center")
 					return
 				end
-				local province = PROVINCE(WARBAND_LEADER(warband))
+				local province = PROVINCE(WARBAND_RECRUITER(warband))
 				if province == INVALID_ID then
 					ui.text("Can't hire units outside of settlement", unit_panel, "center", "center")
 					return

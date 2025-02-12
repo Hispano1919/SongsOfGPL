@@ -219,14 +219,12 @@ end
 ---@param tooltip string?
 function pui.render_unit_icon(rect, pop_id, tooltip)
 	local center_square = rect:centered_square()
-	local race_id = RACE(pop_id)
-	ut.render_icon(center_square,
-		DATA.race_get_icon(race_id),
-		DATA.race_get_r(race_id),
-		DATA.race_get_g(race_id),
-		DATA.race_get_b(race_id),
-		1,
-		true)
+	local warband = UNIT_OF(pop_id)
+	if UNIT_TYPE_OF(pop_id) == UNIT_TYPE.WARRIOR then
+		ut.render_icon(center_square, "guards.png", .8, .8, .8, 1, true)
+	else
+		ut.render_icon(center_square, "minions.png", .8, .8, .8, 1, true)
+	end
 	if tooltip then
 		ui.tooltip(tooltip, rect)
 	end
@@ -831,7 +829,7 @@ function pui.render_location_buttons(game,rect,pop_id)
 			NAME(pop_id) .. " is currently in the capitol of " .. (realm_id ~= INVALID_ID and DATA.realm_get_name(realm_id) or " unclaimed wildlands."))
 	else -- has a warband location
 		ui.panel(icon_rect,2,true)
-		tile_id = WARBAND_TILE(WARBAND(pop_id))
+		tile_id = WARBAND_TILE(UNIT_OF(pop_id))
 		local biome = DATA.tile_get_biome(tile_id)
 		local biome_tooltip = NAME(pop_id) .. " is currently roaming " .. DATA.biome_get_name(biome) .. "."
 		ut.render_icon(icon_rect,"horizon-road.png",DATA.biome_get_r(biome),DATA.biome_get_g(biome),DATA.biome_get_b(biome),1,true)

@@ -200,32 +200,6 @@ function JOB_EFFICIENCY(pop, jobtype)
 	return DCON.job_efficiency(pop,jobtype)
 end
 
----Returns warband of a pop if it is in one
----@param pop_id pop_id
----@return warband_id
-function WARBAND(pop_id)
-	-- a little heavy on the if checks
-	if pop_id ~= INVALID_ID then
-		local warband_id = LEADER_OF_WARBAND(pop_id)
-		if warband_id ~= INVALID_ID then
-			return warband_id
-		end
-		warband_id = RECRUITER_OF_WARBAND(pop_id)
-		if warband_id ~= INVALID_ID then
-			return warband_id
-		end
-		warband_id = COMMANDER_OF_WARBAND(pop_id)
-		if warband_id ~= INVALID_ID then
-			return warband_id
-		end
-		warband_id = UNIT_OF(pop_id)
-		if warband_id ~= INVALID_ID then
-			return warband_id
-		end
-	end
-	return INVALID_ID
-end
-
 -- TODO UNIFY LOCATION STORAGE
 ---Returns province of a pop
 ---@param pop_id pop_id
@@ -572,6 +546,14 @@ end
 function UNIT_OF(unit)
 	local unitship = DATA.get_warband_unit_from_unit(unit)
 	return DATA.warband_unit_get_warband(unitship)
+end
+
+---commenting
+---@param unit pop_id
+---@return unit_type_id
+function UNIT_TYPE_OF(unit)
+	local unitship = DATA.get_warband_unit_from_unit(unit)
+	return DATA.warband_unit_get_type(unitship)
 end
 
 ---@param pop_id pop_id

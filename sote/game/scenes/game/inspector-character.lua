@@ -211,7 +211,7 @@ end
 local function render_warband_overview(game,rect,pop_id,player_id,title)
     ui.panel(rect,2,true)
 
-    local warband_id = WARBAND(pop_id)
+    local warband_id = UNIT_OF(pop_id)
 
     local title_rect = rect:subrect(0,0,rect.width-ut.BASE_HEIGHT*4,ut.BASE_HEIGHT,"left","up")
     ui.panel(title_rect,2,true,true)
@@ -452,7 +452,7 @@ local function draw_war_tab(game,rect,pop_id)
     pui.render_attack(attrib_layout:next(draw_width,ut.BASE_HEIGHT),pop_id)
     pui.render_speed(attrib_layout:next(draw_width,ut.BASE_HEIGHT),pop_id)
 
-    local warband_id = WARBAND(pop_id)
+    local warband_id = UNIT_OF(pop_id)
     if warband_id ~= INVALID_ID then
         render_warband_overview(game,layout:next(rect.width-ut.BASE_HEIGHT,ut.BASE_HEIGHT*4),pop_id)
     else

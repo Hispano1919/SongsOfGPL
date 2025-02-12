@@ -21,16 +21,6 @@ function travel_effects.exit_settlement(character)
 		return
 	end
 
-	local location_character = DATA.get_character_location_from_character(character)
-	if DATA.character_location_get_location(location_character) ~= INVALID_ID then
-		DATA.delete_character_location(location_character)
-	end
-
-	local location_pop = DATA.get_pop_location_from_pop(character)
-	if DATA.pop_location_get_location(location_pop) ~= INVALID_ID then
-		DATA.delete_pop_location(location_pop)
-	end
-
 	DATA.for_each_warband_unit_from_warband(warband, function (item)
 		local unit = DATA.warband_unit_get_unit(item)
 
@@ -65,9 +55,6 @@ function travel_effects.enter_settlement(character)
 	if PROVINCE_REALM(local_province) == INVALID_ID then
 		return
 	end
-
-	DATA.force_create_pop_location(local_province, character)
-	DATA.force_create_character_location(local_province, character)
 
 	DATA.for_each_warband_unit_from_warband(warband, function (item)
 		local unit = DATA.warband_unit_get_unit(item)

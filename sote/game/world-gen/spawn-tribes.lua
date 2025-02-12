@@ -189,11 +189,16 @@ function ProvinceCheck(race, province)
 	if realm ~= INVALID_ID then return false end
 	if (not fat_province.on_a_river) and fat_race.requires_large_river then return false end
 	if (not fat_province.on_a_forest) and fat_race.requires_large_forest then return false end
-	local ja_r, ja_t, ju_r, ju_t = tile.get_climate_data(center)
-	if fat_race.minimum_comfortable_temperature > (ja_t + ju_t) / 2 then return false end
-	if fat_race.minimum_absolute_temperature > math.min(ja_t,ju_t) then return false end
+	local min_t,avg_t,avg_e,count = 0,0,0,0
+	DATA.for_each_tile_province_membership_from_province(province, function(item)
+		local ja_r, ja_t, ju_r, ju_t = tile.get_climate_data(item)
+		min_t, avg_t, avg_e, count = min_t + math.min(ja_t,ju_t), avg_t + (ja_t + ju_t)/2, avg_e + DATA.tile_get_elevation(item), count + 1
+	end)
+	min_t, avg_t, avg_e = min_t / count, avg_t / count, avg_e / count
+	if fat_race.minimum_comfortable_temperature > avg_t then return false end
+	if fat_race.minimum_absolute_temperature > min_t then return false end
 	local elev = fat_center.elevation
-	if fat_race.minimum_comfortable_elevation > elev then return false end
+	if fat_race.minimum_comfortable_elevation > avg_e then return false end
 	return true
 end
 

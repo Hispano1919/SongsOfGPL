@@ -2,11 +2,10 @@ local tabb = require "engine.table"
 
 local pop_utils = require "game.entities.pop".POP
 local province_utils = require "game.entities.province".Province
-local warband_utils = require "game.entities.warband"
 
 local demography_effects = require "game.raws.effects.demography"
 local politics_values = require "game.raws.values.politics"
-local warband_effect = require "game.raws.effects.warband"
+local warband_effects = require "game.raws.effects.warband"
 local messages_effects = require "game.raws.effects.messages"
 
 local PoliticalEffects = {}
@@ -177,7 +176,8 @@ end
 function PoliticalEffects.set_guard_leader(realm, guard_leader)
 	local realm_guard = DATA.get_realm_guard_from_realm(realm)
 	local guard = DATA.realm_guard_get_guard(realm_guard)
-	warband_effect.set_recruiter(guard, guard_leader)
+	demography_effects.recruit(guard_leader, guard, UNIT_TYPE.CIVILIAN)
+	warband_effects.set_recruiter(guard, guard_leader)
 
 	if WORLD:does_player_see_realm_news(realm) then
 		WORLD:emit_notification(NAME(guard_leader) .. " now commands guards of " .. DATA.realm_get_name(realm) .. ".")
@@ -198,16 +198,7 @@ function PoliticalEffects.remove_guard_leader(realm)
 		return
 	end
 
-	warband_effect.unset_recruiter(guard, guard_leader)
-
-	local command = DATA.get_warband_commander_from_warband(guard)
-	if command ~= INVALID_ID then
-		local commander = DATA.warband_commander_get_commander(command)
-
-		if guard_leader == commander then
-			warband_utils.unset_commander(guard)
-		end
-	end
+	warband_effects.unset_recruiter(guard)
 
 	if guard_leader and WORLD:does_player_see_realm_news(realm) then
 		WORLD:emit_notification(NAME(guard_leader) .. " is no longer a guard commander of " .. DATA.realm_get_name(realm) .. ".")
@@ -339,7 +330,7 @@ function PoliticalEffects.grant_nobility(pop, reason)
 	end
 
 	demography_effects.fire_pop(pop)
-	warband_utils.unregister_military(pop)
+	demography_effects.unrecruit(pop)
 
 	-- local pop_location = DATA.get_pop_location_from_pop(pop)
 	-- DATA.delete_pop_location(pop_location)
