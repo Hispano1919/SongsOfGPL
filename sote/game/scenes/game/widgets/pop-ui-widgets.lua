@@ -818,24 +818,41 @@ function pui.render_infrastructure_needs(rect,pop_id)
 end
 
 function pui.render_location_buttons(game,rect,pop_id)
+	local name = NAME(pop_id)
 	local province_id = LOCAL_PROVINCE(pop_id)
 	local realm_id = PROVINCE_REALM(province_id)
 	local icon_size = math.max(ut.BASE_HEIGHT,rect.height)
-	local icon_rect = rect:subrect(0,0,icon_size,rect.height,"right","up")
+	local icon_rect = rect:subrect(-rect.height*3,0,icon_size,icon_size,"right","up")
+	local info_rect = rect:subrect(0,0,icon_size*3,rect.height,"right","up")
 	local tile_id
+	-- in a settlement that has a realm
 	if PROVINCE(pop_id) == province_id then
 		tile_id = DATA.province_get_center(province_id)
 		ib.icon_button_to_realm(game,realm_id,icon_rect,
-			NAME(pop_id) .. " is currently in the capitol of " .. (realm_id ~= INVALID_ID and DATA.realm_get_name(realm_id) or " unclaimed wildlands."))
-	else -- has a warband location
-		ui.panel(icon_rect,2,true)
-		tile_id = WARBAND_TILE(UNIT_OF(pop_id))
+			name .. " is currently in the capitol of " .. (realm_id ~= INVALID_ID and DATA.realm_get_name(realm_id) or " unclaimed wildlands."))
+		pui.render_realm_popularity(info_rect,pop_id,realm_id)
+	else -- has a warband location and speed
+		local warband = UNIT_OF(pop_id)
+		tile_id = WARBAND_TILE(warband)
 		local biome = DATA.tile_get_biome(tile_id)
-		local biome_tooltip = NAME(pop_id) .. " is currently roaming " .. DATA.biome_get_name(biome) .. "."
+		local biome_tooltip = name .. " is currently roaming " .. DATA.biome_get_name(biome) .. "."
+		ui.panel(icon_rect,2,true)
 		ut.render_icon(icon_rect,"horizon-road.png",DATA.biome_get_r(biome),DATA.biome_get_g(biome),DATA.biome_get_b(biome),1,true)
 		ui.tooltip(biome_tooltip,icon_rect)
+		local total, mean = require "game.entities.warband".speed(warband)
+		local size = require "game.entities.warband".size(warband)
+		local tooltip = name .. "'s party has a speed of " .. ut.to_fixed_point2(mean)
+			.. " from " .. size .. " units combined " .. ut.to_fixed_point2(total) .. " speed."
+		ut.generic_number_field(
+			"fast-forward-button.png",
+			mean,
+			info_rect,
+			tooltip,
+			ut.NUMBER_MODE.PERCENTAGE,
+			ut.NAME_MODE.ICON
+		)
 	end
-	ib.text_button_to_province_tile(game,tile_id,rect:subrect(0,0,rect.width-icon_size,rect.height,"left","up"),
+	ib.text_button_to_province_tile(game,tile_id,rect:subrect(0,0,rect.width-icon_size*4,rect.height,"left","up"),
 		NAME(pop_id) .. " is currently in the province of " .. PROVINCE_NAME(province_id) .. ".")
 end
 

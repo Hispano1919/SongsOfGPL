@@ -60,6 +60,7 @@ end
 ---@param player_id pop_id
 ---@param title string
 local function render_pop_overview(game,rect,pop_id,player_id, title)
+    ui.panel(rect,nil,nil,true)
     local title_rect = rect:subrect(0,0,rect.width,ut.BASE_HEIGHT,"left","up")
     ui.text(title,title_rect,"left","center")
 
@@ -83,10 +84,7 @@ local function render_pop_overview(game,rect,pop_id,player_id, title)
     -- location and popularity
     line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
     line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
-    pui.render_location_buttons(game,line_layout:next(line_rect.width-ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
-    if PROVINCE(pop_id) ~= INVALID_ID then -- if in a settlement, display local popularity
-        pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id,PROVINCE_REALM(LOCAL_PROVINCE(pop_id)))
-    end
+    pui.render_location_buttons(game,line_layout:next(line_rect.width,ut.BASE_HEIGHT),pop_id)
 
     -- home populatiry
     line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
@@ -267,19 +265,20 @@ local function render_warband_overview(game,rect,pop_id,player_id,title)
         line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
         line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
         local warband_tile = WARBAND_TILE(warband_id)
-        ib.text_button_to_province_tile(game, warband_tile,line_layout:next(line_rect.width-ut.BASE_HEIGHT*4,ut.BASE_HEIGHT),warband_tooltip)
-        if warband_tile == DATA.province_get_center(TILE_PROVINCE(warband_tile)) then
-            ib.icon_button_to_realm(game,PROVINCE_REALM(province),line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT))
-        else
-            local icon_rect = line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT)
-            ui.panel(icon_rect,2,true)
-            local biome = DATA.tile_get_biome(warband_tile)
-            local biome_tooltip = NAME(pop_id) .. " is currently roaming " .. DATA.biome_get_name(biome) .. "."
-            ut.render_icon(icon_rect,"horizon-road.png",DATA.biome_get_r(biome),DATA.biome_get_g(biome),DATA.biome_get_b(biome),1,true)
-            ui.tooltip(biome_tooltip,icon_rect)
-        end
         if leader_id ~= INVALID_ID then
-            pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),leader_id,PROVINCE_REALM(province))
+            pui.render_location_buttons(game,line_layout:next(line_rect.width,ut.BASE_HEIGHT),leader_id)
+        else
+            ib.text_button_to_province_tile(game,warband_tile,line_layout:next(line_rect.width-ut.BASE_HEIGHT*4,ut.BASE_HEIGHT))
+            if warband_tile == DATA.province_get_center(TILE_PROVINCE(warband_tile)) then
+                ib.icon_button_to_realm(game,PROVINCE_REALM(province),line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT))
+            else
+                local icon_rect = line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT)
+                ui.panel(icon_rect,2,true)
+                local biome = DATA.tile_get_biome(warband_tile)
+                local biome_tooltip = NAME(pop_id) .. " is currently roaming " .. DATA.biome_get_name(biome) .. "."
+                ut.render_icon(icon_rect,"horizon-road.png",DATA.biome_get_r(biome),DATA.biome_get_g(biome),DATA.biome_get_b(biome),1,true)
+                ui.tooltip(biome_tooltip,icon_rect)
+            end
         end
 
         -- leader home populatiry

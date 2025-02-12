@@ -122,16 +122,13 @@ local function load()
 			return true
 		end,
 		clickable = function(root, primary_target)
-			local current_warband = UNIT_OF(root)
-			if WARBAND_LEADER(current_warband) == root
-			then
+			if WARBAND_LEADER(UNIT_OF(root)) == root then
 				return false
 			end
 			return true
 		end,
 		available = function(root, primary_target)
-			if WARBAND_LEADER(UNIT_OF(root)) == root
-			then
+			if WARBAND_LEADER(UNIT_OF(root)) == root then
 				return false
 			end
 			return true
