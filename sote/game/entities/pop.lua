@@ -185,35 +185,6 @@ function rtab.POP.get_infrastructure_need(pop)
 	return DATA.race_get_male_infrastructure_needs(race) * age_multiplier
 end
 
----returns division of time for a given pop_id base on age, forage_ratio, employment and warband
----@param pop_id pop_id
----@return number forage_time
----@return number warband_time
----@return number work_time
----@return number learning_time
-function rtab.POP.get_time_allocation(pop_id)
-	local free_time, forage_time, warband_time, learning_time = 1, 0, 0, 0
-	-- first remove time spend growing and learning
-	local age = AGE_YEARS(pop_id)
-	local teen_age = DATA.race_get_teen_age(RACE(pop_id))
-	if age < teen_age then
-		free_time = age / teen_age
-		learning_time = 1 - free_time
-	end
-	-- then work for warband if part of one
-	local warband_id = UNIT_OF(pop_id)
-	if warband_id ~= INVALID_ID then
-		local status = DATA.warband_get_current_status(warband_id)
-		local warband_time = DATA.warband_status_get_time_used(status)
-		free_time = math.max(0,free_time - warband_time)
-	end
-	-- remaining time is used to forage for life needs
-	forage_time = math.min(free_time, DATA.pop_get_forage_ratio(pop_id))
-	free_time = math.max(0, free_time - forage_time)
-	-- finally any remaining free time can be used to work
-	return forage_time, warband_time, free_time, learning_time
-end
-
 ---Returns age adjust demand for a (need, use case) pair
 ---@param pop pop_id
 ---@param need NEED
@@ -244,7 +215,7 @@ end
 ---@param pop pop_id
 ---@return number pop_adjusted attack modified by pop race and sex
 function rtab.POP.get_attack(pop)
-	return JOB_EFFICIENCY(pop, JOBTYPE.WARRIOR)
+	return JOB_EFFICIENCY(pop)
 end
 
 ---Returns the adjusted armor value for the provided pop.

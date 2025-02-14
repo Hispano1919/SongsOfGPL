@@ -522,8 +522,13 @@ function world.World:tick()
 	end
 
 	if WORLD.current_tick_in_month == 3 then
-		PROFILER:start_timer("warband wages")
+		PROFILER:start_timer("warband update")
 		DATA.for_each_warband(function (warband_id)
+			--reset monthly trackers
+			DATA.warband_set_current_time_used_ratio(warband_id,0)
+			--run warband growth
+			require "game.society.pop-growth".warband(warband_id)
+			--pay wages
 			local treasury = DATA.warband_get_treasury(warband_id)
 			local total_upkeep = DATA.warband_get_total_upkeep(warband_id)
 			if treasury > total_upkeep then
@@ -535,7 +540,7 @@ function world.World:tick()
 				end)
 			end
 		end)
-		PROFILER:end_timer("warband wages")
+		PROFILER:end_timer("warband update")
 	end
 
 	do
@@ -610,8 +615,15 @@ function world.World:tick()
 		local hours_per_day = 10
 
 		DATA.for_each_warband(function (item)
+			-- add yesterday's stance time to warband monthly tracking
+			local status = DATA.warband_get_current_status(item)
+			local status_ratio = DATA.warband_status_get_time_used(status)
+			DATA.warband_inc_current_time_used_ratio(item,status_ratio/30)
+			-- check if traveling at all for the day
 			local current_path = DATA.warband_get_current_path(item)
 			if current_path == nil or #current_path == 0 then
+				DATA.warband_set_current_status(item, WARBAND_STATUS.IDLE)
+				-- add possible daily foraging?
 				return
 			end
 			--- counted in hours
@@ -621,6 +633,9 @@ function world.World:tick()
 				item,
 				1
 			)
+
+			-- forage with missing % at half time if > 100 % supplies?
+
 			--- depending on amount of available supplies, move the party
 			progress = progress - hours_per_day * supplies_availability
 			while progress <= 0 and #current_path > 0 do
@@ -634,6 +649,7 @@ function world.World:tick()
 				end
 			end
 			DATA.warband_set_movement_progress(item, math.max(0, progress))
+			DATA.warband_set_current_status(item, WARBAND_STATUS.TRAVELING)
 		end)
 
 		PROFILER:end_timer("warband movement")
@@ -709,12 +725,9 @@ function world.World:tick()
 			recruit.run(settled_province)
 			PROFILER:end_timer("province")
 
-			PROFILER:start_timer("growth")
-			-- "POP" update
-			local pop_growth = require "game.society.pop-growth"
-			--print("Pop growth")
-			pop_growth.growth(settled_province)
-			PROFILER:end_timer("growth")
+			PROFILER:start_timer("growth-province")
+			require "game.society.pop-growth".province(settled_province)
+			PROFILER:end_timer("growth-province")
 
 			--print("done")
 		end

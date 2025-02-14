@@ -811,8 +811,13 @@ object {
         tag { scenario }
     }
     property{
-        name { current_free_time_ratio }
+        name { current_time_used_ratio }
         type { float }
+        tag { scenario }
+    }
+    property{
+        name { inventory }
+        type { array{trade_good_id}{float} }
         tag { scenario }
     }
     property{

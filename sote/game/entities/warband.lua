@@ -245,7 +245,7 @@ end
 ---@param warband warband_id
 ---@return number
 function warband_utils.exploration_speed(warband)
-	return warband_utils.size(warband) * (1 - DATA.warband_get_current_free_time_ratio(warband))
+	return warband_utils.size(warband) * (1 - DATA.warband_get_current_time_used_ratio(warband))
 end
 
 return warband_utils

@@ -70,15 +70,14 @@ end
 ---@param pop_id pop_id
 function pui.render_forage_time(rect,pop_id)
 	local pop_name = NAME(pop_id)
-	local forage_time, warband_time, _, learning_time = pop_utils.get_time_allocation(pop_id)
-	local tooltip = pop_name .. " expects to be able to use " .. ut.to_fixed_point2(forage_time*100) .."% of it's time foraging."
-		.. "\n " .. pop_name .. " desires to spend " .. ut.to_fixed_point2(DATA.pop_get_forage_ratio(pop_id)*100) .. "% of it's time foraging"
+	local learning_time, warband_time, forage_time, _ = POP_TIME(pop_id)
+	local tooltip = pop_name .. " expects to be able to use " .. ut.to_fixed_point2(forage_time*100) .."% of it's time foraging. "
+		.. strings.title(HESHE(pop_id)) .. " desires to spend " .. ut.to_fixed_point2(DATA.pop_get_forage_ratio(pop_id)*100) .. "% of it's time foraging"
 	if learning_time > 0 then
-		tooltip = tooltip .. " and " .. ut.to_fixed_point2(warband_time*100) .. "% of its time is spent learning"
-	end
-	if warband_time > 0 then
+		tooltip = tooltip .. " but " .. ut.to_fixed_point2(learning_time*100) .. "% of its time is spent learning."
+	elseif warband_time > 0 then
 		tooltip = tooltip .. " but " .. ut.to_fixed_point2(warband_time*100)
-			.. "% of its time is reserved for " .. strings.title(DATA.warband_get_name(UNIT_OF(pop_id))) .. "."
+			.. "% of its time is used by " .. strings.title(DATA.warband_get_name(UNIT_OF(pop_id))) .. "."
 	else
 		tooltip = tooltip .. "."
 	end
@@ -92,29 +91,15 @@ function pui.render_warband_time(rect,pop_id)
 	local pop_name = NAME(pop_id)
 	local warband_id = UNIT_OF(pop_id)
 	if warband_id ~= INVALID_ID then
-		local _, warband_time, _, _ = pop_utils.get_time_allocation(pop_id)
-		local tooltip = pop_name .. " expects to spend " .. ut.to_fixed_point2(warband_time*100)
-			.. "% of it's time for " .. strings.title(DATA.warband_get_name(warband_id)) .. "."
+		local _, warband_time, _, _ = POP_TIME(pop_id)
+		local tooltip = pop_name .. " has spent " .. ut.to_fixed_point2(warband_time*100)
+			.. "% of " .. HISHER(pop_id) .. " time with " .. strings.title(DATA.warband_get_name(warband_id)) .. " this month. "
 		local status = DATA.warband_get_current_status(warband_id)
-		local stance = DATA.warband_get_idle_stance(warband_id)
-		if status == WARBAND_STATUS.IDLE and stance == WARBAND_STANCE.FORAGE then
-			tooltip = tooltip .. "\n This time is spent foraging."
-		elseif status == WARBAND_STATUS.ATTACKING then
-			tooltip = tooltip .. "\n This time is spent fighting."
-		elseif status == WARBAND_STATUS.PREPARING_PATROL then
-			tooltip = tooltip .. "\n This time is spent preparing to patrol."
-		elseif status == WARBAND_STATUS.PREPARING_RAID then
-			tooltip = tooltip .. "\n This time is spent preparing to raid."
-		elseif status == WARBAND_STATUS.PATROL then
-			tooltip = tooltip .. "\n This time is spent patrolling."
-		elseif status == WARBAND_STATUS.RAIDING then
-			tooltip = tooltip .. "\n This time is spent raiding."
-		elseif status == WARBAND_STATUS.TRAVELLING then
-			tooltip = tooltip .. "\n This time is spent traveling."
-		end
+		tooltip = tooltip .. strings.title(HESHE(pop_id)) ..  " is currently " .. DATA.warband_status_get_description(status)
+			.. ", increasing this month's warband time towards " .. ut.to_fixed_point2(DATA.warband_status_get_time_used(status)*100) .. "%."
 		ut.generic_number_field("guards.png", warband_time, rect, tooltip, ut.NUMBER_MODE.PERCENTAGE, ut.NAME_MODE.ICON,true)
 	else
-		local tooltip = pop_name .. " is not part of a warband!"
+		local tooltip = pop_name .. " is not part of a warband."
 		ut.generic_number_field("guards.png", 0, rect, tooltip, ut.NUMBER_MODE.PERCENTAGE, ut.NAME_MODE.ICON,true)
 	end
 end
@@ -124,12 +109,12 @@ end
 ---@param pop_id pop_id
 function pui.render_work_time(rect,pop_id)
 	local pop_name = NAME(pop_id)
-	local _, _, work_time, _ = pop_utils.get_time_allocation(pop_id)
+	local _, _, _, work_time = POP_TIME(pop_id)
 	local occupation = DATA.get_employment_from_worker(pop_id)
     local employer_id = DATA.employment_get_building(occupation)
 	if employer_id then
 		local tooltip = pop_name .. " expects to be able to use " .. ut.to_fixed_point2(work_time*100) .."% of it's time working."
-			.. "\n " .. pop_name .. " desires to spend " .. ut.to_fixed_point2(DATA.pop_get_work_ratio(pop_id)) .. "% of it's time working"
+			.. "\n " .. pop_name .. " wants to spend " .. ut.to_fixed_point2(DATA.pop_get_work_ratio(pop_id)*100) .. "% of it's time working"
 		ut.generic_number_field("miner.png", work_time, rect, tooltip, ut.NUMBER_MODE.PERCENTAGE, ut.NAME_MODE.ICON,true)
 	else
 		local tooltip = pop_name .. " is not employed!"
@@ -315,34 +300,30 @@ function pui.occupation_tooltip(pop_id)
 	local warband_id = UNIT_OF(pop_id)
 
 	-- first spend warband time, then attempt to forage, finally use remaining time to work
-	local forage_time, warband_time, work_time, learning_time = pop_utils.get_time_allocation(pop_id)
+	local learning_time,warband_time, forage_time, work_time  = POP_TIME(pop_id)
 
 	local tooltip = "forage\t" .. ut.to_fixed_point2(forage_time*100)
 		.."%\t(" .. ut.to_fixed_point2(DATA.pop_get_forage_ratio(pop_id)*100) .. "%)"
 
 	if age < teen_age then
 		tooltip = strings.title(pop_utils.get_age_string(pop_id))
-			.. "\t" .. ut.to_fixed_point2((1-(forage_time+learning_time))*100) .. "%"
-			.. "\n\tLearning\t" .. ut.to_fixed_point2(learning_time*100) .. "%"
+			.. "\t(" .. ut.to_fixed_point2((1-(forage_time+learning_time))*100) .. "%)"
+			.. "\n\tLearning\t(" .. ut.to_fixed_point2(learning_time*100) .. "%)"
 			.. "\n\t" .. tooltip
 	else
 		if employer_id ~= INVALID_ID then
-			tooltip = strings.title(DATA.job_get_name(job_id)) .."\t" .. ut.to_fixed_point2(work_time*100) .. "%\t("
-				.. ut.to_fixed_point2(DATA.pop_get_work_ratio(pop_id)*100) .."%)"
+			tooltip = strings.title(DATA.job_get_name(job_id)) .. "\t" .. ut.to_fixed_point2(work_time*100) .. "%"
 				.. "\n\t" .. tooltip
 		end
 		if warband_id ~= INVALID_ID then
 			local unit_type_id = pop_utils.get_unit_type_of(pop_id)
-			local unit_name = unit_type_id ~= INVALID_ID and DATA.unit_type_get_name(unit_type_id) or rank_name(pop_id)
+			local unit_name = DATA.unit_type_get_name(unit_type_id)
 			tooltip = strings.title(unit_name)
-				.. " in " .. strings.title(DATA.warband_get_name(warband_id))
-				.. "\t" .. ut.to_fixed_point2(warband_time*100) .. "%"
-				.. "\t(" .. ut.to_fixed_point2(DATA.warband_get_current_free_time_ratio(warband_id)*100) .. "%)"
-				.. "\t(" .. strings.title(DATA.warband_status_get_name(DATA.warband_get_current_status(warband_id))) .. ")"
+				.. " of " .. strings.title(DATA.warband_get_name(warband_id))
+				.. "\t(" .. ut.to_fixed_point2(warband_time*100) .. "%)"
 				.. "\n\t" .. tooltip
 		elseif employer_id == INVALID_ID then
-			tooltip = "Unemployed\t" .. ut.to_fixed_point2(work_time*100) .. "%"
-				.. "\t(" .. ut.to_fixed_point2(DATA.pop_get_work_ratio(pop_id)*100) .."%)"
+			tooltip = "Unemployed\t(" .. ut.to_fixed_point2(work_time*100) .. "%)"
 				.. "\n\t" .. tooltip
 		end
 	end

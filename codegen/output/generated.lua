@@ -989,13 +989,15 @@ function DATA.test_set_get_0()
         DATA.warband_set_units_target(id, j --[[@as unit_type_id]],  6)    end
     fat_id.current_status = 0
     fat_id.idle_stance = 1
-    fat_id.current_free_time_ratio = 12
-    fat_id.treasury = 11
-    fat_id.total_upkeep = 5
-    fat_id.predicted_upkeep = -1
-    fat_id.supplies = 10
-    fat_id.supplies_target_days = 2
-    fat_id.morale = 17
+    fat_id.current_time_used_ratio = 12
+    for j = 1, 100 do
+        DATA.warband_set_inventory(id, j --[[@as trade_good_id]],  11)    end
+    fat_id.treasury = 5
+    fat_id.total_upkeep = -1
+    fat_id.predicted_upkeep = 10
+    fat_id.supplies = 2
+    fat_id.supplies_target_days = 17
+    fat_id.morale = -7
     local test_passed = true
     for j = 1, 4 do
         test_passed = test_passed and DATA.warband_get_units_current(id, j --[[@as unit_type_id]]) == 4
@@ -1009,20 +1011,24 @@ function DATA.test_set_get_0()
     if not test_passed then print("current_status", 0, fat_id.current_status) end
     test_passed = test_passed and fat_id.idle_stance == 1
     if not test_passed then print("idle_stance", 1, fat_id.idle_stance) end
-    test_passed = test_passed and fat_id.current_free_time_ratio == 12
-    if not test_passed then print("current_free_time_ratio", 12, fat_id.current_free_time_ratio) end
-    test_passed = test_passed and fat_id.treasury == 11
-    if not test_passed then print("treasury", 11, fat_id.treasury) end
-    test_passed = test_passed and fat_id.total_upkeep == 5
-    if not test_passed then print("total_upkeep", 5, fat_id.total_upkeep) end
-    test_passed = test_passed and fat_id.predicted_upkeep == -1
-    if not test_passed then print("predicted_upkeep", -1, fat_id.predicted_upkeep) end
-    test_passed = test_passed and fat_id.supplies == 10
-    if not test_passed then print("supplies", 10, fat_id.supplies) end
-    test_passed = test_passed and fat_id.supplies_target_days == 2
-    if not test_passed then print("supplies_target_days", 2, fat_id.supplies_target_days) end
-    test_passed = test_passed and fat_id.morale == 17
-    if not test_passed then print("morale", 17, fat_id.morale) end
+    test_passed = test_passed and fat_id.current_time_used_ratio == 12
+    if not test_passed then print("current_time_used_ratio", 12, fat_id.current_time_used_ratio) end
+    for j = 1, 100 do
+        test_passed = test_passed and DATA.warband_get_inventory(id, j --[[@as trade_good_id]]) == 11
+    end
+    if not test_passed then print("inventory", 11, DATA.warband[id].inventory[0]) end
+    test_passed = test_passed and fat_id.treasury == 5
+    if not test_passed then print("treasury", 5, fat_id.treasury) end
+    test_passed = test_passed and fat_id.total_upkeep == -1
+    if not test_passed then print("total_upkeep", -1, fat_id.total_upkeep) end
+    test_passed = test_passed and fat_id.predicted_upkeep == 10
+    if not test_passed then print("predicted_upkeep", 10, fat_id.predicted_upkeep) end
+    test_passed = test_passed and fat_id.supplies == 2
+    if not test_passed then print("supplies", 2, fat_id.supplies) end
+    test_passed = test_passed and fat_id.supplies_target_days == 17
+    if not test_passed then print("supplies_target_days", 17, fat_id.supplies_target_days) end
+    test_passed = test_passed and fat_id.morale == -7
+    if not test_passed then print("morale", -7, fat_id.morale) end
     print("SET_GET_TEST_0_warband:")
     if test_passed then print("PASSED") else print("ERROR") end
     local id = DATA.create_realm()

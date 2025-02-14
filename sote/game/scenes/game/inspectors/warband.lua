@@ -738,9 +738,9 @@ function window.draw(gamescene)
 	-- work time ratio
 	ut.generic_number_field(
 		"chart.png",
-		DATA.warband_get_current_free_time_ratio(warband),
+		DATA.warband_get_current_time_used_ratio(warband),
 		status_rect:subrect(0, 0, status_rect.width, ut.BASE_HEIGHT, "left", "center"),
-		"Warriors in this warband are free for " .. ut.to_fixed_point2(DATA.warband_get_current_free_time_ratio(warband) * 100) .. "% of their time.",
+		"Warriors in this warband are free for " .. ut.to_fixed_point2(DATA.warband_get_current_time_used_ratio(warband) * 100) .. "% of their time.",
 		ut.NUMBER_MODE.PERCENTAGE,
 		ut.NAME_MODE.ICON
 	)

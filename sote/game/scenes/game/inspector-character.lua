@@ -416,7 +416,7 @@ local function draw_wrk_tab(game,rect,pop_id)
                     hisher = "her"
                 end
                 local culture_id = CULTURE(pop_id)
-                local forage_time, _, _, _ = pop_utils.get_time_allocation(pop_id)
+                local  _, _, forage_time, _ = POP_TIME(pop_id)
                 local composite_time = v * forage_time
                 local composite_plan = v * DATA.pop_get_forage_ratio(pop_id)
                 ut.generic_number_field("stopwatch.png",composite_time,rect,NAME(pop_id)
@@ -428,7 +428,7 @@ local function draw_wrk_tab(game,rect,pop_id)
             end,
             width = 3,
             value = function (k, v)
-                local forage_time, _, _, _ = pop_utils.get_time_allocation(pop_id)
+                local _, _, forage_time, _ = POP_TIME(pop_id)
                 return v * forage_time
             end
         },

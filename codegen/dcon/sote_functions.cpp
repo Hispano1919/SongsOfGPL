@@ -380,7 +380,7 @@ uint32_t birth_minute(dcon::pop_id pop) {
 //	std::cout << std::to_string(minute) + " = " + std::to_string(minute_tick) + " / " + std::to_string(WORLD_TICKS_PER_MINUTE) + "\n";
 	return minute;
 }
-
+// converting birth year and tick into age values
 uint32_t age_ticks(dcon::pop_id pop) {
 	return (WORLD_CURRENT_YEAR - state.pop_get_birth_year(pop))
 		* WORLD_TICKS_PER_MONTH * 12 + WORLD_CURRENT_TICK - state.pop_get_birth_tick(pop);
@@ -388,14 +388,13 @@ uint32_t age_ticks(dcon::pop_id pop) {
 uint32_t age_months(dcon::pop_id pop) {
 	return age_ticks(pop) / WORLD_TICKS_PER_MONTH;
 }
-
 uint32_t age_years(dcon::pop_id pop) {
 	return age_ticks(pop) / WORLD_TICKS_PER_MONTH / 12;
 }
-
+// using age values
 float age_multiplier(dcon::pop_id pop) {
 	float age_multiplier = 1.f;
-	float age = age_ticks(pop) / WORLD_TICKS_PER_MONTH / 12;
+	float age = age_years(pop);
 	auto race = state.pop_get_race(pop);
 
 	auto adult_age = state.race_get_adult_age(race);
@@ -409,6 +408,41 @@ float age_multiplier(dcon::pop_id pop) {
 	}
 	return age_multiplier;
 }
+// pop time calculations
+float free_time(dcon::pop_id pop) {
+	auto age = age_years(pop);
+	auto race = state.pop_get_race(pop);
+	auto teen = state.race_get_teen_age(race);
+	if (age < teen) {
+		return age / teen;
+	} else {
+		return 1.f;
+	}
+}
+float warband_time(dcon::pop_id pop, float free) {
+	auto unitship = state.pop_get_warband_unit_as_unit(pop);
+	auto warband = state.warband_unit_get_warband(unitship);
+	auto time = 0.f
+	if state.warband_is_valid(warband) {
+		time = state.warband_get_current_time_used_ratio(warband);
+	}
+	if (free < time) {
+		return free;
+	} else {
+		return time;
+	}
+}
+float forage_time(dcon::pop_id pop, float free, float warband) {
+	auto remaining = free - warband;
+	auto desire = state.pop_get_forage_ratio(pop);
+	if (remaining < 0) {
+		return 0.f
+	} elseif (remaining < desire) {
+		return remaining;
+	} else {
+		return desire;
+	}
+}
 
 float job_efficiency(dcon::race_id race, bool female, uint8_t jobtype) {
 	if (female) {
@@ -416,7 +450,6 @@ float job_efficiency(dcon::race_id race, bool female, uint8_t jobtype) {
 	}
 	return state.race_get_male_efficiency(race, jobtype);
 }
-
 float job_efficiency(dcon::pop_id pop, uint8_t jobtype) {
 	return job_efficiency(
 		state.pop_get_race(pop),
