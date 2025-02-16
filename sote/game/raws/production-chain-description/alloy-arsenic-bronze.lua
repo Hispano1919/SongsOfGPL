@@ -21,6 +21,7 @@ return function ()
 
 	local material_icon = "cubes.png"
 
+
 	UseCase:new {
 		name = "arsenic-bronze-source",	description = "source of arsenic bronze",
 		icon = material_icon, r = r, g = g, b = b,
@@ -43,7 +44,7 @@ return function ()
 	TradeGood:new {
 		name = "tools-arsenic-bronze",
 		description = "arsenic bronze tools",
-		icon = material_icon,
+		icon = "stone-axe.png",
 		r = r,
 		g = g,
 		b = b,

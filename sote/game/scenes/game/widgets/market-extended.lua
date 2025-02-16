@@ -1,11 +1,9 @@
-local tabb = require "engine.table"
-
 local ui = require "engine.ui"
 local ut = require "game.ui-utils"
-
 local ev = require "game.raws.values.economy"
 local ef = require "game.raws.effects.economy"
 local et = require "game.raws.triggers.economy"
+
 
 local TRADE_AMOUNT = 1
 
@@ -50,9 +48,11 @@ end
 ---@param province Province
 ---@param ui_panel Rect
 ---@param base_unit number
----@param gam GameScene
 ---@return function
-return function(province, ui_panel, base_unit, gam)
+return function (province, ui_panel, base_unit)
+    ---@type pop_id
+    local player = WORLD.player_character
+
     ---@type TableColumn<ItemData>[]
     local columns = {
         {
@@ -170,67 +170,6 @@ return function(province, ui_panel, base_unit, gam)
             end
         },
         {
-            header = "Difference",
-            render_closure = function(rect, k, v)
-                ---@type ItemData
-                v = v
-                local tooltip = "Shows the diffence between buy price in your current position and sell price in selected one"
-                if WORLD.player_character then
-                    local player_province = WORLD:player_province()
-                    if player_province then
-                        local price_at_player = ev.get_local_price(player_province, v.item)
-                        local data = 1
-                        if price_at_player == 0 and (v.sell_price or 0) == 0 then
-                            data = 0
-                        elseif price_at_player == 0 then
-                            data = 99.99
-                        elseif (v.sell_price or 0) == 0 then
-                            data = 0
-                        else
-                            data = ((v.sell_price or 0) - price_at_player) / price_at_player
-                        end
-                        ut.color_coded_percentage(
-                            data,
-                            rect,
-                            true,
-                            tooltip
-                        )
-                    else
-                        ut.data_entry("", "???", rect, tooltip)
-                    end
-                else
-                    ut.data_entry("", "???", rect, tooltip)
-                end
-            end,
-            width = base_unit * 4,
-            value = function(k, v)
-                ---@type ItemData
-                v = v
-
-                if WORLD.player_character then
-                    local local_province = WORLD:player_province()
-                    if local_province ~= INVALID_ID then
-                        local price_at_player = ev.get_local_price(local_province, v.item)
-                        local data = 1
-                        if price_at_player == 0 and (v.sell_price or 0) == 0 then
-                            data = 1
-                        elseif price_at_player == 0 then
-                            data = 99.99
-                        elseif (v.sell_price or 0) == 0 then
-                            data = 0
-                        else
-                            data = ((v.sell_price or 0) - price_at_player) / price_at_player
-                        end
-                        return data
-                    else
-                        return 0
-                    end
-                else
-                    return 0
-                end
-            end
-        },
-        {
             header = "Stockpile",
             render_closure = function(rect, k, v)
                 ---@type ItemData
@@ -251,27 +190,17 @@ return function(province, ui_panel, base_unit, gam)
             ---@param k any
             ---@param v ItemData
             render_closure = function (rect, k, v)
-                local player_character = WORLD.player_character
-                if player_character == INVALID_ID then
-                    return
-                end
-
                 ---@type string
                 local tooltip = "Buy " .. tostring(TRADE_AMOUNT) .. ". \n"
 
-                local valid_province = WORLD:player_province() == province
-                if not valid_province then
-                    tooltip = tooltip .. "You are too far away \n"
-                end
-
-                local can_buy, reasons = et.can_buy(player_character, v.item, TRADE_AMOUNT)
+                local can_buy, reasons = et.can_buy(player, v.item, TRADE_AMOUNT)
                 for _, reason in pairs(reasons) do
                     ---@type string
                     tooltip = tooltip .. reason .. "\n"
                 end
 
-                if ut.text_button("+", rect, tooltip, can_buy and valid_province) then
-                    ef.buy(player_character, v.item, TRADE_AMOUNT)
+                if ut.text_button("+", rect, tooltip, can_buy) then
+                    ef.buy(player, v.item, TRADE_AMOUNT)
                 end
             end,
             width = base_unit * 2,
@@ -288,27 +217,17 @@ return function(province, ui_panel, base_unit, gam)
             ---@param k any
             ---@param v ItemData
             render_closure = function (rect, k, v)
-                local player_character = WORLD.player_character
-                if player_character == INVALID_ID then
-                    return
-                end
-
                 ---@type string
                 local tooltip = "Sell " .. tostring(TRADE_AMOUNT) .. ". \n"
 
-                local valid_province = WORLD:player_province() == province
-                if not valid_province then
-                    tooltip = tooltip .. "You are too far away \n"
-                end
-
-                local can_buy, reasons = et.can_sell(player_character, v.item, TRADE_AMOUNT)
+                local can_buy, reasons = et.can_sell(player, v.item, TRADE_AMOUNT)
                 for _, reason in pairs(reasons) do
                     ---@type string
                     tooltip = tooltip .. reason .. "\n"
                 end
 
-                if ut.text_button("-", rect, tooltip, can_buy and valid_province) then
-                    ef.sell(player_character, v.item, TRADE_AMOUNT)
+                if ut.text_button("-", rect, tooltip, can_buy) then
+                    ef.sell(player, v.item, TRADE_AMOUNT)
                 end
             end,
             width = base_unit * 2,
@@ -332,23 +251,6 @@ return function(province, ui_panel, base_unit, gam)
                 v = v
                 return v.inventory
             end
-        },
-        {
-            header = "Map",
-            render_closure = function (rect, k, v)
-                ---@type ItemData
-                v = v
-
-                if ut.icon_button(ASSETS.icons['mesh-ball.png'], rect, "Show price on map") then
-                    HACKY_MAP_MODE_CONTEXT_TRADE_CATEGORY = v.item
-                    gam.update_map_mode("prices")
-                end
-            end,
-            width = base_unit * 2,
-            value = function (k, v)
-                return v.tag
-            end,
-            active = true
         }
     }
 
@@ -361,8 +263,6 @@ return function(province, ui_panel, base_unit, gam)
         --- local market
         ---@type table<string, ItemData>
         local data_blob = {}
-
-        local character = WORLD.player_character
 
         if ui.is_key_held("lshift") or ui.is_key_held("rshift") then
             TRADE_AMOUNT = 5
@@ -377,9 +277,7 @@ return function(province, ui_panel, base_unit, gam)
             local good_demand = DATA.province_get_local_demand(province, good_id)
             local good_consumption = DATA.province_get_local_consumption(province, good_id)
             local inventory = 0
-            if character ~= INVALID_ID then
-                inventory =  DATA.pop_get_inventory(character, good_id)
-            end
+            inventory =  DATA.pop_get_inventory(player, good_id)
             local local_storage = DATA.province_get_local_storage(province, good_id)
             if
                 inventory > 0

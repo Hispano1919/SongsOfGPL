@@ -296,6 +296,37 @@ function REALM(pop_id)
 	return DATA.realm_pop_get_realm(pop_realm)
 end
 
+---@param pop_id pop_id
+---@return tile_id
+function LOCAL_TILE(pop_id)
+	local province = PROVINCE(pop_id)
+	if province ~= INVALID_ID then
+		return DATA.province_get_center(province)
+	end
+
+	local tile = (WARBAND_TILE(LEADER_OF_WARBAND(pop_id)))
+	if tile ~= INVALID_ID then
+		return tile
+	end
+
+	tile = (WARBAND_TILE(COMMANDER_OF_WARBAND(pop_id)))
+	if tile ~= INVALID_ID then
+		return tile
+	end
+
+	tile = (WARBAND_TILE(RECRUITER_OF_WARBAND(pop_id)))
+	if tile ~= INVALID_ID then
+		return tile
+	end
+
+	tile = (WARBAND_TILE(UNIT_OF(pop_id)))
+	if tile ~= INVALID_ID then
+		return tile
+	end
+
+	return INVALID_ID
+end
+
 ---commenting
 ---@param pop_id pop_id
 ---@return province_id

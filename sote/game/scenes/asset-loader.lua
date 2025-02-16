@@ -65,6 +65,20 @@ function asl.load_assets()
 	end
 	coroutine.yield()
 
+	print("loading art")
+
+	---@type table<string, love.Image>
+	ASSETS.images = {}
+
+	ASSETS.images.settlement = love.graphics.newImage("/textures/settlement.png",
+		{
+			mipmaps = true,
+			linear = false,
+			dpiscale = 1
+		}
+	)
+	ASSETS.images.settlement:setFilter("linear", "linear", 2)
+
 	asl.message = "Loading music..."
 	if not SILENT_ASSET_LOADING then print(asl.message) end
 	ASSETS.music = {}

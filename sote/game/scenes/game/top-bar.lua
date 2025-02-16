@@ -21,11 +21,12 @@ end
 ---@return boolean
 function tb.mask(gam)
 	local tr = tb.rect()
+	---@type pop_id
 	local character = WORLD.player_character
 	if character == INVALID_ID then
 		return true
 	end
-	local province = WORLD:player_province()
+	local province = PROVINCE(character)
 	if province == INVALID_ID then
 		return true
 	end

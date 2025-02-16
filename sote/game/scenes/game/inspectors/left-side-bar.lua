@@ -34,46 +34,43 @@ function inspector.draw(gam)
         :build()
 
     local inspectors = {
-        "macrobuilder",
+        -- "macrobuilder",
         "macrodecision",
         "army",
         "character-decisions",
         "warband",
         "property",
-        "market",
         "preferences",
         "quests"
     }
 
     local inspector_icons = {
-        ["macrobuilder"] = ASSETS.icons["hammer-drop.png"],
+        -- ["macrobuilder"] = ASSETS.icons["hammer-drop.png"],
         ["macrodecision"] = ASSETS.icons["horizon-road.png"],
         ["army"] = ASSETS.icons["guards.png"],
         ["character-decisions"] = ASSETS.icons["envelope.png"],
         ["warband"] = ASSETS.icons["barbute.png"],
         ["property"] = ASSETS.icons["bank.png"],
-        ["market"] = ASSETS.icons["scales.png"],
         ["preferences"] = ASSETS.icons["shrug.png"],
         ["quests"] =ASSETS.icons["coins.png"]
     }
 
     local inspector_tooltips = {
-        ["macrobuilder"] = "Plan development of your estates",
+        -- ["macrobuilder"] = "Plan development of your estates",
         ["macrodecision"] = "Target province",
         ["army"] = "View local warriors",
         ["character-decisions"] = "Actions",
         ["warband"] = "View your warband",
         ["property"] = "Assess your property",
-        ["market"] = "View local market",
         ["preferences"] = "Decide your preferences",
         ["quests"] = "View available quests"
     }
 
     local inspector_visible = {
-        ["macrobuilder"] = function ()
-            if WORLD.player_character == INVALID_ID then return false end
-            return true
-        end,
+        -- ["macrobuilder"] = function ()
+        --     if WORLD.player_character == INVALID_ID then return false end
+        --     return true
+        -- end,
         ["macrodecision"] = function ()
             if WORLD.player_character == INVALID_ID then return false end
             return true
@@ -93,10 +90,6 @@ function inspector.draw(gam)
             return false
         end,
         ["property"] = function ()
-            if WORLD.player_character == INVALID_ID then return false end
-            return true
-        end,
-        ["market"] = function ()
             if WORLD.player_character == INVALID_ID then return false end
             return true
         end,
@@ -122,11 +115,6 @@ function inspector.draw(gam)
                     gam.inspector = nil
                 else
                     gam.inspector = inspector
-
-                    local character = WORLD.player_character
-                    if character and gam.inspector == "market" then
-                        gam.selected.province = PROVINCE(character)
-                    end
                 end
             end
         end

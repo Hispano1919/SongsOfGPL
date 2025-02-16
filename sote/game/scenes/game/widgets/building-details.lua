@@ -74,6 +74,9 @@ return function (rect, building)
 	outputs_rect.x = outputs_rect.x + outputs_rect.width
 
 	local rows = 5
+	if rect.height > rows * ut.BASE_HEIGHT then
+		rows = math.floor(rect.height / ut.BASE_HEIGHT)
+	end
 
 	local rect_item = inputs_rect:copy()
 	rect_item.height = rect_item.height / rows

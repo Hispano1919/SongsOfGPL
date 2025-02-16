@@ -153,9 +153,9 @@ local inspectors_table = {
 	["confirm-exit"] = require "game.scenes.game.confirm-exit",
 	["army"] = require "game.scenes.game.inspector-military",
 	["character-decisions"] = require "game.scenes.game.inspector-character-decisions",
-	["market"] = require "game.scenes.game.inspectors.market",
+	["market"] = require "game.scenes.game.inspectors.market-collapsed",
 	["population"] = require "game.scenes.game.inspectors.population",
-	["macrobuilder"] = require "game.scenes.game.inspectors.macrobuilder",
+	-- ["macrobuilder"] = require "game.scenes.game.inspectors.macrobuilder",
 	["macrodecision"] = require "game.scenes.game.inspectors.macrodecision",
 	["warband"] = require "game.scenes.game.inspectors.warband",
 	["property"] = require "game.scenes.game.inspectors.property",
@@ -332,11 +332,11 @@ function gam.on_tile_click()
 		local tab = require "engine.table"
 		if tab.contains(ARGS, "--dev") then
 			print("Tile", tile_id)
-			tab.print(clicked_tile)
+			-- tab.print(clicked_tile)
 
 			local climate_cell = WORLD.tile_to_climate_cell[tile_id]
 			print("Climate Cell")
-			tab.print(climate_cell)
+			-- tab.print(climate_cell)
 
 			local la, lo = tile.latlon(tile_id)
 			print(la, lo)
@@ -1787,6 +1787,9 @@ function gam.draw()
 	-- Draw the top bar
 	tb.draw(gam)
 	require "game.scenes.game.inspectors.left-side-bar".draw(gam)
+	require "game.scenes.game.inspectors.local-actions".draw(gam)
+	require "game.scenes.game.inspectors.settlement".draw(gam)
+
 
 	-- Debugging screen thingy in top left
 	local tt = require "engine.table"
@@ -1801,9 +1804,9 @@ function gam.draw()
 	if gam.clicked_tile_id ~= INVALID_ID then
 		if WORLD.player_character ~= INVALID_ID then
 			local realm = WORLD:player_realm()
-			local province = WORLD:player_province()
+			local province = LOCAL_PROVINCE(WORLD.player_character)
 			local pro = tile.province(gam.clicked_tile_id)
-			if realm then
+			if realm ~= INVALID_ID then
 				if (DATA.realm_get_known_provinces(realm)[pro] == nil) and (pro ~= province) then
 					tile_data_viewable = false
 				end
@@ -1826,6 +1829,17 @@ function gam.draw()
 		end
 	end
 
+	if not require "game.scenes.game.inspectors.local-actions".mask() then
+		gam.click_callback = callback.nothing
+		click_success = false
+	end
+
+	if not require "game.scenes.game.inspectors.settlement".mask() then
+		gam.click_callback = callback.nothing
+		click_success = false
+	end
+
+
 	if gam.click_callback == nil then
 		if click_success then
 			gam.handle_zoom()
@@ -1841,6 +1855,8 @@ function gam.draw()
 			gam.click_callback == nil
 			and tb.mask(gam)
 			and require "game.scenes.game.inspectors.left-side-bar".mask()
+			and require "game.scenes.game.inspectors.local-actions".mask()
+			and require "game.scenes.game.inspectors.settlement".mask()
 			and not province_on_map_interaction
 		then
 			gam.click_tile(new_clicked_tile)
@@ -1934,47 +1950,43 @@ function gam.draw()
 
 	-- DRAWING AN ARROW TOWARD PLAYERS PROVINCE
 	local player = WORLD.player_character
-	if player ~= INVALID_ID and gam.inspector == nil then
-		local province = WORLD:player_province()
-		if province ~= INVALID_ID then
-			local center = DATA.province_get_center(province)
-			local lat, lon = tile.latlon(center)
-			local x, y, z = require "game.latlon".lat_lon_to_cart(lat, lon)
-			local target = cpml.vec3.new(x, y, z)
-			local plane_geodesic = gam.camera_position:cross(target)
-			local geodesic_tangent = (plane_geodesic:cross(gam.camera_position)):normalize()
+	if player ~= INVALID_ID and PROVINCE(player) == INVALID_ID and gam.inspector == nil then
+		local center = LOCAL_TILE(WORLD.player_character)
+		local x, y, z = tile.get_cartesian(center)
+		local target = cpml.vec3.new(x, y, z)
+		local plane_geodesic = gam.camera_position:cross(target)
+		local geodesic_tangent = (plane_geodesic:cross(gam.camera_position)):normalize()
 
-			local screen_projection = (projection * view * geodesic_tangent):normalize()
+		local screen_projection = (projection * view * geodesic_tangent):normalize()
 
-			local width, height = love.graphics.getDimensions()
+		local width, height = love.graphics.getDimensions()
 
-			local x_screen = screen_projection.x * width / 20
-			local y_screen = screen_projection.y * height / 20
+		local x_screen = screen_projection.x * width / 20
+		local y_screen = screen_projection.y * height / 20
 
-			local norm = math.sqrt(x_screen * x_screen + y_screen * y_screen)
+		local norm = math.sqrt(x_screen * x_screen + y_screen * y_screen)
 
-			local x_screen = x_screen / norm * 20
-			local y_screen = y_screen / norm * 20
+		local x_screen = x_screen / norm * 20
+		local y_screen = y_screen / norm * 20
 
-			local orthogonal_x_screen = -y_screen / 3
-			local orthogonal_y_screen = x_screen / 3
+		local orthogonal_x_screen = -y_screen / 3
+		local orthogonal_y_screen = x_screen / 3
 
-			local triangle = {
-				width / 2 + orthogonal_x_screen, height / 2 + orthogonal_y_screen,
-				width / 2 + x_screen, height / 2 + y_screen,
-				width / 2 - orthogonal_x_screen, height / 2 - orthogonal_y_screen
-			}
+		local triangle = {
+			width / 2 + orthogonal_x_screen, height / 2 + orthogonal_y_screen,
+			width / 2 + x_screen, height / 2 + y_screen,
+			width / 2 - orthogonal_x_screen, height / 2 - orthogonal_y_screen
+		}
 
 
-			local r, g, b, a = love.graphics.getColor()
+		local r, g, b, a = love.graphics.getColor()
 
-			love.graphics.setColor(1, 1, 1, 1)
-			love.graphics.polygon('fill', triangle)
-			love.graphics.setColor(0, 0, 0, 1)
-			love.graphics.polygon('line', triangle)
+		love.graphics.setColor(1, 1, 1, 1)
+		love.graphics.polygon('fill', triangle)
+		love.graphics.setColor(0, 0, 0, 1)
+		love.graphics.polygon('line', triangle)
 
-			love.graphics.setColor(r, g, b, a)
-		end
+		love.graphics.setColor(r, g, b, a)
 	end
 
 

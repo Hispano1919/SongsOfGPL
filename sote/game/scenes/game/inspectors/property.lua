@@ -11,7 +11,7 @@ local inspector = {}
 ---@return Rect
 local function get_main_panel()
 	local fs = ui.fullscreen()
-    return fs:subrect(ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT * 24, fs.height / 2, "left", "up")
+    return fs:subrect(ut.BASE_HEIGHT * 2, 0, ut.BASE_HEIGHT * 16, ut.BASE_HEIGHT * 25, "left", "down")
 end
 
 ---Returns whether or not clicks on the planet can be registered.
@@ -75,9 +75,9 @@ function inspector.draw(gamescene)
             header = "Name",
             ---@param v estate_id
             render_closure = function(rect, k, v)
-                ib.text_button_to_estate(gamescene, v, rect, "Estates in " .. PROVINCE_NAME(ESTATE_PROVINCE(v)))
+                ib.text_button_to_estate(gamescene, v, rect, PROVINCE_NAME(ESTATE_PROVINCE(v)))
             end,
-            width = base_unit * 8,
+            width = base_unit * 6,
             ---@param v estate_id
             value = function(k, v)
                 return PROVINCE_NAME(ESTATE_PROVINCE(v))
@@ -88,9 +88,9 @@ function inspector.draw(gamescene)
             ---@param rect Rect
             ---@param v estate_id
             render_closure = function (rect, k, v)
-                require "game.scenes.game.widgets.subsidy"(rect, v)
+                ut.money_entry_icon(DATA.estate_get_savings(v), rect, "Your local estates treasury")
             end,
-            width = base_unit * 6,
+            width = base_unit * 3,
             ---@param v estate_id
             value = function (k, v)
                 return DATA.building_get_subsidy(v)
@@ -101,72 +101,26 @@ function inspector.draw(gamescene)
             header = "Balance",
             ---@param v estate_id
             render_closure = function(rect, k, v)
-                ut.money_entry("", DATA.estate_get_balance_last_tick(v), rect)
+                local bought_cost = 0
+                local province = ESTATE_PROVINCE(v)
+                DATA.for_each_trade_good(function (item)
+                    local bought = DATA.estate_get_inventory_bought_last_tick(v, item)
+                    bought_cost = bought_cost + bought * DATA.province_get_local_prices(province, item)
+                end)
+                local sold_cost = 0
+                local province = ESTATE_PROVINCE(v)
+                DATA.for_each_trade_good(function (item)
+                    local sold = DATA.estate_get_inventory_sold_last_tick(v, item)
+                    sold_cost = sold_cost + sold * DATA.province_get_local_prices(province, item)
+                end)
+                ut.money_entry("", DATA.estate_get_balance_last_tick(v), rect,
+                    "Spend: " .. ut.to_fixed_point2(bought_cost) .. "\nEarn: " .. ut.to_fixed_point2(sold_cost)
+                )
             end,
             width = base_unit * 3,
             ---@param v estate_id
             value = function(k, v)
                 return DATA.estate_get_balance_last_tick(v)
-            end
-        },
-        {
-            header = "Bought",
-            ---@param rect Rect
-            ---@param k any
-            ---@param v estate_id
-            render_closure = function(rect, k, v)
-                local bought_cost = 0
-                local province = ESTATE_PROVINCE(v)
-                DATA.for_each_trade_good(function (item)
-                    local bought = DATA.estate_get_inventory_bought_last_tick(v, item)
-                    bought_cost = bought_cost + bought * DATA.province_get_local_prices(province, item)
-                end)
-                ut.money_entry(
-                    "",
-                    bought_cost,
-                    rect, "Amount spent on inputs", true
-                )
-            end,
-            width = base_unit * 3,
-            ---@param v estate_id
-            value = function(k, v)
-                local bought_cost = 0
-                local province = ESTATE_PROVINCE(v)
-                DATA.for_each_trade_good(function (item)
-                    local bought = DATA.estate_get_inventory_bought_last_tick(v, item)
-                    bought_cost = bought_cost + bought * DATA.province_get_local_prices(province, item)
-                end)
-
-                return bought_cost
-            end
-        },
-        {
-            header = "Sold",
-            ---@param v estate_id
-            render_closure = function(rect, k, v)
-                local sold_cost = 0
-                local province = ESTATE_PROVINCE(v)
-                DATA.for_each_trade_good(function (item)
-                    local sold = DATA.estate_get_inventory_sold_last_tick(v, item)
-                    sold_cost = sold_cost + sold * DATA.province_get_local_prices(province, item)
-                end)
-                ut.balance_entry(
-                    "",
-                    sold_cost,
-                    rect, "Amount earnt from selling out inventory"
-                )
-            end,
-            width = base_unit * 3,
-            ---@param v estate_id
-            value = function(k, v)
-                local sold_cost = 0
-                local province = ESTATE_PROVINCE(v)
-                DATA.for_each_trade_good(function (item)
-                    local sold = DATA.estate_get_inventory_sold_last_tick(v, item)
-                    sold_cost = sold_cost + sold * DATA.province_get_local_prices(province, item)
-                end)
-
-                return sold_cost
             end
         },
         {

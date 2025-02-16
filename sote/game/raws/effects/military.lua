@@ -23,6 +23,12 @@ function MilitaryEffects.gather_warband(leader)
 	if LEADER_OF_WARBAND(leader) ~= INVALID_ID then
 		return
 	end
+	if RECRUITER_OF_WARBAND(leader) ~= INVALID_ID then
+		return
+	end
+	if COMMANDER_OF_WARBAND(leader) ~= INVALID_ID then
+		return
+	end
 
 	local warband = DATA.create_warband()
 	DATA.force_create_warband_location(DATA.province_get_center(province), warband)

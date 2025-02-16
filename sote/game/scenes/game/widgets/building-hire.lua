@@ -39,6 +39,7 @@ return function (rect, building)
 	end
 
 	if province == INVALID_ID then
+		ui.text("Building without location???", rect, "center", "center")
 		return
 	end
 
@@ -60,7 +61,16 @@ return function (rect, building)
 	end
 
 	local unemployed_pops = demography_values.unemployed_pops(province)
+
+	if (#unemployed_pops == 0) then
+		ui.text("No available workers here", rect, "center", "center")
+		return
+	end
+
 	local rows = 7
+	if rect.height > rows * ut.BASE_HEIGHT * 1.5 then
+		rows = math.floor(rect.height / ut.BASE_HEIGHT / 1.5)
+	end
 	local columns = 4
 	local width = rect.width / columns
 	local height = rect.height / rows

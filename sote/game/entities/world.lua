@@ -960,14 +960,6 @@ function world.World:does_player_control_realm(realm)
 	return false
 end
 
-function world.World:player_province()
-	if self.player_character == INVALID_ID then
-		return INVALID_ID
-	end
-
-	return PROVINCE(self.player_character)
-end
-
 function world.World:player_realm()
 	if self.player_character == INVALID_ID then
 		return INVALID_ID
@@ -992,7 +984,7 @@ function world.World:does_player_see_province_news(province)
 		return false
 	end
 
-	return (self:player_province() == province)
+	return (LOCAL_PROVINCE(self.player_character) == province)
 end
 
 

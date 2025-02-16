@@ -20,6 +20,7 @@ return function ()
 	local b = 0.10
 
 	local material_icon = "cubes.png"
+	local jewelry_icon = "tribal-pendant.png"
 
 	UseCase:new {
 		name = "brass-source",	description = "source of brass",
@@ -43,7 +44,7 @@ return function ()
 	TradeGood:new {
 		name = "jewelry-brass",
 		description = "brass jewelry",
-		icon = material_icon,
+		icon = jewelry_icon,
 		r = r,
 		g = g,
 		b = b,

@@ -59,8 +59,8 @@ return function ()
 
 	TradeGood:new {
 		name = "tools-tin-bronze",
-		description = "tin bronze",
-		icon = material_icon,
+		description = "tin bronze tools",
+		icon = "stone-axe.png",
 		r = r,
 		g = g,
 		b = b,

@@ -6,7 +6,7 @@ local window = {}
 function window.rect()
     local unit = ut.BASE_HEIGHT
     local fs = ui.fullscreen()
-    return fs:subrect(unit * 2, unit * 2, unit * (16 + 4), unit * 34, "left", "up")
+    return fs:subrect(ut.BASE_HEIGHT * 2, 0, ut.BASE_HEIGHT * 16, ut.BASE_HEIGHT * 25, "left", "down")
 end
 
 function window.mask()
