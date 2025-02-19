@@ -208,21 +208,21 @@ end
 ---@param pop pop_id
 ---@return number attack health modified by pop race and sex
 function rtab.POP.get_health(pop)
-	return rtab.POP.get_size(pop)
+	return rtab.POP.get_size(pop) * 10
 end
 
 ---Returns the adjusted attack value for the provided pop.
 ---@param pop pop_id
 ---@return number pop_adjusted attack modified by pop race and sex
 function rtab.POP.get_attack(pop)
-	return JOB_EFFICIENCY(pop)
+	return JOB_EFFICIENCY(pop,JOBTYPE.WARRIOR)
 end
 
 ---Returns the adjusted armor value for the provided pop.
 ---@param pop pop_id
 ---@return number pop_adjusted armor modified by pop race and sex
 function rtab.POP.get_armor(pop)
-	return 1
+	return rtab.POP.get_size(pop)
 end
 
 ---Returns the adjusted speed value for the provided pop.

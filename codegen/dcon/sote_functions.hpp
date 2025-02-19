@@ -70,7 +70,7 @@ extern "C" {
 	DCON_LUADLL_API float age_multiplier(dcon::pop_id);
 	DCON_LUADLL_API float job_efficiency(dcon::pop_id,uint8_t);
 	// pop time calculations
-	DCON_LUADLL_API float free_time(dcon::pop_id pop);
-	DCON_LUADLL_API float warband_time(dcon::pop_id pop,float free);
-	DCON_LUADLL_API float forage_time(dcon::pop_id pop,float free,float party);
+	DCON_LUADLL_API float pop_free_time(dcon::pop_id pop);
+	DCON_LUADLL_API float pop_warband_time(dcon::pop_id pop,float free);
+	DCON_LUADLL_API float pop_forage_time(dcon::pop_id pop,float free,float party);
 }

@@ -296,34 +296,44 @@ function pui.occupation_tooltip(pop_id)
 	local teen_age = DATA.race_get_teen_age(DATA.pop_get_race(pop_id))
 	local occupation = DATA.get_employment_from_worker(pop_id)
     local employer_id = DATA.employment_get_building(occupation)
-	local job_id = DATA.employment_get_job(occupation)
 	local warband_id = UNIT_OF(pop_id)
 
 	-- first spend warband time, then attempt to forage, finally use remaining time to work
-	local learning_time,warband_time, forage_time, work_time  = POP_TIME(pop_id)
+	local free_time,warband_time,forage_time,work_time  = POP_TIME(pop_id)
 
-	local tooltip = "forage\t" .. ut.to_fixed_point2(forage_time*100)
+	local tooltip = "Foraging\t" .. ut.to_fixed_point2(forage_time*100)
 		.."%\t(" .. ut.to_fixed_point2(DATA.pop_get_forage_ratio(pop_id)*100) .. "%)"
 
 	if age < teen_age then
 		tooltip = strings.title(pop_utils.get_age_string(pop_id))
-			.. "\t(" .. ut.to_fixed_point2((1-(forage_time+learning_time))*100) .. "%)"
-			.. "\n\tLearning\t(" .. ut.to_fixed_point2(learning_time*100) .. "%)"
+			.. "\t(" .. ut.to_fixed_point2(free_time*100) .. "%)"
+			.. "\n\tLearning\t" .. ut.to_fixed_point2((1-free_time)*100) .. "%"
 			.. "\n\t" .. tooltip
 	else
 		if employer_id ~= INVALID_ID then
-			tooltip = strings.title(DATA.job_get_name(job_id)) .. "\t" .. ut.to_fixed_point2(work_time*100) .. "%"
+			local employer_name = DATA.building_type_get_name(DATA.building_get_current_type(employer_id))
+			tooltip = strings.title(employer_name) .. "\t" .. ut.to_fixed_point2(work_time*100) .. "%"
 				.. "\n\t" .. tooltip
 		end
 		if warband_id ~= INVALID_ID then
 			local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 			local unit_name = DATA.unit_type_get_name(unit_type_id)
-			tooltip = strings.title(unit_name)
-				.. " of " .. strings.title(DATA.warband_get_name(warband_id))
-				.. "\t(" .. ut.to_fixed_point2(warband_time*100) .. "%)"
+			tooltip = strings.title(DATA.warband_get_name(warband_id))
+				.. "\t" .. ut.to_fixed_point2(warband_time*100) .. "%"
 				.. "\n\t" .. tooltip
-		elseif employer_id == INVALID_ID then
-			tooltip = "Unemployed\t(" .. ut.to_fixed_point2(work_time*100) .. "%)"
+		end
+		if warband_id ~= INVALID_ID then
+			local unit_type_id = pop_utils.get_unit_type_of(pop_id)
+			local unit_name = DATA.unit_type_get_name(unit_type_id)
+			tooltip = strings.title(unit_name) .. "\t(" .. ut.to_fixed_point2((free_time)*100) .. "%)"
+				.. "\n \t" .. tooltip
+
+		elseif employer_id ~= INVALID_ID then
+			local job_id = DATA.employment_get_job(occupation)
+			tooltip = strings.title(DATA.job_get_name(job_id)) .. "\t" .. ut.to_fixed_point2(work_time*100) .. "%"
+				.. "\n\t" .. tooltip
+		else
+			tooltip = "Unemployed\t(" .. ut.to_fixed_point2(free_time*100) .. "%)"
 				.. "\n\t" .. tooltip
 		end
 	end

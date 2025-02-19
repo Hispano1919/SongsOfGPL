@@ -437,15 +437,16 @@ function BIRTHDATE(pop_id)
 end
 
 ---@param pop_id pop_id
----@return number learning_time
+---@return number free_time
 ---@return number warband_time
 ---@return number forage_time
 ---@return number work_time
 function POP_TIME(pop_id)
-	local free_time = DCON.free_time(pop_id)
-	local warband_time = DCON.warband_time(pop_id,free_time)
-	local forage_time = DCON.forage_time(pop_id,free_time,warband_time)
-	return 1-free_time,warband_time,forage_time,math.max(0,free_time-warband_time-forage_time)
+	local free_time = DCON.pop_free_time(pop_id)
+	local warband_time = DCON.pop_warband_time(pop_id,free_time)
+	local forage_time = DCON.pop_forage_time(pop_id,free_time,warband_time)
+	local work_time = math.max(0,free_time-warband_time-forage_time)
+	return free_time,warband_time,forage_time,work_time
 end
 
 ---@param pop_id pop_id

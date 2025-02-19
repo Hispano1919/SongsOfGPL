@@ -394,12 +394,13 @@ uint32_t age_years(dcon::pop_id pop) {
 // using age values
 float age_multiplier(dcon::pop_id pop) {
 	float age_multiplier = 1.f;
-	float age = age_years(pop);
+	auto age = age_ticks(pop);
 	auto race = state.pop_get_race(pop);
 
-	auto adult_age = state.race_get_adult_age(race);
-	auto middle_age = state.race_get_middle_age(race);
-	auto max_age = state.race_get_max_age(race);
+	auto conversion = WORLD_TICKS_PER_MONTH * 12;
+	auto adult_age = state.race_get_adult_age(race) * conversion;
+	auto middle_age = state.race_get_middle_age(race) * conversion;
+	auto max_age = state.race_get_max_age(race) * conversion;
 
 	if (age < adult_age) {
 		age_multiplier = 0.25 + 0.75 * age / adult_age; // [.25,1.f)
@@ -409,38 +410,49 @@ float age_multiplier(dcon::pop_id pop) {
 	return age_multiplier;
 }
 // pop time calculations
-float free_time(dcon::pop_id pop) {
-	auto age = age_years(pop);
+float pop_free_time(dcon::pop_id pop) {
+	auto age = age_ticks(pop);
 	auto race = state.pop_get_race(pop);
-	auto teen = state.race_get_teen_age(race);
+	auto teen = state.race_get_teen_age(race) * WORLD_TICKS_PER_MONTH * 12;
 	if (age < teen) {
 		return age / teen;
 	} else {
 		return 1.f;
 	}
 }
-float warband_time(dcon::pop_id pop, float free) {
+float pop_warband_time(dcon::pop_id pop, float free) {
+	auto remaining = free - 0.05f;
+	if (free < 0.f) {
+		return 0.f;
+	}
 	auto unitship = state.pop_get_warband_unit_as_unit(pop);
 	auto warband = state.warband_unit_get_warband(unitship);
-	auto time = 0.f
-	if state.warband_is_valid(warband) {
-		time = state.warband_get_current_time_used_ratio(warband);
-	}
-	if (free < time) {
-		return free;
+	if (state.warband_is_valid(warband)) {
+		auto time = state.warband_get_current_time_used_ratio(warband);
+		if (remaining < time) {
+			return remaining;
+		} else {
+			return time;
+		}
 	} else {
-		return time;
+		return 0.f;
 	}
 }
-float forage_time(dcon::pop_id pop, float free, float warband) {
+float pop_forage_time(dcon::pop_id pop, float free, float warband) {
 	auto remaining = free - warband;
 	auto desire = state.pop_get_forage_ratio(pop);
-	if (remaining < 0) {
-		return 0.f
-	} elseif (remaining < desire) {
+	if (remaining < desire) {
 		return remaining;
 	} else {
 		return desire;
+	}
+}
+float pop_work_time(dcon::pop_id pop, float free, float warband, float forage) {
+	auto remaining = free - warband - forage;
+	if (remaining > 0) {
+		return 0;
+	} else {
+		return remaining;
 	}
 }
 
