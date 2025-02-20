@@ -59,7 +59,7 @@ end
 function pui.render_realm_popularity(rect, pop_id, realm_id)
 	if realm_id ~= INVALID_ID then
 		local realm_popularity = require "game.raws.values.politics".popularity(pop_id, realm_id)
-		ut.balance_entry_icon("duality-mask.png", realm_popularity, rect, "Popularity in " .. DATA.realm_get_name(realm_id))
+		ut.balance_entry_icon("duality-mask.png", realm_popularity, rect, NAME(pop_id) .. "'s popularity in " .. DATA.realm_get_name(realm_id) .. ".")
 	else
 		ut.generic_string_field("duality-mask.png","n/a",rect,"Unknown",ut.NAME_MODE.ICON,true,"left")
 	end
@@ -70,11 +70,11 @@ end
 ---@param pop_id pop_id
 function pui.render_forage_time(rect,pop_id)
 	local pop_name = NAME(pop_id)
-	local learning_time, warband_time, forage_time, _ = POP_TIME(pop_id)
+	local free_time, warband_time, forage_time, _ = POP_TIME(pop_id)
 	local tooltip = pop_name .. " expects to be able to use " .. ut.to_fixed_point2(forage_time*100) .."% of it's time foraging. "
 		.. strings.title(HESHE(pop_id)) .. " desires to spend " .. ut.to_fixed_point2(DATA.pop_get_forage_ratio(pop_id)*100) .. "% of it's time foraging"
-	if learning_time > 0 then
-		tooltip = tooltip .. " but " .. ut.to_fixed_point2(learning_time*100) .. "% of its time is spent learning."
+	if free_time < 1 then
+		tooltip = tooltip .. " but " .. ut.to_fixed_point2((1-free_time)*100) .. "% of its time is spent learning."
 	elseif warband_time > 0 then
 		tooltip = tooltip .. " but " .. ut.to_fixed_point2(warband_time*100)
 			.. "% of its time is used by " .. strings.title(DATA.warband_get_name(UNIT_OF(pop_id))) .. "."
@@ -92,10 +92,10 @@ function pui.render_warband_time(rect,pop_id)
 	local warband_id = UNIT_OF(pop_id)
 	if warband_id ~= INVALID_ID then
 		local _, warband_time, _, _ = POP_TIME(pop_id)
+		local status = DATA.warband_get_current_status(warband_id)
 		local tooltip = pop_name .. " has spent " .. ut.to_fixed_point2(warband_time*100)
 			.. "% of " .. HISHER(pop_id) .. " time with " .. strings.title(DATA.warband_get_name(warband_id)) .. " this month. "
-		local status = DATA.warband_get_current_status(warband_id)
-		tooltip = tooltip .. strings.title(HESHE(pop_id)) ..  " is currently " .. DATA.warband_status_get_description(status)
+			.. strings.title(HESHE(pop_id)) ..  " is currently " .. DATA.warband_status_get_description(status)
 			.. ", increasing this month's warband time towards " .. ut.to_fixed_point2(DATA.warband_status_get_time_used(status)*100) .. "%."
 		ut.generic_number_field("guards.png", warband_time, rect, tooltip, ut.NUMBER_MODE.PERCENTAGE, ut.NAME_MODE.ICON,true)
 	else
@@ -108,17 +108,18 @@ end
 ---@param rect Rect
 ---@param pop_id pop_id
 function pui.render_work_time(rect,pop_id)
-	local pop_name = NAME(pop_id)
+	local pop_name, hisher = NAME(pop_id), HISHER(pop_id)
 	local _, _, _, work_time = POP_TIME(pop_id)
 	local occupation = DATA.get_employment_from_worker(pop_id)
     local employer_id = DATA.employment_get_building(occupation)
 	if employer_id then
-		local tooltip = pop_name .. " expects to be able to use " .. ut.to_fixed_point2(work_time*100) .."% of it's time working."
-			.. "\n " .. pop_name .. " wants to spend " .. ut.to_fixed_point2(DATA.pop_get_work_ratio(pop_id)*100) .. "% of it's time working"
-		ut.generic_number_field("miner.png", work_time, rect, tooltip, ut.NUMBER_MODE.PERCENTAGE, ut.NAME_MODE.ICON,true)
+		local tooltip = pop_name .. " expects to use " .. ut.to_fixed_point2(work_time*100) .. "% of " .. hisher .. " time working this month."
+			.. "\n " .. strings.title(HESHE(pop_id)) .. " spent " .. ut.to_fixed_point2(DATA.pop_get_work_ratio(pop_id)*100) .. "% of "
+			.. hisher .. " time working last month."
+		ut.generic_number_field("miner.png", work_time, rect, tooltip, ut.NUMBER_MODE.PERCENTAGE, ut.NAME_MODE.ICON)
 	else
 		local tooltip = pop_name .. " is not employed!"
-		ut.generic_number_field("miner.png", 0, rect, tooltip, ut.NUMBER_MODE.PERCENTAGE, ut.NAME_MODE.ICON,true)
+		ut.generic_number_field("miner.png", 0, rect, tooltip, ut.NUMBER_MODE.PERCENTAGE, ut.NAME_MODE.ICON)
 	end
 end
 
@@ -131,7 +132,7 @@ function pui.occupation_name(pop_id)
     local employer = DATA.employment_get_building(occupation_id)
 	local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 	if age < teen_age then
-		return "child"
+		return pop_utils.get_age_string(pop_id)
 	elseif unit_type_id ~= INVALID_ID then
 		return DATA.unit_type_get_name(unit_type_id)
 	elseif employer ~= INVALID_ID then
@@ -147,7 +148,6 @@ end
 ---@return string
 function pui.job_text(pop_id)
 	local job_id = pop_utils.get_job_of(pop_id)
-	local job_name = DATA.job_get_name(job_id)
 	if job_id ~= INVALID_ID then
 		return DATA.job_get_name(job_id)
 	end
@@ -190,12 +190,13 @@ end
 ---@param pop_id pop_id
 ---@return string
 function pui.unit_tooltip(pop_id)
-	local unit_type_id = pop_utils.get_unit_type_of(pop_id)
-	if unit_type_id ~= INVALID_ID then
-		local fat_unit = DATA.fatten_unit_type(unit_type_id)
-		return strings.title(fat_unit.name)
+	local unit = UNITTYPE_OF(pop_id)
+	if unit ~= INVALID_ID then
+		return strings.title(DATA.unit_type_get_name(unit))
+			.. "\n\t" .. DATA.unit_type_get_description(unit)
 	else
-		return strings.title(rank_name(pop_id))
+		return strings.title(DATA.language_get_ranks(DATA.culture_get_language(CULTURE(pop_id)))[RANK(pop_id)])
+			.. "\n\t" .. strings.title(HESHE(pop_id)) .. " is not in any party."
 	end
 end
 
@@ -205,10 +206,10 @@ end
 function pui.render_unit_icon(rect, pop_id, tooltip)
 	local center_square = rect:centered_square()
 	local warband = UNIT_OF(pop_id)
-	if UNIT_TYPE_OF(pop_id) == UNIT_TYPE.WARRIOR then
-		ut.render_icon(center_square, "guards.png", .8, .8, .8, 1, true)
+	if warband~=INVALID_ID then
+		ut.render_icon(center_square, DATA.unit_type_get_icon(UNITTYPE_OF(pop_id)), .8, .8, .8, 1, true)
 	else
-		ut.render_icon(center_square, "minions.png", .8, .8, .8, 1, true)
+		ut.render_icon(center_square,"inner-self.png", .8, .8, .8, 1, true)
 	end
 	if tooltip then
 		ui.tooltip(tooltip, rect)
@@ -325,12 +326,12 @@ function pui.occupation_tooltip(pop_id)
 		if warband_id ~= INVALID_ID then
 			local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 			local unit_name = DATA.unit_type_get_name(unit_type_id)
-			tooltip = strings.title(unit_name) .. "\t(" .. ut.to_fixed_point2((free_time)*100) .. "%)"
+			tooltip = strings.title(unit_name) .. "\t(" .. ut.to_fixed_point2(free_time*100) .. "%)"
 				.. "\n \t" .. tooltip
 
 		elseif employer_id ~= INVALID_ID then
 			local job_id = DATA.employment_get_job(occupation)
-			tooltip = strings.title(DATA.job_get_name(job_id)) .. "\t" .. ut.to_fixed_point2(work_time*100) .. "%"
+			tooltip = strings.title(DATA.job_get_name(job_id)) .. "\t(" .. ut.to_fixed_point2(free_time*100) .. "%)"
 				.. "\n\t" .. tooltip
 		else
 			tooltip = "Unemployed\t(" .. ut.to_fixed_point2(free_time*100) .. "%)"
@@ -531,23 +532,7 @@ function pui.pop_tooltip(pop_id)
 				.. DATA.race_get_name(RACE(pop_id)) .. " " .. pop_utils.get_age_string(pop_id)
 			.. "\n  Member of " .. strings.title(DATA.culture_get_name(CULTURE(pop_id))) .. " culture"
 			.. "\n  Follower of " .. strings.title(DATA.faith_get_name(DATA.pop_get_faith(pop_id))) .. " faith"
-			.. "\n Size\t" .. ut.to_fixed_point2(pop_utils.get_size(pop_id))
-			.. "\n  Spotting\t" .. ut.to_fixed_point2(pop_utils.get_spotting(pop_id))
-				.. "\tVisibility\t" .. ut.to_fixed_point2(pop_utils.get_visibility(pop_id))
-			.. "\n ".. unit_type .. "\tHealth\t" .. ut.to_fixed_point2(pop_utils.get_health(pop_id))
-			.. "\n  Attack\t" .. ut.to_fixed_point2(pop_utils.get_attack(pop_id))
-				.. "\tArmor\t" .. ut.to_fixed_point2(pop_utils.get_armor(pop_id))
-			.. "\n  Speed\t" .. ut.to_fixed_point2(pop_utils.get_speed(pop_id).base)
-				.. "\tSupply Capacity\t" .. ut.to_fixed_point2(pop_utils.get_supply_capacity(pop_id))
-			.. "\n Skills"
-		for i=1, tabb.size(JOBTYPE)-1 do
-			local skill = JOB_EFFICIENCY(pop_id, i)
-			tooltip = tooltip .. "\n  " .. strings.title(DATA.jobtype_get_name(i))
-				.. "\t" .. ut.to_fixed_point2(skill*100) .. "%"
-		end
 		return tooltip
-			.. "\n CC weight\t" .. ut.to_fixed_point2(pop_utils.get_carry_capacity_weight(pop_id))
-			.. "\tInfrastructure\t" .. ut.to_fixed_point2(pop_utils.get_infrastructure_need(pop_id))
 	else
 		return "unknown"
 	end

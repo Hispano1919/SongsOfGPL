@@ -194,6 +194,8 @@ function DATA.save_state()
     current_lua_state.politics_reason_name = DATA.politics_reason_name
     current_lua_state.politics_reason_description = DATA.politics_reason_description
     current_lua_state.unit_type_name = DATA.unit_type_name
+    current_lua_state.unit_type_description = DATA.unit_type_description
+    current_lua_state.unit_type_icon = DATA.unit_type_icon
     current_lua_state.law_trade_name = DATA.law_trade_name
     current_lua_state.law_building_name = DATA.law_building_name
     current_lua_state.trade_good_name = DATA.trade_good_name
@@ -347,6 +349,8 @@ function DATA.load_state()
     DATA.politics_reason_name = loaded_lua_state.politics_reason_name
     DATA.politics_reason_description = loaded_lua_state.politics_reason_description
     DATA.unit_type_name = loaded_lua_state.unit_type_name
+    DATA.unit_type_description = loaded_lua_state.unit_type_description
+    DATA.unit_type_icon = loaded_lua_state.unit_type_icon
     DATA.law_trade_name = loaded_lua_state.law_trade_name
     DATA.law_building_name = loaded_lua_state.law_building_name
     DATA.trade_good_name = loaded_lua_state.trade_good_name
@@ -998,6 +1002,7 @@ function DATA.test_set_get_0()
     fat_id.supplies = 2
     fat_id.supplies_target_days = 17
     fat_id.morale = -7
+    fat_id.in_settlement = true
     local test_passed = true
     for j = 1, 4 do
         test_passed = test_passed and DATA.warband_get_units_current(id, j --[[@as unit_type_id]]) == 4
@@ -1029,6 +1034,8 @@ function DATA.test_set_get_0()
     if not test_passed then print("supplies_target_days", 17, fat_id.supplies_target_days) end
     test_passed = test_passed and fat_id.morale == -7
     if not test_passed then print("morale", -7, fat_id.morale) end
+    test_passed = test_passed and fat_id.in_settlement == true
+    if not test_passed then print("in_settlement", true, fat_id.in_settlement) end
     print("SET_GET_TEST_0_warband:")
     if test_passed then print("PASSED") else print("ERROR") end
     local id = DATA.create_realm()

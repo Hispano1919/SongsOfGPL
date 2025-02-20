@@ -22,6 +22,7 @@ local ffi = require("ffi")
 ---@field morale number 
 ---@field current_path table<tile_id> 
 ---@field movement_progress number 
+---@field in_settlement boolean 
 
 ---@class struct_warband
 ---@field units_current table<unit_type_id, number> Current distribution of units in the warband
@@ -36,6 +37,7 @@ local ffi = require("ffi")
 ---@field supplies number 
 ---@field supplies_target_days number 
 ---@field morale number 
+---@field in_settlement boolean 
 
 
 ffi.cdef[[
@@ -66,6 +68,8 @@ void dcon_warband_set_supplies_target_days(int32_t, float);
 float dcon_warband_get_supplies_target_days(int32_t);
 void dcon_warband_set_morale(int32_t, float);
 float dcon_warband_get_morale(int32_t);
+void dcon_warband_set_in_settlement(int32_t, bool);
+bool dcon_warband_get_in_settlement(int32_t);
 void dcon_delete_warband(int32_t j);
 int32_t dcon_create_warband();
 bool dcon_warband_is_valid(int32_t);
@@ -363,6 +367,16 @@ end
 function DATA.warband_set_movement_progress(warband_id, value)
     DATA.warband_movement_progress[warband_id] = value
 end
+---@param warband_id warband_id valid warband id
+---@return boolean in_settlement 
+function DATA.warband_get_in_settlement(warband_id)
+    return DCON.dcon_warband_get_in_settlement(warband_id - 1)
+end
+---@param warband_id warband_id valid warband id
+---@param value boolean valid boolean
+function DATA.warband_set_in_settlement(warband_id, value)
+    DCON.dcon_warband_set_in_settlement(warband_id - 1, value)
+end
 
 local fat_warband_id_metatable = {
     __index = function (t,k)
@@ -379,6 +393,7 @@ local fat_warband_id_metatable = {
         if (k == "morale") then return DATA.warband_get_morale(t.id) end
         if (k == "current_path") then return DATA.warband_get_current_path(t.id) end
         if (k == "movement_progress") then return DATA.warband_get_movement_progress(t.id) end
+        if (k == "in_settlement") then return DATA.warband_get_in_settlement(t.id) end
         return rawget(t, k)
     end,
     __newindex = function (t,k,v)
@@ -432,6 +447,10 @@ local fat_warband_id_metatable = {
         end
         if (k == "movement_progress") then
             DATA.warband_set_movement_progress(t.id, v)
+            return
+        end
+        if (k == "in_settlement") then
+            DATA.warband_set_in_settlement(t.id, v)
             return
         end
         rawset(t, k, v)

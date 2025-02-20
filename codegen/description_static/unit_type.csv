@@ -1,3 +1,3 @@
-name
-warrior
-civilian
+name;description;icon
+warrior;fighter;guards.png
+civilian;noncombatant;minions.png

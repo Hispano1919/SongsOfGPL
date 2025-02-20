@@ -23,7 +23,7 @@ local function load()
 		end,
 		clickable = function(root, primary_target)
 			if UNIT_OF(root) == INVALID_ID
-				or UNIT_TYPE_OF(root) == UNIT_TYPE.WARRIOR
+				or UNITTYPE_OF(root) == UNIT_TYPE.WARRIOR
 			then
 				return false
 			end
@@ -75,7 +75,7 @@ local function load()
 		end,
 		clickable = function(root, primary_target)
 			if UNIT_OF(root) == INVALID_ID
-				or UNIT_TYPE_OF(root) == UNIT_TYPE.CIVILIAN
+				or UNITTYPE_OF(root) == UNIT_TYPE.CIVILIAN
 			then
 				return false
 			end

@@ -445,7 +445,7 @@ function POP_TIME(pop_id)
 	local free_time = DCON.pop_free_time(pop_id)
 	local warband_time = DCON.pop_warband_time(pop_id,free_time)
 	local forage_time = DCON.pop_forage_time(pop_id,free_time,warband_time)
-	local work_time = math.max(0,free_time-warband_time-forage_time)
+	local work_time = DCON.pop_work_time(pop_id,free_time,warband_time,forage_time)
 	return free_time,warband_time,forage_time,work_time
 end
 
@@ -564,7 +564,7 @@ end
 ---commenting
 ---@param unit pop_id
 ---@return unit_type_id
-function UNIT_TYPE_OF(unit)
+function UNITTYPE_OF(unit)
 	local unitship = DATA.get_warband_unit_from_unit(unit)
 	return DATA.warband_unit_get_type(unitship)
 end

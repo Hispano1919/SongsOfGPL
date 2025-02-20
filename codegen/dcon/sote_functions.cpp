@@ -449,8 +449,8 @@ float pop_forage_time(dcon::pop_id pop, float free, float warband) {
 }
 float pop_work_time(dcon::pop_id pop, float free, float warband, float forage) {
 	auto remaining = free - warband - forage;
-	if (remaining > 0) {
-		return 0;
+	if (remaining < 0.f) {
+		return 0.f;
 	} else {
 		return remaining;
 	}
@@ -468,6 +468,20 @@ float job_efficiency(dcon::pop_id pop, uint8_t jobtype) {
 		state.pop_get_female(pop),
 		jobtype
 	) * age_multiplier(pop);
+}
+
+bool pop_same_location(dcon::pop_id a, dcon::pop_id b) {
+	auto a_location = state.pop_location_get_location(state.pop_get_pop_location_as_pop(a));
+	auto b_location = state.pop_location_get_location(state.pop_get_pop_location_as_pop(a));
+	if (state.province_is_valid(a_location) && a_location == b_location) {
+		return true;
+	} // if not in same settlement, check if in same party
+	auto a_warband = state.warband_unit_get_warband(state.pop_get_warband_unit_as_unit(a));
+	auto b_warband = state.warband_unit_get_warband(state.pop_get_warband_unit_as_unit(b));
+	if (state.warband_is_valid(a_warband) && a_warband == b_warband) {
+		return true;
+	}
+	return false;
 }
 
 void update_vegetation(float speed) {
@@ -862,18 +876,14 @@ void record_use_demand(dcon::province_id province, dcon::use_case_id use_case, f
 
 void pop_forage_update(dcon::pop_id pop, dcon::province_id province) {
 	auto size = state.province_get_size(province);
-	auto forage_time = state.pop_get_forage_ratio(pop);
+	auto free_time = pop_free_time(pop);
+	auto warband_time = pop_warband_time(pop,free_time);
+	auto forage_time = pop_forage_time(pop,free_time,warband_time);
+	auto work_time = pop_work_time(pop,free_time,warband_time,forage_time);
+	// set actual work time for production call so as to not recalculate it
+	state.pop_set_work_ratio(pop,work_time);
 
 	auto estimated_profit = 0.f;
-
-	auto work_profit = 0.f;
-	auto employment = state.pop_get_employment(pop);
-	if (state.employment_get_building(employment)) {
-		work_profit = state.employment_get_worker_income(employment);
-	} else {
-		forage_time = 1.f;
-	}
-
 
 	for (uint32_t i = 0; i < state.province_get_foragers_targets_size(); i++){
 		base_types::forage_container& forage_case = state.province_get_foragers_targets(province, i);
@@ -937,20 +947,19 @@ void pop_forage_update(dcon::pop_id pop, dcon::province_id province) {
 		);
 	}
 
-	// update forage time:
+	// update forage time based on profit:
 	// forage profit is considered as unreliable
 	// to allow advanced production
 	estimated_profit = estimated_profit * 0.5f;
-	auto work_time = state.pop_get_work_ratio(pop);
+	auto employment = state.pop_get_employment(pop);
 	if (state.employment_get_building(employment)) {
+		auto work_profit = state.employment_get_worker_income(employment);
 		if(state.pop_get_free_will(pop) && !state.pop_get_is_player(pop)) {
 			// estimated forage profit is already modified by work time
 			if (work_profit / work_time > estimated_profit / forage_time * 1.05f && forage_time > 0.05f) {
-				state.pop_set_forage_ratio(pop, forage_time - 0.01f);
-				state.pop_set_work_ratio(pop, state.pop_get_work_ratio(pop) + 0.01f);
+				state.pop_set_forage_ratio(pop, forage_time * 0.98f);
 			} else if (work_profit / work_time < estimated_profit / forage_time * 0.95f && forage_time < 0.95f) {
-				state.pop_set_forage_ratio(pop, forage_time + 0.01f);
-				state.pop_set_work_ratio(pop, state.pop_get_work_ratio(pop) - 0.01f);
+				state.pop_set_forage_ratio(pop, forage_time * 1.02f);
 			}
 		}
 	}
@@ -1137,8 +1146,11 @@ void pops_consume() {
 	static auto uses_buffer = state.trade_good_category_make_vectorizable_float_buffer();
 
 	state.for_each_pop([&](auto pop){
+		auto age = age_years(pop);
+		auto race = state.pop_get_race(pop);
+		auto teen_age = state.race_get_teen_age(race);
 		auto parent = state.parent_child_relation_get_parent(state.pop_get_parent_child_relation_as_child(pop));
-		if (parent) return;
+		if (age < teen_age && parent && pop_same_location(pop,parent)) return;
 
 		// std::cout << "pop: " << pop.index();
 
@@ -1152,8 +1164,12 @@ void pops_consume() {
 
 			state.pop_for_each_parent_child_relation_as_parent(pop, [&](auto child_rel) {
 				auto child = state.parent_child_relation_get_child(child_rel);
-				base_types::need_satisfaction& need_child = state.pop_get_need_satisfaction(child, i);
-				demanded += need_child.demanded;
+				auto child_age = age_years(child);
+				auto teen_age = state.race_get_teen_age(state.pop_get_race(child));
+				if (child_age < teen_age && pop_same_location(pop,child)) {
+					base_types::need_satisfaction& need_child = state.pop_get_need_satisfaction(child, i);
+					demanded += need_child.demanded;
+				}
 			});
 
 			auto use = dcon::use_case_id{dcon::use_case_id::value_base_t(need.use_case - 1)};
@@ -1187,8 +1203,12 @@ void pops_consume() {
 			need.consumed = need.demanded * satisfaction;
 			state.pop_for_each_parent_child_relation_as_parent(pop, [&](auto child_rel) {
 				auto child = state.parent_child_relation_get_child(child_rel);
-				base_types::need_satisfaction& need_child = state.pop_get_need_satisfaction(child, i);
-				need_child.consumed = need.demanded * satisfaction;
+				auto child_age = age_years(child);
+				auto teen_age = state.race_get_teen_age(state.pop_get_race(child));
+				if (child_age < teen_age) {
+					base_types::need_satisfaction& need_child = state.pop_get_need_satisfaction(child, i);
+					need_child.consumed = need.demanded * satisfaction;
+				}
 			});
 		}
 	});
@@ -1489,6 +1509,17 @@ void pops_update_stats() {
 		auto basic_satisfaction = (total_basic_consumed + total_life_consumed) / (total_basic_demanded + total_life_demanded);
 		state.pop_set_life_needs_satisfaction(pop, life_satisfaction);
 		state.pop_set_basic_needs_satisfaction(pop, basic_satisfaction);
+
+		// shift foraging based on life satisfaction
+		auto forage_ratio = state.pop_get_forage_ratio(pop);
+		if (life_satisfaction < 0.5f) {
+			forage_ratio *= 1.05f;
+		} else if (life_satisfaction > 0.75f) {
+			forage_ratio *= 0.95f;
+		}
+		if (forage_ratio < 0.05f) forage_ratio = 0.05f;
+		else if (forage_ratio > 0.95f) forage_ratio = 0.95f;
+		state.pop_set_forage_ratio(pop, forage_ratio);
 	});
 }
 
@@ -1773,12 +1804,14 @@ void update_economy() {
 		ve::apply([&](dcon::province_id p) { pops_produce(p); }, provinces);
 	});
 	state.for_each_warband([&](auto warband) {
-		auto tile = state.warband_get_location_from_warband_location(warband);
-		auto province = state.tile_get_province_from_tile_province_membership(tile);
-		state.warband_for_each_warband_unit(warband, [&](auto warband_unit) {
-			auto pop = state.warband_unit_get_unit(warband_unit);
-			pop_forage_update(pop, province);
-		});
+		if (!state.warband_get_in_settlement(warband)) {
+			auto tile = state.warband_get_location_from_warband_location(warband);
+			auto province = state.tile_get_province_from_tile_province_membership(tile);
+			state.warband_for_each_warband_unit(warband, [&](auto warband_unit) {
+				auto pop = state.warband_unit_get_unit(warband_unit);
+				pop_forage_update(pop, province);
+			});
+		}
 	});
 
 	pops_consume();

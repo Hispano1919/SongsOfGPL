@@ -113,6 +113,9 @@ ffi.cdef[[
 	float pop_free_time(uint32_t pop);
 	float pop_warband_time(uint32_t pop,float free);
 	float pop_forage_time(uint32_t pop,float free,float party);
+	float pop_work_time(uint32_t pop,float free,float party,float forage);
+	// misc
+	bool pop_same_location(uint32_t pop_a,uint32_t pop_b);
 ]]
 
 

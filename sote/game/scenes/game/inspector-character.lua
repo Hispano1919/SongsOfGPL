@@ -124,7 +124,7 @@ local function render_employer_overview(game,rect,pop_id,player_id)
             estate_tooltip = NAME(owner_id) .. "'s " .. employer_name .. " in " .. PROVINCE_NAME(employer_province) .. "."
             ib.render_portrait_with_overlay(game,portrait_rect,owner_id,player_id,pui.pop_tooltip(pop_id))
         else -- public buildings controlled by overseer?
-            local realm_id = PROVINCE_REALM()
+            local realm_id = PROVINCE_REALM(employer_province)
             estate_tooltip = "Public estate of " .. REALM_NAME(realm_id) .. "."
             owner_id = require "game.raws.values.politics".overseer(realm_id)
             if owner_id ~= INVALID_ID then

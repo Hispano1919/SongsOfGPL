@@ -10,16 +10,22 @@ local ffi = require("ffi")
 ---@class (exact) fat_unit_type_id
 ---@field id unit_type_id Unique unit_type id
 ---@field name string 
+---@field description string 
+---@field icon string 
 
 ---@class struct_unit_type
 
 ---@class (exact) unit_type_id_data_blob_definition
 ---@field name string 
+---@field description string 
+---@field icon string 
 ---Sets values of unit_type for given id
 ---@param id unit_type_id
 ---@param data unit_type_id_data_blob_definition
 function DATA.setup_unit_type(id, data)
     DATA.unit_type_set_name(id, data.name)
+    DATA.unit_type_set_description(id, data.description)
+    DATA.unit_type_set_icon(id, data.icon)
 end
 
 ffi.cdef[[
@@ -32,6 +38,10 @@ uint32_t dcon_unit_type_size();
 ---unit_type: FFI arrays---
 ---@type (string)[]
 DATA.unit_type_name= {}
+---@type (string)[]
+DATA.unit_type_description= {}
+---@type (string)[]
+DATA.unit_type_icon= {}
 
 ---unit_type: LUA bindings---
 
@@ -73,15 +83,45 @@ end
 function DATA.unit_type_set_name(unit_type_id, value)
     DATA.unit_type_name[unit_type_id] = value
 end
+---@param unit_type_id unit_type_id valid unit_type id
+---@return string description 
+function DATA.unit_type_get_description(unit_type_id)
+    return DATA.unit_type_description[unit_type_id]
+end
+---@param unit_type_id unit_type_id valid unit_type id
+---@param value string valid string
+function DATA.unit_type_set_description(unit_type_id, value)
+    DATA.unit_type_description[unit_type_id] = value
+end
+---@param unit_type_id unit_type_id valid unit_type id
+---@return string icon 
+function DATA.unit_type_get_icon(unit_type_id)
+    return DATA.unit_type_icon[unit_type_id]
+end
+---@param unit_type_id unit_type_id valid unit_type id
+---@param value string valid string
+function DATA.unit_type_set_icon(unit_type_id, value)
+    DATA.unit_type_icon[unit_type_id] = value
+end
 
 local fat_unit_type_id_metatable = {
     __index = function (t,k)
         if (k == "name") then return DATA.unit_type_get_name(t.id) end
+        if (k == "description") then return DATA.unit_type_get_description(t.id) end
+        if (k == "icon") then return DATA.unit_type_get_icon(t.id) end
         return rawget(t, k)
     end,
     __newindex = function (t,k,v)
         if (k == "name") then
             DATA.unit_type_set_name(t.id, v)
+            return
+        end
+        if (k == "description") then
+            DATA.unit_type_set_description(t.id, v)
+            return
+        end
+        if (k == "icon") then
+            DATA.unit_type_set_icon(t.id, v)
             return
         end
         rawset(t, k, v)
@@ -103,5 +143,9 @@ UNIT_TYPE = {
 local index_unit_type
 index_unit_type = DATA.create_unit_type()
 DATA.unit_type_set_name(index_unit_type, "warrior")
+DATA.unit_type_set_description(index_unit_type, "fighter")
+DATA.unit_type_set_icon(index_unit_type, "guards.png")
 index_unit_type = DATA.create_unit_type()
 DATA.unit_type_set_name(index_unit_type, "civilian")
+DATA.unit_type_set_description(index_unit_type, "noncombatant")
+DATA.unit_type_set_icon(index_unit_type, "minions.png")

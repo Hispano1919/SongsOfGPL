@@ -14,3 +14,4 @@ supplies_target_days float=60
 morale float=0.5
 current_path table<tile_id>
 movement_progress number
+in_settlement bool=false

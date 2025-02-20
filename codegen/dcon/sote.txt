@@ -850,6 +850,11 @@ object {
         type { float }
         tag { scenario }
     }
+    property{
+        name { in_settlement }
+        type { bitfield }
+        tag { scenario }
+    }
 }
 object {
     name { realm }

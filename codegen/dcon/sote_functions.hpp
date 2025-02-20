@@ -73,4 +73,7 @@ extern "C" {
 	DCON_LUADLL_API float pop_free_time(dcon::pop_id pop);
 	DCON_LUADLL_API float pop_warband_time(dcon::pop_id pop,float free);
 	DCON_LUADLL_API float pop_forage_time(dcon::pop_id pop,float free,float party);
+	DCON_LUADLL_API float pop_work_time(dcon::pop_id pop,float free,float party,float forage);
+	// misc
+	DCON_LUADLL_API bool pop_same_location(dcon::pop_id,dcon::pop_id);
 }
