@@ -1824,7 +1824,7 @@ object {
 object {
     name { unit_type }
     storage_type { contiguous }
-    size { 4 }
+    size { 5 }
     tag {scenario}
 }
 object {

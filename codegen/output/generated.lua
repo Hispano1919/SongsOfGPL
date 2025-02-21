@@ -555,7 +555,7 @@ function DATA.test_set_get_0()
     fat_id.g = 6
     fat_id.b = -18
     fat_id.language = -4
-    for j = 1, 4 do
+    for j = 1, 5 do
         DATA.culture_set_traditional_units(id, j --[[@as unit_type_id]],  12)    end
     fat_id.traditional_militarization = 11
     for j = 1, 10 do
@@ -569,7 +569,7 @@ function DATA.test_set_get_0()
     if not test_passed then print("b", -18, fat_id.b) end
     test_passed = test_passed and fat_id.language == -4
     if not test_passed then print("language", -4, fat_id.language) end
-    for j = 1, 4 do
+    for j = 1, 5 do
         test_passed = test_passed and DATA.culture_get_traditional_units(id, j --[[@as unit_type_id]]) == 12
     end
     if not test_passed then print("traditional_units", 12, DATA.culture[id].traditional_units[0]) end
@@ -810,7 +810,7 @@ function DATA.test_set_get_0()
         DATA.province_set_local_resources_location(id, j, -15)
     end
     fat_id.mood = 5
-    for j = 1, 4 do
+    for j = 1, 5 do
         DATA.province_set_unit_types(id, j --[[@as unit_type_id]],  20)    end
     for j = 1, 250 do
         DATA.province_set_throughput_boosts(id, j --[[@as production_method_id]],  -20)    end
@@ -959,7 +959,7 @@ function DATA.test_set_get_0()
     if not test_passed then print("local_resources.location", -15, DATA.province[id].local_resources[0].location) end
     test_passed = test_passed and fat_id.mood == 5
     if not test_passed then print("mood", 5, fat_id.mood) end
-    for j = 1, 4 do
+    for j = 1, 5 do
         test_passed = test_passed and DATA.province_get_unit_types(id, j --[[@as unit_type_id]]) == 20
     end
     if not test_passed then print("unit_types", 20, DATA.province[id].unit_types[0]) end
@@ -987,9 +987,9 @@ function DATA.test_set_get_0()
     if test_passed then print("PASSED") else print("ERROR") end
     local id = DATA.create_warband()
     local fat_id = DATA.fatten_warband(id)
-    for j = 1, 4 do
+    for j = 1, 5 do
         DATA.warband_set_units_current(id, j --[[@as unit_type_id]],  4)    end
-    for j = 1, 4 do
+    for j = 1, 5 do
         DATA.warband_set_units_target(id, j --[[@as unit_type_id]],  6)    end
     fat_id.current_status = 0
     fat_id.idle_stance = 1
@@ -1004,11 +1004,11 @@ function DATA.test_set_get_0()
     fat_id.morale = -7
     fat_id.in_settlement = true
     local test_passed = true
-    for j = 1, 4 do
+    for j = 1, 5 do
         test_passed = test_passed and DATA.warband_get_units_current(id, j --[[@as unit_type_id]]) == 4
     end
     if not test_passed then print("units_current", 4, DATA.warband[id].units_current[0]) end
-    for j = 1, 4 do
+    for j = 1, 5 do
         test_passed = test_passed and DATA.warband_get_units_target(id, j --[[@as unit_type_id]]) == 6
     end
     if not test_passed then print("units_target", 6, DATA.warband[id].units_target[0]) end

@@ -90,8 +90,8 @@ DATA.warband_movement_progress= {}
 ---warband: LUA bindings---
 
 DATA.warband_size = 50000
-DCON.dcon_warband_resize_units_current(5)
-DCON.dcon_warband_resize_units_target(5)
+DCON.dcon_warband_resize_units_current(6)
+DCON.dcon_warband_resize_units_target(6)
 DCON.dcon_warband_resize_inventory(101)
 ---@return warband_id
 function DATA.create_warband()

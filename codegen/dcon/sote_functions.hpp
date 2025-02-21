@@ -76,4 +76,6 @@ extern "C" {
 	DCON_LUADLL_API float pop_work_time(dcon::pop_id pop,float free,float party,float forage);
 	// misc
 	DCON_LUADLL_API bool pop_same_location(dcon::pop_id,dcon::pop_id);
+    DCON_LUADLL_API bool is_dependent(dcon::pop_id child);
+    DCON_LUADLL_API bool is_dependent_of(dcon::pop_id child,dcon::pop_id parent);
 }

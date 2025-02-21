@@ -120,6 +120,11 @@ function pg.add_remove(to_add,to_remove)
 		local parent_home_province = HOME(pp)
 		if parent_home_province ~= INVALID_ID then
 			province_utils.set_home(parent_home_province, newborn)
+		else -- if no home province, check for realm to asign
+			local parent_realm = DATA.realm_pop_get_realm(DATA.get_realm_pop_from_pop(pp))
+			if parent_realm ~= INVALID_ID then
+				SET_REALM(newborn,parent_realm)
+			end
 		end
 		local parent_province = PROVINCE(pp)
 		if parent_province ~= INVALID_ID then

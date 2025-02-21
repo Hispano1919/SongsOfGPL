@@ -450,6 +450,18 @@ function POP_TIME(pop_id)
 end
 
 ---@param pop_id pop_id
+---@return boolean
+function IS_DEPENDENT(pop_id)
+	return DCON.is_dependent(pop_id)
+end
+---@param pop_id pop_id
+---@param parent pop_id
+---@return boolean
+function IS_DEPENDENT_OF(pop_id,parent)
+	return DCON.is_dependent_of(pop_id,parent)
+end
+
+---@param pop_id pop_id
 function SET_BUSY(pop_id)
 	DATA.pop_set_busy(pop_id, true)
 end

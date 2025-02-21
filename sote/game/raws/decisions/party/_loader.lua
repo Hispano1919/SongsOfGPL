@@ -24,6 +24,7 @@ return function ()
 		pretrigger = function(root)
 			if BUSY(root) then return false end
 			if LOCAL_REALM(root)~= REALM(root)then return false end
+			if IS_DEPENDENT(root) then return false end
 			if LEADER_OF_WARBAND(root) ~= INVALID_ID then return false end
 			if RECRUITER_OF_WARBAND(root) ~= INVALID_ID then return false end
 			if WORLD.player_character ~= root then

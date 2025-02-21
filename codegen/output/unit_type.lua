@@ -45,7 +45,7 @@ DATA.unit_type_icon= {}
 
 ---unit_type: LUA bindings---
 
-DATA.unit_type_size = 4
+DATA.unit_type_size = 5
 ---@return unit_type_id
 function DATA.create_unit_type()
     ---@type unit_type_id
@@ -139,13 +139,18 @@ UNIT_TYPE = {
     INVALID = 0,
     WARRIOR = 1,
     CIVILIAN = 2,
+    FOLLOWER = 3,
 }
 local index_unit_type
 index_unit_type = DATA.create_unit_type()
 DATA.unit_type_set_name(index_unit_type, "warrior")
-DATA.unit_type_set_description(index_unit_type, "fighter")
+DATA.unit_type_set_description(index_unit_type, "combatant")
 DATA.unit_type_set_icon(index_unit_type, "guards.png")
 index_unit_type = DATA.create_unit_type()
 DATA.unit_type_set_name(index_unit_type, "civilian")
 DATA.unit_type_set_description(index_unit_type, "noncombatant")
 DATA.unit_type_set_icon(index_unit_type, "minions.png")
+index_unit_type = DATA.create_unit_type()
+DATA.unit_type_set_name(index_unit_type, "follower")
+DATA.unit_type_set_description(index_unit_type, "follower")
+DATA.unit_type_set_icon(index_unit_type, "ages.png")

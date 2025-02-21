@@ -33,6 +33,14 @@ function travel_effects.exit_settlement(character)
 		if DATA.pop_location_get_location(location_unit_pop) ~= INVALID_ID then
 			DATA.delete_pop_location(location_unit_pop)
 		end
+
+		-- automatically recruit dependents as followers when leaving settlement
+		DATA.for_each_parent_child_relation_from_parent(unit,function(child_rel)
+			local child = DATA.parent_child_relation_get_child(child_rel)
+			if IS_DEPENDENT_OF(child,unit) and UNIT_OF(child)==INVALID_ID then
+				require "game.raws.effects.demography".recruit(child,warband,UNIT_TYPE.FOLLOWER)
+			end
+		end);
 	end)
 end
 
@@ -63,11 +71,10 @@ function travel_effects.enter_settlement(character)
 		if (IS_CHARACTER(unit)) then
 			DATA.force_create_character_location(local_province, unit)
 		end
-		-- unrecruit children if at home
-		if local_province == HOME(unit) then
-			local age = AGE_YEARS(unit)
-			local teen_age = DATA.race_get_teen_age(RACE(unit))
-			if age < teen_age then
+		-- automatically unrecruit non dependent followers if at home
+		if DATA.warband_unit_get_type(item) == UNIT_TYPE.FOLLOWER then
+			local home = HOME(unit)
+			if home~=INVALID_ID and home==province and not IS_DEPENDENT(unit) then
 				require "game.raws.effects.demography".unrecruit(unit)
 			end
 		end

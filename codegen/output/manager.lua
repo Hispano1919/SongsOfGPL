@@ -116,6 +116,8 @@ ffi.cdef[[
 	float pop_work_time(uint32_t pop,float free,float party,float forage);
 	// misc
 	bool pop_same_location(uint32_t pop_a,uint32_t pop_b);
+    bool is_dependent(uint32_t child);
+    bool is_dependent_of(uint32_t child,uint32_t parent);
 ]]
 
 

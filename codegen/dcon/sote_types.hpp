@@ -155,6 +155,7 @@ enum class UNIT_TYPE : uint8_t {
     INVALID = 0,
     WARRIOR = 1,
     CIVILIAN = 2,
+    FOLLOWER = 3,
 };
 
 enum class LAW_TRADE : uint8_t {
