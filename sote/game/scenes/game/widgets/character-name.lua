@@ -67,7 +67,7 @@ local function name(character_id)
         if guard and guard == in_warband then
             return title .. " of " .. REALM_NAME(guard)
         else
-            return title .. " of " .. strings.title(DATA.warband_get_name(character_id))
+            return title .. " of " .. WARBAND_NAME(character_id)
         end
     elseif realm ~= INVALID_ID then
         return strings.title(rank_name(character_id)) .. " of " .. DATA.realm_get_name(realm)

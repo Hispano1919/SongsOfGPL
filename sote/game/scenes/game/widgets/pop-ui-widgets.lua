@@ -77,7 +77,7 @@ function pui.render_forage_time(rect,pop_id)
 		tooltip = tooltip .. " but " .. ut.to_fixed_point2((1-free_time)*100) .. "% of its time is spent learning."
 	elseif warband_time > 0 then
 		tooltip = tooltip .. " but " .. ut.to_fixed_point2(warband_time*100)
-			.. "% of its time is used by " .. strings.title(DATA.warband_get_name(UNIT_OF(pop_id))) .. "."
+			.. "% of its time is used by " .. WARBAND_NAME(UNIT_OF(pop_id)) .. "."
 	else
 		tooltip = tooltip .. "."
 	end
@@ -94,7 +94,7 @@ function pui.render_warband_time(rect,pop_id)
 		local _, warband_time, _, _ = POP_TIME(pop_id)
 		local status = DATA.warband_get_current_status(warband_id)
 		local tooltip = pop_name .. " has spent " .. ut.to_fixed_point2(warband_time*100)
-			.. "% of " .. HISHER(pop_id) .. " time with " .. strings.title(DATA.warband_get_name(warband_id)) .. " this month. "
+			.. "% of " .. HISHER(pop_id) .. " time with " .. WARBAND_NAME(warband_id) .. " this month. "
 			.. strings.title(HESHE(pop_id)) ..  " is currently " .. DATA.warband_status_get_description(status)
 			.. ", increasing this month's warband time towards " .. ut.to_fixed_point2(DATA.warband_status_get_time_used(status)*100) .. "%."
 		ut.generic_number_field("guards.png", warband_time, rect, tooltip, ut.NUMBER_MODE.PERCENTAGE, ut.NAME_MODE.ICON,true)
@@ -190,7 +190,7 @@ end
 ---@param pop_id pop_id
 ---@return string
 function pui.unit_tooltip(pop_id)
-	local unit = UNITTYPE_OF(pop_id)
+	local unit = UNIT_TYPE_OF(pop_id)
 	if unit ~= INVALID_ID then
 		return strings.title(DATA.unit_type_get_name(unit))
 			.. "\n\t" .. DATA.unit_type_get_description(unit)
@@ -207,7 +207,7 @@ function pui.render_unit_icon(rect, pop_id, tooltip)
 	local center_square = rect:centered_square()
 	local warband = UNIT_OF(pop_id)
 	if warband~=INVALID_ID then
-		ut.render_icon(center_square, DATA.unit_type_get_icon(UNITTYPE_OF(pop_id)), .8, .8, .8, 1, true)
+		ut.render_icon(center_square, DATA.unit_type_get_icon(UNIT_TYPE_OF(pop_id)), .8, .8, .8, 1, true)
 	else
 		ut.render_icon(center_square,"inner-self.png", .8, .8, .8, 1, true)
 	end
@@ -319,7 +319,7 @@ function pui.occupation_tooltip(pop_id)
 		if warband_id ~= INVALID_ID then
 			local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 			local unit_name = DATA.unit_type_get_name(unit_type_id)
-			tooltip = strings.title(DATA.warband_get_name(warband_id))
+			tooltip = WARBAND_NAME(warband_id)
 				.. "\t" .. ut.to_fixed_point2(warband_time*100) .. "%"
 				.. "\n\t" .. tooltip
 		end

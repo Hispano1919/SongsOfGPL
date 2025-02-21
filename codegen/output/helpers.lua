@@ -576,7 +576,7 @@ end
 ---commenting
 ---@param unit pop_id
 ---@return unit_type_id
-function UNITTYPE_OF(unit)
+function UNIT_TYPE_OF(unit)
 	local unitship = DATA.get_warband_unit_from_unit(unit)
 	return DATA.warband_unit_get_type(unitship)
 end
@@ -613,6 +613,13 @@ end
 ---@return string
 function PROVINCE_NAME(province_id)
 	return DATA.province_get_name(province_id)
+end
+
+---commenting
+---@param warband_id warband_id
+---@return string
+function WARBAND_NAME(warband_id)
+	return DATA.warband_get_name(warband_id)
 end
 
 ---commenting

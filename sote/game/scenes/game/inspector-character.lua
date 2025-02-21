@@ -230,7 +230,7 @@ local function render_warband_overview(game,rect,pop_id,player_id,title)
     if warband_id ~= INVALID_ID then
         local warband_status = DATA.warband_get_current_status(warband_id)
         local warband_location = warband_utils.location(warband_id)
-        local warband_name = strings.title(DATA.warband_get_name(warband_id))
+        local warband_name = WARBAND_NAME(warband_id)
         local status_name = DATA.warband_status_get_name(warband_status)
         local province = LOCAL_PROVINCE(warband_utils.active_leader(warband_id))
         local warband_tooltip = warband_name .. " is currently " .. status_name .. " in " .. PROVINCE_NAME(province) .. "."

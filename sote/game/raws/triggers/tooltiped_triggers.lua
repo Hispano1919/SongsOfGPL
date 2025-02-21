@@ -1,3 +1,5 @@
+local strings = require "engine.string"
+
 local province_utils = require "game.entities.province".Province
 
 local office_triggers = require "game.raws.triggers.offices"
@@ -37,6 +39,88 @@ Trigger.Pretrigger.not_busy = {
 	end,
 	condition = function(root)
 		return not BUSY(root)
+	end
+}
+
+---@type Pretrigger
+Trigger.Pretrigger.is_dependent = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		local parent = PARENT(root)
+		if parent ~= INVALID_ID then
+			return { "You are not a dependent of " .. NAME(parent) .. "!"}
+		end
+		return { "You are not dependent on anyone!" }
+	end,
+	condition = function(root)
+		return IS_DEPENDENT(root)
+	end
+}
+---@type Pretrigger
+Trigger.Pretrigger.not_dependent = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "You are a dependent of " .. NAME(PARENT(root)) }
+	end,
+	condition = function(root)
+		return not IS_DEPENDENT(root)
+	end
+}
+
+---@type Pretrigger
+Trigger.Pretrigger.is_in_party = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "You are not part of a party!" }
+	end,
+	condition = function(root)
+		return UNIT_OF(root) ~= INVALID_ID
+	end
+}
+---@type Pretrigger
+Trigger.Pretrigger.not_in_party = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "You are part of " .. WARBAND_NAME(UNIT_OF(root)) .. "!" }
+	end,
+	condition = function(root)
+		return UNIT_OF(root) == INVALID_ID
+	end
+}
+
+---@type Pretrigger
+Trigger.Pretrigger.not_party_civilian = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		local warband = UNIT_OF(root)
+		if warband ~= INVALID_ID then
+			return { "You are a civilian of " .. WARBAND_NAME(warband) }
+		end
+		return { "You are not in a warband!" }
+	end,
+	condition = function(root)
+		return UNIT_OF(root) ~= nil and UNIT_TYPE_OF(root) ~= UNIT_TYPE.CIVILIAN
+	end
+}
+---@type Pretrigger
+Trigger.Pretrigger.not_party_warrior = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		local warband = UNIT_OF(root)
+		if warband ~= INVALID_ID then
+			return { "You are a warrior of " .. WARBAND_NAME(warband) }
+		end
+		return { "You are not in a warband!" }
+	end,
+	condition = function(root)
+		return UNIT_OF(root) ~= nil and UNIT_TYPE_OF(root) ~= UNIT_TYPE.WARRIOR
+	end
+}
+---@type Pretrigger
+Trigger.Pretrigger.not_party_follower = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		local warband = UNIT_OF(root)
+		if warband ~= INVALID_ID then
+			return { "You are not a follower of " .. WARBAND_NAME(warband) }
+		end
+		return { "You are a follower of any warband!" }
+	end,
+	condition = function(root)
+		return UNIT_OF(root) ~= nil and UNIT_TYPE_OF(root) ~= UNIT_TYPE.FOLLOWER
 	end
 }
 
@@ -144,7 +228,34 @@ function Trigger.Pretrigger.OR(list_of_pretriggers)
 end
 
 ---@type Pretrigger
-Trigger.Pretrigger.leading_idle_warband = {
+Trigger.Pretrigger.not_leading_party = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		local warband = UNIT_OF(root)
+		if warband ~= INVALID_ID then
+			return { "You are leading " .. WARBAND_NAME(warband) .. "." }
+		end
+		return { " You are not in a party!"}
+	end,
+	condition = function(root)
+		return UNIT_OF(root) ~= INVALID_ID and LEADER_OF_WARBAND(root) == INVALID_ID
+	end
+}
+---@type Pretrigger
+Trigger.Pretrigger.leading_party = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		local warband = UNIT_OF(root)
+		if warband ~= INVALID_ID then
+			return { "You are leading" .. WARBAND_NAME(warband) .. "." }
+		end
+		return { " You are not in a party!"}
+	end,
+	condition = function(root)
+		return UNIT_OF(root) ~= INVALID_ID and LEADER_OF_WARBAND(root) ~= INVALID_ID
+	end
+}
+
+---@type Pretrigger
+Trigger.Pretrigger.leading_idle_party = {
 	tooltip_on_condition_failure = function(root, primary_target)
 		return { "You do not lead any idle party." }
 	end,

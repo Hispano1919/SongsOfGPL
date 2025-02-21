@@ -273,7 +273,7 @@ function window.draw(gamescene)
 		-- warband realm inspector button
 		ib.icon_button_to_realm(gamescene, realm, realm_rect)
 		-- warband name
-		ui.centered_text(DATA.warband_get_name(warband) .. ", " .. desc, top_bar_layout:next(rect.width - (ut.BASE_HEIGHT + spacing) * 2, ut.BASE_HEIGHT))
+		ui.centered_text(WARBAND_NAME(warband) .. ", " .. desc, top_bar_layout:next(rect.width - (ut.BASE_HEIGHT + spacing) * 2, ut.BASE_HEIGHT))
 		-- close button
 		ib.icon_button_to_close(gamescene, top_bar_layout:next(ut.BASE_HEIGHT, ut.BASE_HEIGHT))
 	end
