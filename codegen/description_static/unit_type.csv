@@ -1,3 +1,4 @@
 name;description;icon
-warrior;fighter;guards.png
+warrior;combatant;guards.png
 civilian;noncombatant;minions.png
+follower;follower;ages.png

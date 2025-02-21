@@ -196,7 +196,7 @@ local function load()
 				else
 					-- we found someone
 					if not IS_CHARACTER(successor) then
-						pe.grant_nobility(successor, POLITICS_REASON.NOTENOUGHNOBLES)
+						pe.grant_nobility(successor, realm, POLITICS_REASON.NOTENOUGHNOBLES)
 					end
 					-- now we can guarantee that it's a character:
 

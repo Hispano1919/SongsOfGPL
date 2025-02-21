@@ -130,7 +130,7 @@ function pg.add_remove(to_add,to_remove)
 			end
 		else -- if not in a settlement, then part of a warband, add child to it
 			local warband = UNIT_OF(pp)
-			require "game.raws.effects.demography".recruit(newborn,warband,UNIT_TYPE.CIVILIAN)
+			require "game.raws.effects.demography".recruit(newborn,warband,UNIT_TYPE.FOLLOWER)
 		end
 
 		DATA.force_create_parent_child_relation(pp, newborn)
@@ -159,7 +159,8 @@ end
 ---check pop for birth or death
 function pg.run(pop,to_add,to_remove)
 	assert(DCON.dcon_pop_is_valid(pop - 1), tostring(pop))
-	local min_life_satisfaction = 3
+	local min_life_satisfaction = DATA.pop_get_life_needs_satisfaction(pop)
+--[[
 	for index = 1, MAX_NEED_SATISFACTION_POSITIONS_INDEX do
 		local use_case = DATA.pop_get_need_satisfaction_use_case(pop, index)
 		if use_case == 0 then
@@ -175,7 +176,7 @@ function pg.run(pop,to_add,to_remove)
 			end
 		end
 	end
-
+--]]
 	local race = DATA.pop_get_race(pop)
 	local age = AGE_YEARS(pop)
 	local max_age = DATA.race_get_max_age(race)

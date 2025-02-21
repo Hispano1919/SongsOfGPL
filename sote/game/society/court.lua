@@ -89,7 +89,7 @@ function co.run(realm)
 			end))
 
 			if pop then
-				pe.grant_nobility(pop, POLITICS_REASON.POPULATIONGROWTH)
+				pe.grant_nobility(pop, realm, POLITICS_REASON.POPULATIONGROWTH)
 			end
 		end
 	end)

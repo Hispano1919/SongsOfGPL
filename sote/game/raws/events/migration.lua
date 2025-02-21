@@ -61,6 +61,7 @@ function load()
 			if expedition_leader == nil then
 				expedition_leader = political_effects.grant_nobility_to_random_pop(
 					associated_data.origin_province,
+					PROVINCE_REALM(associated_data.origin_province),
 					POLITICS_REASON.EXPEDITIONLEADER
 				)
 				if expedition_leader == nil then

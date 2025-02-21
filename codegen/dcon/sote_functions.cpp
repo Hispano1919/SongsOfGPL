@@ -484,6 +484,24 @@ bool pop_same_location(dcon::pop_id a, dcon::pop_id b) {
 	return false;
 }
 
+bool is_dependent_of(dcon::pop_id pop, dcon::pop_id parent) {
+	auto age = age_years(pop);
+	auto race = state.pop_get_race(pop);
+	auto teen_age = state.race_get_teen_age(race);
+	if (age < teen_age && parent && pop_same_location(pop,parent))
+		return true;
+	return false;
+}
+bool is_dependent(dcon::pop_id pop) {
+	auto age = age_years(pop);
+	auto race = state.pop_get_race(pop);
+	auto teen_age = state.race_get_teen_age(race);
+	auto parent = state.parent_child_relation_get_parent(state.pop_get_parent_child_relation_as_child(pop));
+	if (age < teen_age && parent && pop_same_location(pop,parent))
+		return true;
+	return false;
+}
+
 void update_vegetation(float speed) {
 	state.execute_serial_over_tile([speed](auto ids) {
 		auto conifer = state.tile_get_conifer(ids);
@@ -1146,11 +1164,7 @@ void pops_consume() {
 	static auto uses_buffer = state.trade_good_category_make_vectorizable_float_buffer();
 
 	state.for_each_pop([&](auto pop){
-		auto age = age_years(pop);
-		auto race = state.pop_get_race(pop);
-		auto teen_age = state.race_get_teen_age(race);
-		auto parent = state.parent_child_relation_get_parent(state.pop_get_parent_child_relation_as_child(pop));
-		if (age < teen_age && parent && pop_same_location(pop,parent)) return;
+		if (is_dependent(pop)) return;
 
 		// std::cout << "pop: " << pop.index();
 
@@ -1162,17 +1176,23 @@ void pops_consume() {
 
 			auto demanded = need.demanded;
 
+			auto use = dcon::use_case_id{dcon::use_case_id::value_base_t(need.use_case - 1)};
+
 			state.pop_for_each_parent_child_relation_as_parent(pop, [&](auto child_rel) {
 				auto child = state.parent_child_relation_get_child(child_rel);
-				auto child_age = age_years(child);
-				auto teen_age = state.race_get_teen_age(state.pop_get_race(child));
-				if (child_age < teen_age && pop_same_location(pop,child)) {
+				if (is_dependent_of(pop,child)) {
 					base_types::need_satisfaction& need_child = state.pop_get_need_satisfaction(child, i);
 					demanded += need_child.demanded;
+					// transfer half of relevent trade goods for collective satisfaction
+					state.use_case_for_each_use_weight_as_use_case(use, [&](auto weight_id){
+						auto trade_good = state.use_weight_get_trade_good(weight_id);
+						auto amount = state.pop_get_inventory(child,trade_good);
+						state.pop_set_inventory(child,trade_good,amount*0.5);
+						state.pop_set_inventory(pop,trade_good,state.pop_get_inventory(pop,trade_good)+amount*0.5);
+					});
 				}
 			});
 
-			auto use = dcon::use_case_id{dcon::use_case_id::value_base_t(need.use_case - 1)};
 
 			auto actual_consumption_rate = state.use_case_get_good_consumption(use);
 			auto satisfied = 0.f;
@@ -1514,7 +1534,7 @@ void pops_update_stats() {
 		auto forage_ratio = state.pop_get_forage_ratio(pop);
 		if (life_satisfaction < 0.5f) {
 			forage_ratio *= 1.05f;
-		} else if (life_satisfaction > 0.75f) {
+		} else if (life_satisfaction >= 1.f) {
 			forage_ratio *= 0.95f;
 		}
 		if (forage_ratio < 0.05f) forage_ratio = 0.05f;
