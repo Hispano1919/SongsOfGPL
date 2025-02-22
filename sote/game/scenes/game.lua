@@ -2000,7 +2000,7 @@ function gam.draw()
 
 
 	if PROFILE_FLAG then
-		local pop_count, chr_count, war_count, rlm_count = 0, 0, 0, 0
+		local pop_count, chr_count, war_count, est_count, rlm_count = 0, 0, 0, 0, 0
 		DATA.for_each_pop(function (item)
 			pop_count = pop_count + 1
 			if IS_CHARACTER(item) then
@@ -2010,6 +2010,9 @@ function gam.draw()
 		DATA.for_each_warband(function (item)
 			war_count = war_count + 1
 		end)
+		DATA.for_each_estate(function (item)
+			est_count = est_count + 1
+		end)
 		DATA.for_each_realm(function (item)
 			rlm_count = rlm_count + 1
 		end)
@@ -2017,8 +2020,9 @@ function gam.draw()
 		local reset_rect = profile_rect:subrect(0, 0, 50, 20, "left", "up")
 		local pop_rect = profile_rect:subrect(50, 0, 100, 20, "left", "up")
 		local chr_rect = profile_rect:subrect(150, 0, 100, 20, "left", "up")
-		local war_rect = profile_rect:subrect(250, 0, 100, 20, "left", "up")
-		local rlm_rect = profile_rect:subrect(350, 0, 100, 20, "left", "up")
+		local est_rect = profile_rect:subrect(250, 0, 100, 20, "left", "up")
+		local war_rect = profile_rect:subrect(350, 0, 100, 20, "left", "up")
+		local rlm_rect = profile_rect:subrect(450, 0, 100, 20, "left", "up")
 		ui.panel(profile_rect)
 		profile_rect.y = profile_rect.y + 20
 		profile_rect.height = profile_rect.height - 20
@@ -2042,6 +2046,7 @@ function gam.draw()
 		end
 		ut.generic_number_field("POP", pop_count, pop_rect, "number of pop in world",ut.NUMBER_MODE.INTEGER,ut.NAME_MODE.NAME)
 		ut.generic_number_field("CHR", chr_count, chr_rect, "number of characters in world",ut.NUMBER_MODE.INTEGER,ut.NAME_MODE.NAME)
+		ut.generic_number_field("EST", est_count, est_rect, "number of active estates in world",ut.NUMBER_MODE.INTEGER,ut.NAME_MODE.NAME)
 		ut.generic_number_field("WAR", war_count, war_rect, "number of characters in world",ut.NUMBER_MODE.INTEGER,ut.NAME_MODE.NAME)
 		ut.generic_number_field("RLM", rlm_count, rlm_rect, "number of active realms in world",ut.NUMBER_MODE.INTEGER,ut.NAME_MODE.NAME)
 	end

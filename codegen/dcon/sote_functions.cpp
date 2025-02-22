@@ -422,7 +422,7 @@ float pop_free_time(dcon::pop_id pop) {
 }
 float pop_warband_time(dcon::pop_id pop, float free) {
 	auto remaining = free - 0.05f;
-	if (free < 0.f) {
+	if (remaining <= 0.f) {
 		return 0.f;
 	}
 	auto unitship = state.pop_get_warband_unit_as_unit(pop);
