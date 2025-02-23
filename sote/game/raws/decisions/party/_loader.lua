@@ -1,13 +1,14 @@
 local utils = require "game.raws.raws-utils"
 local Decision = require "game.raws.decisions"
 
+local economic_values = require "game.raws.values.economy"
+
 local military_effects = require "game.raws.effects.military"
 local economic_effects = require "game.raws.effects.economy"
 
 local demography_effects = require "game.raws.effects.demography"
 
 local pretriggers = require "game.raws.triggers.tooltiped_triggers".Pretrigger
-
 
 return function ()
 	local base_gift_size = 20
@@ -18,9 +19,9 @@ return function ()
 		function(root)
 			return "Gather my own party?"
 		end,
-		1/12,
+		1/12, -- Once every year on average
 		{
-			pretriggers.not_busy, pretriggers.not_dependent, pretriggers.not_in_party,
+			pretriggers.not_busy, pretriggers.not_dependent,
 			pretriggers.not_in_party
 		},
 		{
@@ -53,7 +54,7 @@ return function ()
 		function(root)
 			return "Disband my party?"
 		end,
-		0,
+		0, -- AI never disbands
 		{
 			pretriggers.not_busy, pretriggers.leading_idle_party,
 			pretriggers.leading_party
@@ -75,7 +76,7 @@ return function ()
 		function(root)
 			return "Leave " .. WARBAND_NAME(UNIT_OF(root)) .."?"
 		end,
-		1/12,
+		1/12, -- Once every year on average
 		{
 			pretriggers.not_busy, pretriggers.not_dependent,
 			pretriggers.is_in_party, pretriggers.not_leading_party
@@ -109,13 +110,13 @@ return function ()
 		function(root)
 			return "Fight for " .. WARBAND_NAME(UNIT_OF(root))
 		end,
-		1/24,
+		1/24, -- Once every 2 years on average
 		{
-			pretriggers.not_busy, pretriggers.not_party_warrior,
-			pretriggers.is_in_party, pretriggers.not_party_follower
+			pretriggers.not_busy, pretriggers.not_unit_type(UNIT_TYPE.WARRIOR),
+			pretriggers.is_in_party, pretriggers.not_unit_type(UNIT_TYPE.FOLLOWER)
 		},
 		{
-			pretriggers.is_in_party, pretriggers.not_party_follower
+			pretriggers.is_in_party, pretriggers.not_unit_type(UNIT_TYPE.FOLLOWER)
 		},
 		function(root)
 			local warband = UNIT_OF(root)
@@ -143,13 +144,13 @@ return function ()
 		function(root)
 			return "Stop fighting with " .. WARBAND_NAME(UNIT_OF(root))
 		end,
-		1/24,
+		1/24, -- Once every 2 years on average
 		{
-			pretriggers.not_busy, pretriggers.not_party_civilian,
-			pretriggers.is_in_party, pretriggers.not_party_follower
+			pretriggers.not_busy, pretriggers.not_unit_type(UNIT_TYPE.CIVILIAN),
+			pretriggers.is_in_party, pretriggers.not_unit_type(UNIT_TYPE.FOLLOWER)
 		},
 		{
-			pretriggers.is_in_party, pretriggers.not_party_follower
+			pretriggers.is_in_party, pretriggers.not_unit_type(UNIT_TYPE.FOLLOWER)
 		},
 		function(root)
 			local warband = UNIT_OF(root)
@@ -171,46 +172,63 @@ return function ()
 		end
 	)
 
-		---@type DecisionCharacter
-	Decision.Character:new {
-		name = 'donate-wealth-warband',
-		ui_name = "Donate wealth to your warband.",
-		tooltip = utils.constant_string("Donate wealth (" .. tostring(base_gift_size) .. ") to your warband treasury."),
-		sorting = 1,
-		primary_target = "none",
-		secondary_target = 'none',
-		base_probability = 1 / 3 , -- Once every 3 months on average
-		pretrigger = function(root)
-			if BUSY(root) then return false end
-			if SAVINGS(root) < base_gift_size then
-				return false
-			end
-			if LEADER_OF_WARBAND(root) == INVALID_ID then return false end
-			return true
+	Decision.CharacterSelf:new_from_trigger_lists(
+		'donate-wealth-party',
+		"Donate wealth to your party.",
+		function(root)
+			return "Donate " .. require "game.ui-utils".to_fixed_point2(SAVINGS(root)/3) .. MONEY_SYMBOL .. " to " .. WARBAND_NAME(UNIT_OF(root))
 		end,
-		clickable = function(root, primary_target)
-			if LEADER_OF_WARBAND(root) == INVALID_ID then return false end
-			if WORLD:is_player(root) then return false end
-			return true
+		1/3, -- Once every 3 months on average
+		{
+			pretriggers.not_busy,
+			pretriggers.is_in_party
+		},
+		{
+			pretriggers.is_in_party
+		},
+		function(root)
+			economic_effects.gift_to_warband(LEADER_OF_WARBAND(root), root, SAVINGS(root) / 3)
 		end,
-		available = function(root, primary_target)
-			if SAVINGS(root) < 5 then
-				return false
-			end
-			return true
-		end,
-		ai_secondary_target = function(root, primary_target)
-			return nil, true
-		end,
-		ai_will_do = function(root, primary_target, secondary_target)
-			if DATA.warband_get_treasury(LEADER_OF_WARBAND(root)) < SAVINGS(root) / 2 then
+		function(root)
+			if LEADER_OF_WARBAND(root) ~= INVALID_ID and DATA.warband_get_treasury(LEADER_OF_WARBAND(root)) < SAVINGS(root) / 2 then
 				return 1
 			end
-
 			return 0
-		end,
-		effect = function(root, primary_target, secondary_target)
-			economic_effects.gift_to_warband(LEADER_OF_WARBAND(root), root, SAVINGS(root) / 3)
 		end
-	}
+	)
+
+	Decision.CharacterSelf:new_from_trigger_lists(
+		'buy-party-supplies',
+		"Buy supplies",
+		function(root)
+			return "Try to buy a months worth of traveling supplies"
+		end,
+		1, -- Once every month on average
+		{
+			--tooltips
+			pretriggers.not_busy, pretriggers.leading_idle_party, pretriggers.in_settlement,
+			--visible
+			pretriggers.leading_party
+		},
+		{
+			--visible
+			pretriggers.leading_party
+		},
+		function(root)
+			--effect
+			print("buying supplies...")
+			local party = UNIT_OF(root)
+			local max = require "game.entities.warband".daily_supply_consumption(party)*30
+			local amount = math.min(max,economic_values.get_local_amount_of_use(PROVINCE(root),CALORIES_USE_CASE))
+			require "game.raws.effects.economy".party_buy_use(party, CALORIES_USE_CASE, amount)
+		end,
+		function(root)
+			-- ai
+			if require "game.raws.values.economy".days_of_travel(UNIT_OF(root)) > 30 then
+				return 1
+			end
+			return 0
+		end
+	)
+
 end

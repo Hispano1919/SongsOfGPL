@@ -32,6 +32,37 @@ CHECKBOX_NEGATIVE = " x "
 ---@field tooltip_on_condition_failure fun(root: Character, primary_target:Province): string[]
 ---@field condition fun(root: Character, primary_target:Province): boolean
 
+
+---Prepares a trigger which is true if one of list_of_pretriggers is true
+---@param list_of_pretriggers Pretrigger[]
+---@return Pretrigger
+function Trigger.Pretrigger.OR(list_of_pretriggers)
+	return {
+		tooltip_on_condition_failure = function(root, primary_target)
+			local tooltip = { "You failed one of prerequisites:" }
+			for _, trigger in ipairs(list_of_pretriggers) do
+				if trigger.condition(root) then
+					return {}
+				else
+					for _, current_tooltip in ipairs(trigger.tooltip_on_condition_failure(root, primary_target)) do
+						table.insert(tooltip, " " .. CHECKBOX_NEGATIVE .. current_tooltip)
+					end
+				end
+			end
+			return tooltip
+		end,
+		condition = function(root)
+			for _, trigger in ipairs(list_of_pretriggers) do
+				if trigger.condition(root) then
+					return true
+				end
+			end
+		end
+	}
+end
+
+-- SELF TRIGGERS (NO TARGET)
+
 ---@type Pretrigger
 Trigger.Pretrigger.not_busy = {
 	tooltip_on_condition_failure = function(root, primary_target)
@@ -39,6 +70,15 @@ Trigger.Pretrigger.not_busy = {
 	end,
 	condition = function(root)
 		return not BUSY(root)
+	end
+}
+
+Trigger.Pretrigger.in_settlement = {
+	tooltip_on_condition_failure = function(root, primary_target)
+		return { "You are not in a settlement!" }
+	end,
+	condition = function(root)
+		return PROVINCE(root) ~= INVALID_ID
 	end
 }
 
@@ -68,7 +108,7 @@ Trigger.Pretrigger.not_dependent = {
 ---@type Pretrigger
 Trigger.Pretrigger.is_in_party = {
 	tooltip_on_condition_failure = function(root, primary_target)
-		return { "You are not part of a party!" }
+		return { "You are not in a party!" }
 	end,
 	condition = function(root)
 		return UNIT_OF(root) ~= INVALID_ID
@@ -77,52 +117,50 @@ Trigger.Pretrigger.is_in_party = {
 ---@type Pretrigger
 Trigger.Pretrigger.not_in_party = {
 	tooltip_on_condition_failure = function(root, primary_target)
-		return { "You are part of " .. WARBAND_NAME(UNIT_OF(root)) .. "!" }
+		return { "You are a " .. DATA.unit_type_name(UNIT_TYPE_OF(root))
+			.. " of " .. WARBAND_NAME(UNIT_OF(root)) .. "!" }
 	end,
 	condition = function(root)
 		return UNIT_OF(root) == INVALID_ID
 	end
 }
 
----@type Pretrigger
-Trigger.Pretrigger.not_party_civilian = {
-	tooltip_on_condition_failure = function(root, primary_target)
-		local warband = UNIT_OF(root)
-		if warband ~= INVALID_ID then
-			return { "You are a civilian of " .. WARBAND_NAME(warband) }
+---@param unit_type unit_type_id
+---@return Pretrigger
+function Trigger.Pretrigger.is_unit_type(unit_type)
+	local result = {
+		tooltip_on_condition_failure = function(root, primary_target)
+			local warband = UNIT_OF(root)
+			if warband ~= INVALID_ID then
+				return { "You are a " .. DATA.unit_type_name(UNIT_TYPE_OF(root))
+				.. " of " .. WARBAND_NAME(warband) }
+			end
+			return { "You are not in a party!" }
+		end,
+		condition = function(root)
+			return UNIT_OF(root) ~= nil and UNIT_TYPE_OF(root) ~= unit_type
 		end
-		return { "You are not in a warband!" }
-	end,
-	condition = function(root)
-		return UNIT_OF(root) ~= nil and UNIT_TYPE_OF(root) ~= UNIT_TYPE.CIVILIAN
-	end
-}
----@type Pretrigger
-Trigger.Pretrigger.not_party_warrior = {
-	tooltip_on_condition_failure = function(root, primary_target)
-		local warband = UNIT_OF(root)
-		if warband ~= INVALID_ID then
-			return { "You are a warrior of " .. WARBAND_NAME(warband) }
+	}
+	return result
+end
+---@param unit_type unit_type_id|integer
+---@return Pretrigger
+function Trigger.Pretrigger.not_unit_type(unit_type)
+	local result = {
+		tooltip_on_condition_failure = function(root, primary_target)
+			local warband = UNIT_OF(root)
+			if warband ~= INVALID_ID then
+				return { "You are a " .. DATA.unit_type_name(UNIT_TYPE_OF(root))
+				.. " of " .. WARBAND_NAME(warband) }
+			end
+			return { "You are not in a party!" }
+		end,
+		condition = function(root)
+			return UNIT_OF(root) ~= nil and UNIT_TYPE_OF(root) == unit_type
 		end
-		return { "You are not in a warband!" }
-	end,
-	condition = function(root)
-		return UNIT_OF(root) ~= nil and UNIT_TYPE_OF(root) ~= UNIT_TYPE.WARRIOR
-	end
-}
----@type Pretrigger
-Trigger.Pretrigger.not_party_follower = {
-	tooltip_on_condition_failure = function(root, primary_target)
-		local warband = UNIT_OF(root)
-		if warband ~= INVALID_ID then
-			return { "You are not a follower of " .. WARBAND_NAME(warband) }
-		end
-		return { "You are a follower of any warband!" }
-	end,
-	condition = function(root)
-		return UNIT_OF(root) ~= nil and UNIT_TYPE_OF(root) ~= UNIT_TYPE.FOLLOWER
-	end
-}
+	}
+	return result
+end
 
 ---@type Pretrigger
 Trigger.Pretrigger.during_migration = {
@@ -199,42 +237,14 @@ Trigger.Pretrigger.at_core_realm_province = {
 	end
 }
 
----Prepares a trigger which is true if one of list_of_pretriggers is true
----@param list_of_pretriggers Pretrigger[]
----@return Pretrigger
-function Trigger.Pretrigger.OR(list_of_pretriggers)
-	return {
-		tooltip_on_condition_failure = function(root, primary_target)
-			local tooltip = { "You failed one of prerequisites:" }
-			for _, trigger in ipairs(list_of_pretriggers) do
-				if trigger.condition(root) then
-					return {}
-				else
-					for _, current_tooltip in ipairs(trigger.tooltip_on_condition_failure(root, primary_target)) do
-						table.insert(tooltip, " " .. CHECKBOX_NEGATIVE .. current_tooltip)
-					end
-				end
-			end
-			return tooltip
-		end,
-		condition = function(root)
-			for _, trigger in ipairs(list_of_pretriggers) do
-				if trigger.condition(root) then
-					return true
-				end
-			end
-		end
-	}
-end
-
 ---@type Pretrigger
 Trigger.Pretrigger.not_leading_party = {
 	tooltip_on_condition_failure = function(root, primary_target)
 		local warband = UNIT_OF(root)
 		if warband ~= INVALID_ID then
-			return { "You are leading " .. WARBAND_NAME(warband) .. "." }
+			return { "You are leading " .. WARBAND_NAME(warband) }
 		end
-		return { " You are not in a party!"}
+		return { "You are not in a party!"}
 	end,
 	condition = function(root)
 		return UNIT_OF(root) ~= INVALID_ID and LEADER_OF_WARBAND(root) == INVALID_ID
@@ -245,9 +255,9 @@ Trigger.Pretrigger.leading_party = {
 	tooltip_on_condition_failure = function(root, primary_target)
 		local warband = UNIT_OF(root)
 		if warband ~= INVALID_ID then
-			return { "You are leading" .. WARBAND_NAME(warband) .. "." }
+			return { "You are not leading " .. WARBAND_NAME(warband) }
 		end
-		return { " You are not in a party!"}
+		return { "You are not in a party!"}
 	end,
 	condition = function(root)
 		return UNIT_OF(root) ~= INVALID_ID and LEADER_OF_WARBAND(root) ~= INVALID_ID
@@ -257,7 +267,16 @@ Trigger.Pretrigger.leading_party = {
 ---@type Pretrigger
 Trigger.Pretrigger.leading_idle_party = {
 	tooltip_on_condition_failure = function(root, primary_target)
-		return { "You do not lead any idle party." }
+		local warband = UNIT_OF(root)
+		if warband ~= INVALID_ID then
+			if WARBAND_LEADER(warband) ~= root then
+				return { "You are not leading" .. WARBAND_NAME(warband) }
+			end
+			if DATA.warband_get_current_status(warband) ~= WARBAND_STATUS.IDLE then
+				return { WARBAND_NAME(warband) .. " is not currently idle" }
+			end
+		end
+		return { "You are not in a party!" }
 	end,
 	condition = function(root)
 		local warband = LEADER_OF_WARBAND(root)
@@ -274,7 +293,19 @@ Trigger.Pretrigger.leading_idle_party = {
 ---@type Pretrigger
 Trigger.Pretrigger.leading_idle_guard = {
 	tooltip_on_condition_failure = function(root, primary_target)
-		return { "You do not lead idle tribal guard." }
+		local warband = UNIT_OF(root)
+		if warband ~= INVALID_ID then
+			if DATA.warband_get_guard_of(warband) == INVALID_ID then
+				return { WARBAND_NAME(warband) .. " is not a realm guard" }
+			end
+			if WARBAND_RECRUITER(warband) ~= root then
+				return { "You are not leading " .. WARBAND_NAME(warband) }
+			end
+			if DATA.warband_get_current_status(warband) ~= WARBAND_STATUS.IDLE then
+				return { WARBAND_NAME(warband) .. " is not currently idle" }
+			end
+		end
+		return { "You are not in a party!" }
 	end,
 	condition = function(root)
 		local warband = RECRUITER_OF_WARBAND(root)
@@ -284,7 +315,7 @@ Trigger.Pretrigger.leading_idle_guard = {
 		if DATA.warband_get_current_status(warband) ~= WARBAND_STATUS.IDLE then
 			return false
 		end
-		if GUARD(REALM(root)) ~= warband then
+		if DATA.warband_get_guard_of(warband) == INVALID_ID then
 			return false
 		end
 		return true
@@ -314,10 +345,18 @@ Trigger.Pretrigger.leader = {
 ---@type Pretrigger
 Trigger.Pretrigger.no_guard_at_local_realm = {
 	tooltip_on_condition_failure = function(root, primary_target)
-		return { "Guard is already established here" }
+		local realm = province_utils.realm(PROVINCE(root))
+		if realm ~= INVALID_ID then
+			return { REALM_NAME(realm) .. " is defended by " .. WARBAND_NAME() }
+		end
+		return { "There is no settled realm!"}
 	end,
 	condition = function(root)
-		local guard = DATA.realm_guard_get_guard(DATA.get_realm_guard_from_realm(province_utils.realm(PROVINCE(root))))
+		local realm = province_utils.realm(PROVINCE(root))
+		if realm == INVALID_ID then
+			return false
+		end
+		local guard = DATA.realm_guard_get_guard(DATA.get_realm_guard_from_realm(realm))
 		return guard == INVALID_ID
 	end
 }
@@ -325,10 +364,18 @@ Trigger.Pretrigger.no_guard_at_local_realm = {
 ---@type Pretrigger
 Trigger.Pretrigger.guard_at_local_realm = {
 	tooltip_on_condition_failure = function(root, primary_target)
-		return { "Guard is not established here yet" }
+		local realm = province_utils.realm(PROVINCE(root))
+		if realm ~= INVALID_ID then
+			return { REALM_NAME(realm) .. " has no guards!" }
+		end
+		return { "There is no settled realm!"}
 	end,
 	condition = function(root)
-		local guard = DATA.realm_guard_get_guard(DATA.get_realm_guard_from_realm(province_utils.realm(PROVINCE(root))))
+		local realm = province_utils.realm(PROVINCE(root))
+		if realm == INVALID_ID then
+			return false
+		end
+		local guard = DATA.realm_guard_get_guard(DATA.get_realm_guard_from_realm(realm))
 		return guard ~= INVALID_ID
 	end
 }
@@ -336,10 +383,22 @@ Trigger.Pretrigger.guard_at_local_realm = {
 ---@type Pretrigger
 Trigger.Pretrigger.local_guard_exists_and_has_no_officer = {
 	tooltip_on_condition_failure = function(root, primary_target)
-		return { "Guard is not established yet or it already has guard leader" }
+		local realm = province_utils.realm(PROVINCE(root))
+		if realm ~= INVALID_ID then
+			local guard = DATA.realm_guard_get_guard(DATA.get_realm_guard_from_realm(realm))
+			if guard ~= INVALID_ID then
+				return { WARBAND_NAME(guard) .. " is already being lead by " .. WARBAND_RECRUITER(guard) }
+			end
+			return { REALM_NAME(realm) .. " has no guards!" }
+		end
+		return { "There is no settled realm!"}
 	end,
 	condition = function(root)
-		local guard = DATA.realm_guard_get_guard(DATA.get_realm_guard_from_realm(province_utils.realm(PROVINCE(root))))
+		local realm = province_utils.realm(PROVINCE(root))
+		if realm == INVALID_ID then
+			return false
+		end
+		local guard = DATA.realm_guard_get_guard(DATA.get_realm_guard_from_realm(realm))
 		if guard == INVALID_ID then
 			return false
 		end
@@ -410,6 +469,44 @@ Trigger.Pretrigger.designates_offices_local = {
 	end
 }
 
+---check that the pop's has at least x in savings
+---@param x number
+---@return Pretrigger
+function Trigger.Pretrigger.savings_at_least(x)
+	---@type Pretrigger
+	local result = {
+		tooltip_on_condition_failure = function(root, primary_target)
+			return { "You don't have " .. ut.to_fixed_point2(x) .. MONEY_SYMBOL }
+		end,
+		condition = function(root)
+			return SAVINGS(root) >= x
+		end
+	}
+	return result
+end
+
+---check that the pop's party has at least x in treasury
+---@param x number
+---@return Pretrigger
+function Trigger.Pretrigger.party_savings_at_least(x)
+	---@type Pretrigger
+	local result = {
+		tooltip_on_condition_failure = function(root, primary_target)
+			local warband = UNIT_OF(root)
+			if warband ~= INVALID_ID then
+				return { WARBAND_NAME(warband) .. " doesn't have " .. ut.to_fixed_point2(x) .. MONEY_SYMBOL }
+			end
+			return { "You are not in a party!" }
+		end,
+		condition = function(root)
+			local warband = UNIT_OF(root)
+			return warband ~= INVALID_ID and DATA.warband_get_treasury(warband) >= x
+		end
+	}
+	return result
+end
+
+-- CHARACTER TRIGGERS
 
 ---@type TriggerCharacter
 Trigger.Targeted.is_overlord_of_target = {
@@ -441,7 +538,6 @@ Trigger.Targeted.target_is_tax_collector = {
 		return collector_for ~= INVALID_ID
 	end
 }
-
 
 ---@type TriggerCharacter
 Trigger.Targeted.valid_overseer = {
@@ -498,8 +594,6 @@ Trigger.Targeted.is_not_in_negotiations = {
 	end
 }
 
-
-
 ---@type TriggerProvince
 Trigger.Targeted.settled = {
 	tooltip_on_condition_failure = function(root, primary_target)
@@ -509,6 +603,8 @@ Trigger.Targeted.settled = {
 		return province_utils.realm(primary_target) ~= INVALID_ID
 	end
 }
+
+-- PROVINCE TRIGGERS
 
 ---@type TriggerProvince
 Trigger.Targeted.not_settled = {
@@ -569,22 +665,6 @@ Trigger.Targeted.has_no_local_trade_permit = {
 		return not economy_triggers.allowed_to_trade(root, PROVINCE_REALM(primary_target))
 	end
 }
-
----commenting
----@param x number
----@return Pretrigger
-function Trigger.Pretrigger.savings_at_least(x)
-	---@type Pretrigger
-	local result = {
-		tooltip_on_condition_failure = function(root, primary_target)
-			return { "You don't have " .. ut.to_fixed_point2(x) .. MONEY_SYMBOL }
-		end,
-		condition = function(root)
-			return SAVINGS(root) >= x
-		end
-	}
-	return result
-end
 
 ---@type TriggerProvince
 Trigger.Targeted.has_no_local_building_permit = {

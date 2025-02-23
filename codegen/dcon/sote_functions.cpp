@@ -1035,14 +1035,12 @@ void update_building_scale() {
 		}, worker, associated_job) * (2.f - worktime);
 
 		auto scale = worktime * efficiency;
-		auto output_scale = worktime * efficiency * efficiency;
-		auto input_scale = worktime * efficiency;
 
 		auto final_production_scale = scale * state.province_get_throughput_boosts(province, production_method);
-		auto final_output_scale = output_scale
+		auto final_output_scale = scale
 			* (1 + state.province_get_output_efficiency_boosts(province, production_method))
 			* (state.province_get_local_efficiency_boosts(province, production_method));
-		auto final_input_scale = input_scale * (1 - state.province_get_input_efficiency_boosts(province, production_method));
+		auto final_input_scale = scale * (1 - state.province_get_input_efficiency_boosts(province, production_method));
 
 		state.building_set_production_scale(building, final_production_scale);
 		state.building_set_output_scale(building, final_output_scale);

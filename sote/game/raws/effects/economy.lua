@@ -16,17 +16,14 @@ local EconomicEffects = {}
 
 --- consumes `days` worth amount of supplies
 --- returns ratio consumed / desired
----@param warband warband_id
+---@param party warband_id
 ---@param days number
 ---@return number
-function EconomicEffects.consume_supplies(warband, days)
-	local daily_consumption = warband_utils.daily_supply_consumption(warband)
+function EconomicEffects.consume_supplies(party, days)
+	local daily_consumption = warband_utils.daily_supply_consumption(party)
 	local consumption = days * daily_consumption
-	local leader = DATA.warband_leader_get_leader(DATA.get_warband_leader_from_warband(warband))
 
-	assert(leader ~= INVALID_ID, "ATTEMPT TO CONSUME SUPPLIES BY WARBAND WITHOUT LEADER")
-
-	local consumed = EconomicEffects.consume_use_case_from_inventory(leader, CALORIES_USE_CASE, consumption)
+	local consumed = EconomicEffects.consume_use_case_for_party(party, CALORIES_USE_CASE, consumption)
 
 	-- give some wiggle room for floats
 	if consumption == 0 then
@@ -98,6 +95,26 @@ function EconomicEffects.add_pop_savings(pop, x, reason)
 
 	if math.abs(x) > 0 then
 		EconomicEffects.display_character_savings_change(pop, x, reason)
+	end
+end
+
+---Change party savings
+---@param party warband_id
+---@param x number
+---@param reason ECONOMY_REASON
+function EconomicEffects.add_party_savings(party, x, reason)
+	local savings = DATA.warband_get_treasury(party)
+
+	if savings + x < 0 then
+		print("Attempt to reduce savings below zero. Probably a rounding error? Preventing it anyway.", savings, x)
+		-- print(debug.traceback())
+		x = -savings
+	end
+
+	DATA.warband_inc_treasury(party, x)
+
+	if DATA.warband_get_treasury(party) ~= DATA.warband_get_treasury(party) then
+		error("BAD POP SAVINGS INCREASE: " .. tostring(x) .. " " .. reason)
 	end
 end
 
@@ -560,7 +577,66 @@ function EconomicEffects.consume_use_case_from_inventory(pop, use_case, amount)
 	return consumed
 end
 
----comment
+--- Consumes up to amount of use case from inventory in equal parts to available.
+--- Returns total amount able to be satisfied.
+---@param pop pop_id
+---@param use_case use_case_id
+---@param amount number
+---@return number consumed
+function EconomicEffects.consume_use_case_for_party(party, use_case, amount)
+	local supply = ev.available_use_case_for_party(party, use_case)
+	if supply <= 0 then
+		return 0
+	end
+	if supply < amount then
+		amount = supply
+	end
+	local consumed = tabb.accumulate(DATA.get_use_weight_from_use_case(use_case), 0, function(a, _, weight_id)
+		local good = DATA.use_weight_get_trade_good(weight_id)
+		local weight = DATA.use_weight_get_weight(weight_id)
+		local good_in_inventory = DATA.warband_get_inventory(party, good)
+		if good_in_inventory > 0 then
+			local available = good_in_inventory * weight
+			local satisfied = available / supply * amount
+			local used = satisfied / weight
+			if satisfied > available + 0.01
+				or used > good_in_inventory + 0.01
+			then
+				error("CONSUMED TOO MUCH FROM INVENTORY"
+					.. "\n good_in_inventory = "
+					.. tostring(good_in_inventory)
+					.. "\n weight = "
+					.. tostring(weight)
+					.. "\n available = "
+					.. tostring(available)
+					.. "\n satisfied = "
+					.. tostring(satisfied)
+					.. "\n supply = "
+					.. tostring(supply)
+					.. "\n amount = "
+					.. tostring(amount)
+					.. "\n used = "
+					.. tostring(used)
+				)
+			end
+			DATA.warband_set_inventory(party, good, math.max(0, DATA.warband_get_inventory(party, good) - used))
+			a = a + satisfied
+		end
+		return a
+	end)
+
+	if consumed > amount + 0.01 then
+		error("CONSUMED TOO MUCH: "
+			.. "\n consumed = "
+			.. tostring(consumed)
+			.. "\n amount = "
+			.. tostring(amount))
+	end
+
+	return consumed
+end
+
+---attempts to buy use case from market for characters
 ---@param character Character
 ---@param use use_case_id
 ---@param amount number
@@ -697,14 +773,164 @@ function EconomicEffects.character_buy_use(character, use, amount)
 
 	if WORLD:does_player_see_province_news(province) then
 		WORLD:emit_notification(
-			"Trader " .. DATA.pop_get_name(character)
-			.. " bought " .. amount	.. " " .. use
+			require "game.raws.ranks.localisation"(character) .. NAME(character)
+			.. " bought " .. ut.to_fixed_point2(amount)	.. " " .. DATA.use_case_name(use)
 			.. " for " .. ut.to_fixed_point2(spendings)
 			.. MONEY_SYMBOL
 		)
 	end
 end
 
+---attempts to buy use case from market for parties
+---@param party warband_id
+---@param use use_case_id
+---@param amount number
+function EconomicEffects.party_buy_use(party, use, amount)
+	local leader = warband_utils.active_leader(party)
+	local province = PROVINCE(leader)
+	local savings = DATA.warband_get_treasury(party)
+	local can_buy, failure = et.can_buy_use(province, savings, use, amount)
+	if not can_buy then
+--		print(tabb.accumulate(failure,"Failed can_buy check",function(a,k,v)
+--			return a .. "\n" .. k .. " " .. v
+--		end))
+		return false
+	end
+
+	-- can_buy validates province
+
+	local price = ev.get_local_price_of_use(province, use)
+
+	local cost = price * amount
+
+	if cost ~= cost then
+		error(
+			"WRONG BUY OPERATION "
+			.. "\n price = "
+			.. tostring(price)
+			.. "\n amount = "
+			.. tostring(amount)
+		)
+	end
+
+	local price_expectation = ev.get_local_price_of_use(province, use)
+	local use_available = ev.get_local_amount_of_use(province, use)
+
+	local total_bought = 0
+	local spendings = 0
+	local budget = DATA.warband_get_treasury(party)
+
+	---@type {good: trade_good_id, weight: number, price: number, available: number}[]
+	local goods = {}
+	DATA.for_each_use_weight_from_use_case(use, function (weight_id)
+		local good = DATA.use_weight_get_trade_good(weight_id)
+		local weight = DATA.use_weight_get_weight(weight_id)
+		local good_price = ev.get_local_price(province, good)
+		if leader ~= INVALID_ID then
+			local price_belief = DATA.pop_get_price_belief_buy(leader, good)
+			if price_belief == 0 then
+				DATA.pop_set_price_belief_buy(leader, good, good_price)
+			else
+				DATA.pop_set_price_belief_buy(leader, good, price_belief * (3 / 4) + good_price * (1 / 4))
+			end
+		end
+		local goods_available = DATA.province_get_local_storage(province, good)
+		if goods_available > 0 then
+			goods[#goods + 1] = { good = good, weight = weight, price = good_price, available = goods_available }
+		end
+	end)
+	for _, values in pairs(goods) do
+		local good_use_amount = values.available * values.weight
+		local goods_available_weight = math.max(good_use_amount / use_available, 0)
+		local consumed_amount = amount / values.weight * goods_available_weight
+
+		if goods_available_weight ~= goods_available_weight
+			or consumed_amount ~= consumed_amount
+		then
+			error("CHARACTER BUY USE CALCULATED AMOUNT IS NAN"
+				.. "\n use = "
+				.. tostring(use)
+				.. "\n use_available = "
+				.. tostring(use_available)
+				.. "\n good = "
+				.. tostring(values.good)
+				.. "\n good_price = "
+				.. tostring(values.price)
+				.. "\n goods_available = "
+				.. tostring(values.available)
+				.. "\n good_use_amount = "
+				.. tostring(good_use_amount)
+				.. "\n good use weight = "
+				.. tostring(values.weight)
+				.. "\n goods_available_weight = "
+				.. tostring(goods_available_weight)
+				.. "\n consumed_amount = "
+				.. tostring(consumed_amount)
+				.. "\n amount = "
+				.. tostring(amount)
+			)
+		end
+
+		local costs = consumed_amount * values.price
+
+		if budget <= costs then
+			consumed_amount = budget / values.price
+			costs = budget
+			budget = 0
+		else
+			budget = budget - costs
+		end
+
+		total_bought = total_bought + consumed_amount * values.weight
+
+		-- we need to get back to use "units" so we multiply consumed amount back by weight
+
+		spendings = spendings + costs
+
+		--MAKE TRANSACTION
+		DATA.province_inc_trade_wealth(province, costs)
+		---pop's savings are reduced later
+
+		DATA.warband_inc_inventory(party, values.good, amount)
+		EconomicEffects.change_local_stockpile(province, values.good, -consumed_amount)
+
+		local trade_volume =
+			DATA.province_get_local_production(province, values.good)
+			+ DATA.province_get_local_demand(province, values.good)
+			+ DATA.province_get_local_storage(province, values.good)
+			+ consumed_amount + 0.01
+		local price_change = consumed_amount / trade_volume * PRICE_SIGNAL_PER_STOCKPILED_UNIT * values.price
+
+		EconomicEffects.change_local_price(province, values.good, price_change)
+	end
+	if total_bought < amount * 0.7 or total_bought > amount * 1.3 then
+		print("Potentially invalid attempt to buy use case for the party"
+			.. "\n use = "
+			.. tostring(use)
+			.. "\n spendings = "
+			.. tostring(spendings)
+			.. "\n total_bought = "
+			.. tostring(total_bought)
+			.. "\n amount = "
+			.. tostring(amount)
+			.. "\n price_expectation = "
+			.. tostring(price_expectation)
+			.. "\n use_available = "
+			.. tostring(use_available)
+		)
+	end
+
+	EconomicEffects.add_party_savings(party, -math.min(spendings, DATA.pop_get_savings(party)), ECONOMY_REASON.TRADE)
+
+	if WORLD:does_player_see_province_news(province) then
+		WORLD:emit_notification(
+			WARBAND_NAME(party)
+			.. " bought " .. ut.to_fixed_point2(amount)	.. " " .. DATA.use_case_get_name(use)
+			.. " for " .. ut.to_fixed_point2(spendings)
+			.. MONEY_SYMBOL
+		)
+	end
+end
 
 --[[ unused code, rewrite on demand, but it would be better to purchase realms goods via some agent
 ---comment
@@ -967,21 +1193,8 @@ function EconomicEffects.gift_to_warband(warband, character, amount)
 	assert(warband ~= INVALID_ID)
 	assert(character ~= INVALID_ID)
 
-	local savings = DATA.pop_get_savings(character)
-	local treasury = DATA.warband_get_treasury(warband)
-
-	if amount > 0 then
-		if savings < amount then
-			amount = savings
-		end
-	else
-		if treasury < -amount then
-			amount = treasury
-		end
-	end
-
 	EconomicEffects.add_pop_savings(character, -amount, ECONOMY_REASON.WARBAND)
-	DATA.warband_inc_treasury(warband, amount)
+	EconomicEffects.add_party_savings(warband,  amount, ECONOMY_REASON.DONATION)
 end
 
 ---comment

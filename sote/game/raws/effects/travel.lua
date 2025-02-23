@@ -21,6 +21,8 @@ function travel_effects.exit_settlement(character)
 		return
 	end
 
+	DATA.warband_set_in_settlement(warband,false)
+
 	DATA.for_each_warband_unit_from_warband(warband, function (item)
 		local unit = DATA.warband_unit_get_unit(item)
 
@@ -62,6 +64,8 @@ function travel_effects.enter_settlement(character)
 	if PROVINCE_REALM(local_province) == INVALID_ID then
 		return
 	end
+
+	DATA.warband_set_in_settlement(warband,true)
 
 	DATA.for_each_warband_unit_from_warband(warband, function (item)
 		local unit = DATA.warband_unit_get_unit(item)

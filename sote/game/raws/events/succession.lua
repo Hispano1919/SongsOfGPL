@@ -211,13 +211,13 @@ local function load()
 
 			-- notify possible parent and children
 			local parent = DATA.parent_child_relation_get_parent(DATA.get_parent_child_relation_from_child(character))
-			if parent ~= INVALID_ID then
-				if parent == WORLD.player_character then
-					WORLD:emit_notification("My child, " .. NAME(character) .. ", has died at the age of " .. AGE_YEARS(character) .. ".")
-				end
+			if parent ~= INVALID_ID and parent == WORLD.player_character then
+				WORLD:emit_notification("My child, " .. NAME(character) .. ", has died at the age of " .. AGE_YEARS(character) .. ".")
 			end
 			DATA.for_each_parent_child_relation_from_parent(character, function(item)
-				WORLD:emit_notification("My parent, " .. NAME(character) .. ", has died at the age of " .. AGE_YEARS(character) .. ".")
+				if WORLD.player_character ~= INVALID_ID and WORLD.player_character == DATA.parent_child_relation_get_child(item) then
+					WORLD:emit_notification("My parent, " .. NAME(character) .. ", has died at the age of " .. AGE_YEARS(character) .. ".")
+				end
 			end)
 
 			-- delete character

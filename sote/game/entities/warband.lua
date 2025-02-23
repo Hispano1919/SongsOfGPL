@@ -77,7 +77,6 @@ function warband_utils.loot_capacity(warband)
 	local cap = 0.01
 	for _, membership in ipairs(DATA.get_warband_unit_from_warband(warband)) do
 		local pop = DATA.warband_unit_get_unit(membership)
-		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
 		cap = cap + pop_utils.get_supply_capacity(pop)
 	end
@@ -98,7 +97,6 @@ function warband_utils.spotting(warband)
 
 	for _, membership in ipairs(DATA.get_warband_unit_from_warband(warband)) do
 		local pop = DATA.warband_unit_get_unit(membership)
-		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
 		result = result + pop_utils.get_spotting(pop)
 	end
@@ -122,7 +120,6 @@ function warband_utils.visibility(warband)
 	local result = 0
 	for _, membership in ipairs(DATA.get_warband_unit_from_warband(warband)) do
 		local pop = DATA.warband_unit_get_unit(membership)
-		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
 		result = result + pop_utils.get_visibility(pop)
 	end
@@ -164,7 +161,6 @@ function warband_utils.speed(warband)
 	local result = 0
 	for _, membership in ipairs(DATA.get_warband_unit_from_warband(warband)) do
 		local pop = DATA.warband_unit_get_unit(membership)
-		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
 		result = result + pop_utils.get_speed(pop).base
 	end
@@ -207,7 +203,6 @@ end
 function warband_utils.predict_upkeep(warband)
 	local result = 0
 	for _, membership in ipairs(DATA.get_warband_unit_from_warband(warband)) do
-		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
 		result = result + BASE_UNIT_UPKEEP
 	end
@@ -228,7 +223,6 @@ function warband_utils.daily_supply_consumption(warband)
 	local result = 0
 	for _, membership in ipairs(DATA.get_warband_unit_from_warband(warband)) do
 		local pop = DATA.warband_unit_get_unit(membership)
-		local unit_type = DATA.warband_unit_get_type(membership)
 		---@type number
 		result = result + pop_utils.get_supply_use(pop)
 	end
