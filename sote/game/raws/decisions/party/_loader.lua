@@ -216,15 +216,14 @@ return function ()
 		},
 		function(root)
 			--effect
-			print("buying supplies...")
 			local party = UNIT_OF(root)
-			local max = require "game.entities.warband".daily_supply_consumption(party)*30
-			local amount = math.min(max,economic_values.get_local_amount_of_use(PROVINCE(root),CALORIES_USE_CASE))
-			require "game.raws.effects.economy".party_buy_use(party, CALORIES_USE_CASE, amount)
+			local desire = require "game.entities.warband".daily_supply_consumption(party)*30
+			local amount = economic_values.get_local_amount_of_use(PROVINCE(root),CALORIES_USE_CASE)
+			require "game.raws.effects.economy".party_buy_use(party, CALORIES_USE_CASE, math.min(amount,desire))
 		end,
 		function(root)
 			-- ai
-			if require "game.raws.values.economy".days_of_travel(UNIT_OF(root)) > 30 then
+			if require "game.raws.values.economy".days_of_travel(UNIT_OF(root)) < DATA.warband_get_supplies_target_days(UNIT_OF(root)) then
 				return 1
 			end
 			return 0

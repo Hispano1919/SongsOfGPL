@@ -793,6 +793,29 @@ function pui.render_infrastructure_needs(rect,pop_id)
 	)
 end
 
+
+---@param rect Rect
+---@param pop_id pop_id
+function pui.render_party_speed(rect,pop_id)
+	local warband = UNIT_OF(pop_id)
+	if warband ~= INVALID_ID then
+		local total, mean = require "game.entities.warband".speed(warband)
+		local size = require "game.entities.warband".size(warband)
+		local tooltip = NAME(pop_id) .. "'s party has a speed of " .. ut.to_fixed_point2(mean)
+			.. " from " .. size .. " units combined " .. ut.to_fixed_point2(total) .. " speed."
+		ut.generic_number_field(
+			"fast-forward-button.png",
+			mean,
+			rect,
+			tooltip,
+			ut.NUMBER_MODE.PERCENTAGE,
+			ut.NAME_MODE.ICON
+		)
+	else
+		pui.render_speed(rect,pop_id)
+	end
+end
+
 function pui.render_location_buttons(game,rect,pop_id)
 	local name = NAME(pop_id)
 	local province_id = LOCAL_PROVINCE(pop_id)
@@ -815,18 +838,7 @@ function pui.render_location_buttons(game,rect,pop_id)
 		ui.panel(icon_rect,2,true)
 		ut.render_icon(icon_rect,"horizon-road.png",DATA.biome_get_r(biome),DATA.biome_get_g(biome),DATA.biome_get_b(biome),1,true)
 		ui.tooltip(biome_tooltip,icon_rect)
-		local total, mean = require "game.entities.warband".speed(warband)
-		local size = require "game.entities.warband".size(warband)
-		local tooltip = name .. "'s party has a speed of " .. ut.to_fixed_point2(mean)
-			.. " from " .. size .. " units combined " .. ut.to_fixed_point2(total) .. " speed."
-		ut.generic_number_field(
-			"fast-forward-button.png",
-			mean,
-			info_rect,
-			tooltip,
-			ut.NUMBER_MODE.PERCENTAGE,
-			ut.NAME_MODE.ICON
-		)
+		pui.render_party_speed(info_rect,pop_id)
 	end
 	ib.text_button_to_province_tile(game,tile_id,rect:subrect(0,0,rect.width-icon_size*4,rect.height,"left","up"),
 		NAME(pop_id) .. " is currently in the province of " .. PROVINCE_NAME(province_id) .. ".")

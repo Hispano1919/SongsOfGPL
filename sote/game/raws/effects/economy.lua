@@ -740,7 +740,7 @@ function EconomicEffects.character_buy_use(character, use, amount)
 		DATA.province_inc_trade_wealth(province, costs)
 		---pop's savings are reduced later
 
-		DATA.pop_inc_inventory(character, values.good, amount)
+		DATA.pop_inc_inventory(character, values.good, consumed_amount)
 		EconomicEffects.change_local_stockpile(province, values.good, -consumed_amount)
 
 		local trade_volume =
@@ -891,7 +891,7 @@ function EconomicEffects.party_buy_use(party, use, amount)
 		DATA.province_inc_trade_wealth(province, costs)
 		---pop's savings are reduced later
 
-		DATA.warband_inc_inventory(party, values.good, amount)
+		DATA.warband_inc_inventory(party, values.good, consumed_amount)
 		EconomicEffects.change_local_stockpile(province, values.good, -consumed_amount)
 
 		local trade_volume =

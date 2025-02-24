@@ -64,7 +64,11 @@ function MilitaryEffects.dissolve_guard(realm)
 	if guard == INVALID_ID then
 		return
 	end
-
+	local leader = LEADER(realm)
+	DATA.for_each_trade_good(function (item)
+		local amount = DATA.warband_get_inventory(guard,item)
+		DATA.pop_inc_inventory(leader,item,amount)
+	end)
 	economy_effects.change_treasury(realm, -DATA.warband_get_treasury(guard), ECONOMY_REASON.WARBAND)
 	-- place all pop into closest settlement
 	DATA.for_each_warband_unit_from_warband(guard, function(item)
@@ -92,7 +96,10 @@ function MilitaryEffects.dissolve_warband(leader)
 			DATA.force_create_character_location(local_province, unit)
 		end
 	end)
-
+	DATA.for_each_trade_good(function (item)
+		local amount = DATA.warband_get_inventory(warband,item)
+		DATA.pop_inc_inventory(leader,item,amount)
+	end)
 	economy_effects.gift_to_warband(warband, leader, -DATA.warband_get_treasury(warband))
 	DATA.delete_warband(warband)
 

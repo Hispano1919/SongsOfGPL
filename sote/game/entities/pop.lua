@@ -274,7 +274,7 @@ end
 ---@return number pop_adjusted food need modified by pop race and sex
 function rtab.POP.get_supply_use(pop)
 	local pop_food = rtab.POP.calculate_need_use_case_satisfaction(pop, NEED.FOOD, CALORIES_USE_CASE)
-	return pop_food / 30 * rtab.POP.get_size(pop)
+	return pop_food / 30
 end
 
 ---Returns the adjusted hauling capacity value for the provided pop.

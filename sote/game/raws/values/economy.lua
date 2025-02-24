@@ -223,14 +223,12 @@ end
 ---@param use_case use_case_id
 ---@return number
 function eco_values.available_use_case_for_party(party, use_case)
-	local supply = tabb.accumulate(DATA.get_use_weight_from_use_case(use_case), 0, function(a, _, weight_id)
-		local good = DATA.use_weight_get_trade_good(weight_id)
-		local weight = DATA.use_weight_get_weight(weight_id)
+	local supply = 0
+    DATA.for_each_use_weight_from_use_case(use_case, function(item)
+		local good = DATA.use_weight_get_trade_good(item)
+		local weight = DATA.use_weight_get_weight(item)
 		local good_in_inventory = DATA.warband_get_inventory(party, good)
-		if good_in_inventory > 0 then
-			a = a + good_in_inventory * weight
-		end
-		return a
+		supply = supply + good_in_inventory * weight
 	end)
 	return supply
 end
@@ -240,14 +238,12 @@ end
 ---@param use_case use_case_id
 ---@return number
 function eco_values.available_use_case_from_inventory(pop, use_case)
-	local supply = tabb.accumulate(DATA.get_use_weight_from_use_case(use_case), 0, function(a, _, weight_id)
-		local good = DATA.use_weight_get_trade_good(weight_id)
-		local weight = DATA.use_weight_get_weight(weight_id)
+	local supply = 0
+    DATA.for_each_use_weight_from_use_case(use_case, function(item)
+		local good = DATA.use_weight_get_trade_good(item)
+		local weight = DATA.use_weight_get_weight(item)
 		local good_in_inventory = DATA.pop_get_inventory(pop, good)
-		if good_in_inventory > 0 then
-			a = a + good_in_inventory * weight
-		end
-		return a
+		supply = supply + good_in_inventory * weight
 	end)
 	return supply
 end

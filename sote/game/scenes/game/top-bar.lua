@@ -116,6 +116,9 @@ function tb.draw(gam)
 		return
 	end
 
+	local settlment = PROVINCE(character)
+	local province = LOCAL_PROVINCE(character)
+
 	local tr = tb.rect()
 	ui.panel(tr)
 
@@ -160,31 +163,70 @@ function tb.draw(gam)
 		rect,
 		"My personal savings")
 
-
-	local amount = economy_values.available_use_case_from_inventory(character, CALORIES_USE_CASE)
+	-- food goods in player character inventory
+	local food_amount = economy_values.available_use_case_from_inventory(character, CALORIES_USE_CASE)
+	local food_in_inventory, food_size = "", 0
+	if food_amount > 0 then
+		DATA.for_each_use_weight_from_use_case(CALORIES_USE_CASE,function(item)
+			local good = DATA.use_weight_get_trade_good(item)
+			local count = DATA.pop_get_inventory(character,good)
+			if count > 0 then
+				food_size = food_size + count
+				local weight = DATA.use_weight_get_weight(item)
+				food_in_inventory = food_in_inventory .. "\n\t" .. DATA.trade_good_get_name(good)
+				.. "\t" .. uit.to_fixed_point2(count) .. " at " .. uit.to_fixed_point2(weight) .. " calories"
+				.. "\n\t\t=>\t" .. uit.to_fixed_point2(count*weight) .. "\t[" .. uit.to_fixed_point2(count*weight/food_amount*100) .. "%]"
+			end
+		end)
+		food_in_inventory = "\nFood in my inventory: (" .. food_size .. ")" .. food_in_inventory
+	end
 	uit.sqrt_number_entry_icon(
 		"sliced-bread.png",
-		amount,
+		food_amount,
 		layout:next(uit.BASE_HEIGHT * 4, uit.BASE_HEIGHT),
-		"Food in my inventory")
+		"I have  " .. uit.to_fixed_point2(food_size) .. " units of goods that have a value of "
+			.. uit.to_fixed_point2(food_amount) .. " calories."
+			.. food_in_inventory)
 
-	local days_of_travel = 0
-	if LEADER_OF_WARBAND(character) ~= INVALID_ID then
-		days_of_travel = economy_values.days_of_travel(LEADER_OF_WARBAND(character))
+	-- food goods in player party inventory for travel expenses
+	local days_of_travel, party_food, party_supplies = 0,0,0
+	local party_supplies_tooltip = "."
+	local party = UNIT_OF(character)
+	if party ~= INVALID_ID then
+		party_supplies_tooltip = party_supplies_tooltip .. "\nFood in party inventory:"
+		party_supplies = economy_values.get_supply_available(party)
+		days_of_travel = economy_values.days_of_travel(party)
+		DATA.for_each_use_weight_from_use_case(CALORIES_USE_CASE,function(item)
+			local good = DATA.use_weight_get_trade_good(item)
+			local count = DATA.warband_get_inventory(party,good)
+			if count > 0 then
+				party_food = party_food + count
+				local weight = DATA.use_weight_get_weight(item)
+				party_supplies_tooltip = party_supplies_tooltip .. "\n\t" .. DATA.trade_good_get_name(good)
+					.. "\t" .. uit.to_fixed_point2(count) .. " at " .. uit.to_fixed_point2(weight) .. " calories"
+					.. "\n\t\t=>\t" .. uit.to_fixed_point2(count*weight) .. "\t[" .. uit.to_fixed_point2(count*weight/party_supplies*100) .. "%]"
+			end
+		end) party_supplies_tooltip = " and a traveling cost of "
+			.. uit.to_fixed_point2(warband_utils.daily_supply_consumption(party)) .. " calories per day"
+			.. party_supplies_tooltip
 	end
 	uit.balance_entry_icon(
 		"horizon-road.png",
 		days_of_travel,
 		layout:next(uit.BASE_HEIGHT * 3, uit.BASE_HEIGHT),
-		"Days my party can travel. Zero if I do not lead any party.")
+		"My party can travel for " .. uit.to_fixed_point2(days_of_travel) .. " days from "
+			.. uit.to_fixed_point2(party_food) .. " units of goods that have a value of "
+			.. uit.to_fixed_point2(party_supplies) .. " calories"
+			.. party_supplies_tooltip)
 
+	-- TODO EXPECTED TRAVEL TIME
 
+	-- local popularity
+	if settlment ~= INVALID_ID then
+		pui.render_realm_popularity(layout:next(uit.BASE_HEIGHT*3,uit.BASE_HEIGHT),character,PROVINCE_REALM(settlment))
+	else
 
-	uit.balance_entry_icon(
-		"duality-mask.png",
-		politics_values.popularity(character, LOCAL_REALM(character)),
-		layout:next(uit.BASE_HEIGHT * 3, uit.BASE_HEIGHT),
-		"My popularity")
+	end
 
 	pui.render_basic_needs_satsifaction(
 		layout:next(uit.BASE_HEIGHT * 3, uit.BASE_HEIGHT),

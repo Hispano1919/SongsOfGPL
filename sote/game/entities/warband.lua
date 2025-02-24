@@ -221,13 +221,13 @@ end
 ---@return number
 function warband_utils.daily_supply_consumption(warband)
 	local result = 0
-	for _, membership in ipairs(DATA.get_warband_unit_from_warband(warband)) do
-		local pop = DATA.warband_unit_get_unit(membership)
+	DATA.for_each_warband_unit_from_warband(warband, function(item)
+		local pop = DATA.warband_unit_get_unit(item)
 		---@type number
 		result = result + pop_utils.get_supply_use(pop)
-	end
+	end)
 
-	return result * 0.05 --- made up value. raw value leads to VERY expensive trading
+	return result * 0.25 --- made up value. raw value leads to VERY expensive trading
 end
 
 ---@param warband warband_id
