@@ -127,17 +127,9 @@ function tb.draw(gam)
 	end
 
 	-- portrait
-	local portrait_rect = tr:subrect(0, 0, uit.BASE_HEIGHT * 2, uit.BASE_HEIGHT * 2, "left", "up"):shrink(5)
-	if ui.invisible_button(portrait_rect) then
-		if gam.inspector == 'character' then
-			gam.inspector = nil
-		else
-			gam.selected.character = WORLD.player_character
-			gam.inspector = "character"
-		end
-	end
-	require "game.scenes.game.widgets.portrait" (portrait_rect, WORLD.player_character)
-	ui.tooltip("Click the portrait to open character screen", portrait_rect)
+	local portrait_rect = tr:subrect(0, 0, uit.BASE_HEIGHT * 2, uit.BASE_HEIGHT * 2, "left", "up")
+	require "game.scenes.game.widgets.inspector-redirect-buttons".icon_button_to_character(gam, character, portrait_rect,
+		"I am " .. require "game.scenes.game.widgets.pop-ui-widgets".pop_tooltip(character))
 
 
 	--- current character
@@ -148,7 +140,7 @@ function tb.draw(gam)
 
 	local name_rect = layout:next(7 * uit.BASE_HEIGHT, uit.BASE_HEIGHT)
 	if uit.text_button(NAME(character), name_rect) then
-		gam.selected.character = WORLD.player_character
+		gam.selected.character = character
 		gam.inspector = "character"
 	end
 
@@ -206,20 +198,34 @@ function tb.draw(gam)
 					.. "\t" .. uit.to_fixed_point2(count) .. " at " .. uit.to_fixed_point2(weight) .. " calories"
 					.. "\n\t\t=>\t" .. uit.to_fixed_point2(count*weight) .. "\t[" .. uit.to_fixed_point2(count*weight/party_supplies*100) .. "%]"
 			end
-		end) party_supplies_tooltip = " and a traveling cost of "
+		end)
+		party_supplies_tooltip = " and a traveling cost of "
 			.. uit.to_fixed_point2(warband_utils.daily_supply_consumption(party)) .. " calories per day"
 			.. party_supplies_tooltip
-	end
-	uit.balance_entry_icon(
-		"horizon-road.png",
-		days_of_travel,
-		layout:next(uit.BASE_HEIGHT * 3, uit.BASE_HEIGHT),
-		"My party can travel for " .. uit.to_fixed_point2(days_of_travel) .. " days from "
-			.. uit.to_fixed_point2(party_food) .. " units of goods that have a value of "
-			.. uit.to_fixed_point2(party_supplies) .. " calories"
-			.. party_supplies_tooltip)
 
-	-- TODO EXPECTED TRAVEL TIME
+		uit.balance_entry_icon(
+			"horizon-road.png",
+			days_of_travel,
+			layout:next(uit.BASE_HEIGHT * 3, uit.BASE_HEIGHT),
+			"My party can travel for " .. uit.to_fixed_point2(days_of_travel) .. " days from "
+				.. uit.to_fixed_point2(party_food) .. " units of goods that have a value of "
+				.. uit.to_fixed_point2(party_supplies) .. " calories"
+				.. party_supplies_tooltip)
+		require "game.scenes.game.widgets.inspector-redirect-buttons".text_button_to_party(
+			gam,
+			party,
+			layout:next(uit.BASE_HEIGHT*6,uit.BASE_HEIGHT),
+			"Inspect my party")
+	else
+		if uit.text_button(
+			"Gather party",
+			layout:next(uit.BASE_HEIGHT*9,uit.BASE_HEIGHT),
+			"Gather my own party?")
+		then
+			require "game.raws.effects.military".gather_warband(character)
+		end
+	end
+
 
 	-- local popularity
 	if settlment ~= INVALID_ID then

@@ -61,14 +61,13 @@ function window.draw(game)
         if i > 0 then
             local realm_icon_rect = rect:subrect(0, 0, rect.height, rect.height, "left", "up")
             local leader_icon_rect = rect:subrect(rect.height, 0, rect.height, rect.height, "left", "up")
-            local warband_icon_rect = rect:subrect(rect.height*2, 0, rect.height, rect.height, "left", "up")
             local warband_name_rect = rect:subrect(rect.height*3, 0, (rect.width-rect.height*3)/2, rect.height, "left", "up")
             local warband_status_rect = rect:subrect(0, 0, (rect.width-rect.height*3)/2, rect.height, "right", "up")
 
             ---@type Warband
-            local warband = warbands[i]
-            local leader = require "game.entities.warband".active_leader(warband)
-            local warband_realm = warband_utils.realm(warband)
+            local party_id = warbands[i]
+            local leader = require "game.entities.warband".active_leader(party_id)
+            local warband_realm = warband_utils.realm(party_id)
 
             ib.icon_button_to_realm(game, warband_realm, realm_icon_rect)
             if leader and leader ~= INVALID_ID then
@@ -76,10 +75,8 @@ function window.draw(game)
             else
                 ib.icon_button_to_realm(game, warband_realm, leader_icon_rect)
             end
-            ib.icon_button_to_warband(game, warband, warband_icon_rect,DATA.warband_get_name(warband))
-
-            ui.centered_text(require "engine.string".title(DATA.warband_get_name(warband)), warband_name_rect)
-            ui.centered_text(DATA.warband_status_get_name(DATA.warband_get_current_status(warband)), warband_status_rect)
+            ib.text_button_to_party(game, party_id, warband_name_rect,DATA.warband_get_name(party_id))
+            ui.centered_text(DATA.warband_status_get_name(DATA.warband_get_current_status(party_id)), warband_status_rect)
         end
     end, uit.BASE_HEIGHT, tabb.size(warbands), uit.BASE_HEIGHT, slider_warbands)
 end

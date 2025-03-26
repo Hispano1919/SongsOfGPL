@@ -1,3 +1,4 @@
 name string
 description string
 icon string
+base_cost float

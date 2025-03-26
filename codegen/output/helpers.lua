@@ -1,5 +1,8 @@
 --- Helper functions to reduce key presses to type names of common wrappers
 
+CLICK_STRING = "\nClick here to learn more!"
+OBSERVER_BUTTON_TOOLTIP = "Observers cannot interact with the world!"
+
 ---@enum AI_GOAL
 AI_GOAL = {
 	RAID = 0,
@@ -18,6 +21,14 @@ AI_GOAL = {
 
 ---@type table<world_tile_id, tile_id>
 TILE_FROM_WORLD_ID = {}
+
+TRAVEL_DAY_HOURS = 12
+
+function MONTH_WEIGHTED_JAN_JUL(jan_value,jul_value,month)
+	local jan_weight = math.cos(5/3 * month / math.pi) / 2 + .5
+	local jul_weight = math.cos(5/3 * (month + 6) / math.pi) / 2 + .5
+	return jan_weight * jan_value + jul_weight * jul_value
+end
 
 function REGENERATE_RAWS()
 	local w = {}
@@ -249,10 +260,17 @@ function PROVINCE_REALM(province)
 end
 
 ---commenting
----@param pop_id pop_id
+---@param pop_id pop_id|`INVALID_ID`
 ---@return number
 function SAVINGS(pop_id)
 	return DATA.pop_get_savings(pop_id)
+end
+
+---commenting
+---@param warband_id warband_id|`INVALID_ID`
+---@return number
+function WARBAND_SAVINGS(warband_id)
+	return DATA.warband_get_treasury(warband_id)
 end
 
 ---commenting
@@ -538,6 +556,13 @@ function LEADER_OF_WARBAND(leader)
 	end
 	local leadership = DATA.get_warband_leader_from_leader(leader)
 	return DATA.warband_leader_get_warband(leadership)
+end
+
+
+---@param party warband_id
+---@return boolean
+function IN_SETTLEMENT(party)
+	return DATA.warband_get_in_settlement(party)
 end
 
 ---@param warband warband_id

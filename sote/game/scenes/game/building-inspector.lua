@@ -14,7 +14,7 @@ local province_utils = require "game.entities.province".Province
 local pop_utils = require "game.entities.pop".POP
 local demography_effects = require "game.raws.effects.demography"
 
-BUILDING_SUBSIDY_AMOUNT = 1
+KEY_PRESS_MODIFIER = 1
 
 local output_list_state = nil
 local input_list_state = nil
@@ -52,12 +52,12 @@ local property_inventory_state = nil
 function re.draw(gam)
 
 	--- combining key presses for increments of 1, 5, 10, and 50
-	BUILDING_SUBSIDY_AMOUNT = 1
+	KEY_PRESS_MODIFIER = 1
 	if ui.is_key_held("lshift") or ui.is_key_held("rshift") then
-		BUILDING_SUBSIDY_AMOUNT = BUILDING_SUBSIDY_AMOUNT * 2
+		KEY_PRESS_MODIFIER = KEY_PRESS_MODIFIER * 2
 	end
 	if ui.is_key_held("lctrl") or ui.is_key_held("rctrl") then
-		BUILDING_SUBSIDY_AMOUNT = BUILDING_SUBSIDY_AMOUNT * 4
+		KEY_PRESS_MODIFIER = KEY_PRESS_MODIFIER * 4
 	end
 
 	local estate = gam.selected.estate

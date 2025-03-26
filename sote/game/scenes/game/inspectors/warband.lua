@@ -789,7 +789,6 @@ function window.draw(gamescene)
 
 		-- WARBAND STRENGTH
 		local avg_health, avg_armor, avg_attack  = math.max(total_health / count, 0), math.max(total_armor / count, 0), math.max(total_attack / count, 0)
-		local total_speed, avg_speed = warband_utils.speed(warband)
 
 		local strength_width = ut.BASE_HEIGHT * 3
 		local strength_height = ut.BASE_HEIGHT

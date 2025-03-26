@@ -1826,6 +1826,11 @@ object {
     storage_type { contiguous }
     size { 5 }
     tag {scenario}
+    property{
+        name { base_cost }
+        type { float }
+        tag { scenario }
+    }
 }
 object {
     name { law_trade }

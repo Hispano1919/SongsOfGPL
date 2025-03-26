@@ -157,7 +157,7 @@ local inspectors_table = {
 	["population"] = require "game.scenes.game.inspectors.population",
 	["macrobuilder"] = require "game.scenes.game.inspectors.macrobuilder",
 	["macrodecision"] = require "game.scenes.game.inspectors.macrodecision",
-	["warband"] = require "game.scenes.game.inspectors.warband",
+	["warband"] = require "sote.game.scenes.game.inspector-party",
 	["property"] = require "game.scenes.game.inspectors.property",
 	["preferences"] = require "game.scenes.game.inspectors.character_stance",
 	["quests"] = require "game.scenes.game.inspectors.quests"
@@ -753,7 +753,6 @@ function gam.click_tile(tile_id)
 					military_values.warband_speed(warband),
 					DATA.realm_get_known_provinces(REALM(WORLD.player_character))
 				)
-				print(path)
 				if path then
 					tabb.print(path)
 					table.insert(path, WARBAND_TILE(warband))

@@ -48,12 +48,12 @@ function inspector.draw(gamescene)
     local rect = get_main_panel()
 
 	--- combining key presses for increments of 1, 5, 10, and 50
-	BUILDING_SUBSIDY_AMOUNT = 1
+	KEY_PRESS_MODIFIER = 1
 	if ui.is_key_held("lshift") or ui.is_key_held("rshift") then
-		BUILDING_SUBSIDY_AMOUNT = BUILDING_SUBSIDY_AMOUNT * 2
+		KEY_PRESS_MODIFIER = KEY_PRESS_MODIFIER * 2
 	end
 	if ui.is_key_held("lctrl") or ui.is_key_held("rctrl") then
-		BUILDING_SUBSIDY_AMOUNT = BUILDING_SUBSIDY_AMOUNT * 4
+		KEY_PRESS_MODIFIER = KEY_PRESS_MODIFIER * 4
 	end
 
     ui.panel(rect)
@@ -73,7 +73,8 @@ function inspector.draw(gamescene)
             header = "Name",
             ---@param v estate_id
             render_closure = function(rect, k, v)
-                ib.text_button_to_estate(gamescene, v, INVALID_ID, rect, "Estates in " .. PROVINCE_NAME(ESTATE_PROVINCE(v)))
+                ib.text_button_to_estate(gamescene, v, INVALID_ID, rect, PROVINCE_NAME(ESTATE_PROVINCE(v)),
+                    "Estates in " .. PROVINCE_NAME(ESTATE_PROVINCE(v)))
             end,
             width = base_unit * 8,
             ---@param v estate_id

@@ -1,4 +1,4 @@
 name string
-description string
+action_string string
 time_used float
 icon string

@@ -281,7 +281,7 @@ end
 ---@param pop pop_id
 ---@return number pop_adjusted hauling modified by pop race and sex
 function rtab.POP.get_supply_capacity(pop)
-	return JOB_EFFICIENCY(pop, JOBTYPE.HAULING)
+	return JOB_EFFICIENCY(pop, JOBTYPE.HAULING) * 10
 end
 
 

@@ -10,7 +10,7 @@ local ffi = require("ffi")
 ---@class (exact) fat_warband_status_id
 ---@field id warband_status_id Unique warband_status id
 ---@field name string 
----@field description string 
+---@field action_string string 
 ---@field time_used number 
 ---@field icon string 
 
@@ -19,7 +19,7 @@ local ffi = require("ffi")
 
 ---@class (exact) warband_status_id_data_blob_definition
 ---@field name string 
----@field description string 
+---@field action_string string 
 ---@field time_used number 
 ---@field icon string 
 ---Sets values of warband_status for given id
@@ -27,7 +27,7 @@ local ffi = require("ffi")
 ---@param data warband_status_id_data_blob_definition
 function DATA.setup_warband_status(id, data)
     DATA.warband_status_set_name(id, data.name)
-    DATA.warband_status_set_description(id, data.description)
+    DATA.warband_status_set_action_string(id, data.action_string)
     DATA.warband_status_set_time_used(id, data.time_used)
     DATA.warband_status_set_icon(id, data.icon)
 end
@@ -45,7 +45,7 @@ uint32_t dcon_warband_status_size();
 ---@type (string)[]
 DATA.warband_status_name= {}
 ---@type (string)[]
-DATA.warband_status_description= {}
+DATA.warband_status_action_string= {}
 ---@type (string)[]
 DATA.warband_status_icon= {}
 
@@ -90,14 +90,14 @@ function DATA.warband_status_set_name(warband_status_id, value)
     DATA.warband_status_name[warband_status_id] = value
 end
 ---@param warband_status_id warband_status_id valid warband_status id
----@return string description 
-function DATA.warband_status_get_description(warband_status_id)
-    return DATA.warband_status_description[warband_status_id]
+---@return string action_string 
+function DATA.warband_status_get_action_string(warband_status_id)
+    return DATA.warband_status_action_string[warband_status_id]
 end
 ---@param warband_status_id warband_status_id valid warband_status id
 ---@param value string valid string
-function DATA.warband_status_set_description(warband_status_id, value)
-    DATA.warband_status_description[warband_status_id] = value
+function DATA.warband_status_set_action_string(warband_status_id, value)
+    DATA.warband_status_action_string[warband_status_id] = value
 end
 ---@param warband_status_id warband_status_id valid warband_status id
 ---@return number time_used 
@@ -130,7 +130,7 @@ end
 local fat_warband_status_id_metatable = {
     __index = function (t,k)
         if (k == "name") then return DATA.warband_status_get_name(t.id) end
-        if (k == "description") then return DATA.warband_status_get_description(t.id) end
+        if (k == "action_string") then return DATA.warband_status_get_action_string(t.id) end
         if (k == "time_used") then return DATA.warband_status_get_time_used(t.id) end
         if (k == "icon") then return DATA.warband_status_get_icon(t.id) end
         return rawget(t, k)
@@ -140,8 +140,8 @@ local fat_warband_status_id_metatable = {
             DATA.warband_status_set_name(t.id, v)
             return
         end
-        if (k == "description") then
-            DATA.warband_status_set_description(t.id, v)
+        if (k == "action_string") then
+            DATA.warband_status_set_action_string(t.id, v)
             return
         end
         if (k == "time_used") then
@@ -177,41 +177,41 @@ WARBAND_STATUS = {
 local index_warband_status
 index_warband_status = DATA.create_warband_status()
 DATA.warband_status_set_name(index_warband_status, "idle")
-DATA.warband_status_set_description(index_warband_status, "idle")
+DATA.warband_status_set_action_string(index_warband_status, "idle")
 DATA.warband_status_set_time_used(index_warband_status, 0.25)
 DATA.warband_status_set_icon(index_warband_status, "guards.png")
 index_warband_status = DATA.create_warband_status()
 DATA.warband_status_set_name(index_warband_status, "raiding")
-DATA.warband_status_set_description(index_warband_status, "raiding")
+DATA.warband_status_set_action_string(index_warband_status, "raiding")
 DATA.warband_status_set_time_used(index_warband_status, 0.5)
 DATA.warband_status_set_icon(index_warband_status, "stone-spear.png")
 index_warband_status = DATA.create_warband_status()
 DATA.warband_status_set_name(index_warband_status, "preparing_raid")
-DATA.warband_status_set_description(index_warband_status, "preparing to raid")
+DATA.warband_status_set_action_string(index_warband_status, "preparing a raid")
 DATA.warband_status_set_time_used(index_warband_status, 0.5)
 DATA.warband_status_set_icon(index_warband_status, "minions.png")
 index_warband_status = DATA.create_warband_status()
 DATA.warband_status_set_name(index_warband_status, "preparing_patrol")
-DATA.warband_status_set_description(index_warband_status, "preparing to patrol")
+DATA.warband_status_set_action_string(index_warband_status, "preparing to patrol")
 DATA.warband_status_set_time_used(index_warband_status, 0.25)
 DATA.warband_status_set_icon(index_warband_status, "ages.png")
 index_warband_status = DATA.create_warband_status()
 DATA.warband_status_set_name(index_warband_status, "patrol")
-DATA.warband_status_set_description(index_warband_status, "patrolling")
+DATA.warband_status_set_action_string(index_warband_status, "patrolling")
 DATA.warband_status_set_time_used(index_warband_status, 0.5)
 DATA.warband_status_set_icon(index_warband_status, "round-shield.png")
 index_warband_status = DATA.create_warband_status()
 DATA.warband_status_set_name(index_warband_status, "attacking")
-DATA.warband_status_set_description(index_warband_status, "attacking")
+DATA.warband_status_set_action_string(index_warband_status, "attacking")
 DATA.warband_status_set_time_used(index_warband_status, 0.5)
 DATA.warband_status_set_icon(index_warband_status, "hammer-drop.png")
 index_warband_status = DATA.create_warband_status()
 DATA.warband_status_set_name(index_warband_status, "traveling")
-DATA.warband_status_set_description(index_warband_status, "traveling")
+DATA.warband_status_set_action_string(index_warband_status, "traveling")
 DATA.warband_status_set_time_used(index_warband_status, 0.5)
 DATA.warband_status_set_icon(index_warband_status, "horizon-road.png")
 index_warband_status = DATA.create_warband_status()
 DATA.warband_status_set_name(index_warband_status, "off_duty")
-DATA.warband_status_set_description(index_warband_status, "off duty")
+DATA.warband_status_set_action_string(index_warband_status, "off duty")
 DATA.warband_status_set_time_used(index_warband_status, 0.0)
 DATA.warband_status_set_icon(index_warband_status, "shrug.png")

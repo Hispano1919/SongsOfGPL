@@ -48,13 +48,14 @@ end
 function demo.recruit(pop, warband, unit_type)
 	-- clean pop data
 	demo.fire_pop(pop)
-
-	local location = DATA.get_pop_location_from_pop(pop)
-	if location == INVALID_ID then
-		error("ATTEMPT TO HIRE POP WITHOUT PROVINCE")
-	end
-
 	warband_effects.set_as_unit(warband,pop,unit_type)
+	-- recruit all dependents as followers
+	DATA.for_each_parent_child_relation_from_parent(pop, function (item)
+		local child = DATA.parent_child_relation_get_child(item)
+		if IS_DEPENDENT_OF(child,pop) then
+			demo.recruit(child,warband,UNIT_TYPE.FOLLOWER)
+		end
+	end)
 end
 
 ---handles leaving warbands
@@ -62,14 +63,18 @@ end
 function demo.unrecruit(pop)
 	local warband = UNIT_OF(pop)
 	if warband ~= INVALID_ID then
-		warband_effects.fire_unit(warband, pop)
-	end
-	-- make sure pop is in a settlement
-	if PROVINCE(pop) == INVALID_ID then
-		local province = TILE_PROVINCE(WARBAND_TILE(warband))
-		DATA.force_create_pop_location(province, pop)
-		if IS_CHARACTER(pop) then
-			DATA.force_create_character_location(province, pop)
+		-- demote to follower if not in settlement
+		if PROVINCE(pop) == INVALID_ID then
+			warband_effects.set_as_unit(warband,pop,UNIT_TYPE.FOLLOWER)
+		else
+			warband_effects.fire_unit(warband, pop)
+			-- unrecruit all dependent followers
+			DATA.for_each_parent_child_relation_from_parent(pop, function (item)
+				local child = DATA.parent_child_relation_get_child(item)
+				if IS_DEPENDENT_OF(child,pop) then
+					demo.unrecruit(child)
+				end
+			end)
 		end
 	end
 end

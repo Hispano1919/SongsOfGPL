@@ -3,12 +3,6 @@ local pop_utils = require "game.entities.pop".POP
 
 local warband_utils = {}
 
-
-BASE_UNIT_UPKEEP = 0.1
-
-warband_utils.upkeep_per_unit = BASE_UNIT_UPKEEP
-warband_utils.base_unit_price = 50
-
 -- values
 
 ---Returns a the highest ranking officer
@@ -70,22 +64,33 @@ function warband_utils.realm(warband)
 	end
 end
 
----comment
 ---@param warband warband_id
 ---@return number
 function warband_utils.loot_capacity(warband)
-	local cap = 0.01
-	for _, membership in ipairs(DATA.get_warband_unit_from_warband(warband)) do
-		local pop = DATA.warband_unit_get_unit(membership)
+	return warband_utils.total_hauling(warband)
+end
+
+---@param warband warband_id
+---@return number
+function warband_utils.total_hauling(warband)
+	local cap = 0
+	DATA.for_each_warband_unit_from_warband(warband, function (item)
+		local pop = DATA.warband_unit_get_unit(item)
 		---@type number
 		cap = cap + pop_utils.get_supply_capacity(pop)
-	end
+	end)
 	return cap
 end
 
 ---@param warband warband_id
-function warband_utils.total_hauling(warband)
-	return warband_utils.loot_capacity(warband)
+---@return number
+function warband_utils.current_hauling(warband)
+	local total_weight = 0
+	DATA.for_each_trade_good(function (item)
+		-- TODO: implement weight of trade goods
+		total_weight = total_weight + DATA.warband_get_inventory(warband, item)
+	end)
+	return total_weight
 end
 
 ---Returns warbands current spotting bonus
@@ -153,20 +158,6 @@ function warband_utils.total_strength(warband, civilian)
 	return total_health, total_attack, total_armor, total_speed, total_count
 end
 
----Returns average speed of warband, noncombatants included
----@param warband warband_id
----@return number total_speed
----@return number mean_speed
-function warband_utils.speed(warband)
-	local result = 0
-	for _, membership in ipairs(DATA.get_warband_unit_from_warband(warband)) do
-		local pop = DATA.warband_unit_get_unit(membership)
-		---@type number
-		result = result + pop_utils.get_speed(pop).base
-	end
-	return result, math.max(result / warband_utils.size(warband))
-end
-
 ---Total size of warband
 ---@param warband warband_id
 ---@return integer
@@ -203,8 +194,8 @@ end
 function warband_utils.predict_upkeep(warband)
 	local result = 0
 	for _, membership in ipairs(DATA.get_warband_unit_from_warband(warband)) do
-		---@type number
-		result = result + BASE_UNIT_UPKEEP
+		local unit_type = DATA.warband_unit_get_type(membership)
+		result = result + DATA.unit_type_get_base_cost(unit_type)
 	end
 	return result
 end

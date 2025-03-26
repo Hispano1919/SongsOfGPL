@@ -181,7 +181,7 @@ function DATA.save_state()
     current_lua_state.trait_icon = DATA.trait_icon
     current_lua_state.trade_good_category_name = DATA.trade_good_category_name
     current_lua_state.warband_status_name = DATA.warband_status_name
-    current_lua_state.warband_status_description = DATA.warband_status_description
+    current_lua_state.warband_status_action_string = DATA.warband_status_action_string
     current_lua_state.warband_status_icon = DATA.warband_status_icon
     current_lua_state.warband_stance_name = DATA.warband_stance_name
     current_lua_state.building_archetype_name = DATA.building_archetype_name
@@ -336,7 +336,7 @@ function DATA.load_state()
     DATA.trait_icon = loaded_lua_state.trait_icon
     DATA.trade_good_category_name = loaded_lua_state.trade_good_category_name
     DATA.warband_status_name = loaded_lua_state.warband_status_name
-    DATA.warband_status_description = loaded_lua_state.warband_status_description
+    DATA.warband_status_action_string = loaded_lua_state.warband_status_action_string
     DATA.warband_status_icon = loaded_lua_state.warband_status_icon
     DATA.warband_stance_name = loaded_lua_state.warband_stance_name
     DATA.building_archetype_name = loaded_lua_state.building_archetype_name

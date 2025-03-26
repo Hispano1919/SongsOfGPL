@@ -55,7 +55,7 @@ function WarbandEffects.set_as_unit(warband, character, unit)
 
 	local fat_warband = DATA.fatten_warband(warband)
 
-	local new_upkeep = BASE_UNIT_UPKEEP
+	local new_upkeep = DATA.unit_type_get_base_cost(unit)
 
 	if current_warband == INVALID_ID then
 		---#logging LOGS:write("no current warband\n")
@@ -67,7 +67,7 @@ function WarbandEffects.set_as_unit(warband, character, unit)
 		---#logging LOGS:write("there is current warband but it's different\n")
 		---#logging LOGS:flush()
 
-		local current_upkeep = BASE_UNIT_UPKEEP
+		local current_upkeep = DATA.unit_type_get_base_cost(current_type)
 
 		DATA.warband_inc_units_current(current_warband, current_type, -1)
 		DATA.warband_inc_total_upkeep(current_warband, -current_upkeep)
@@ -78,7 +78,7 @@ function WarbandEffects.set_as_unit(warband, character, unit)
 		---#logging LOGS:write("there is current warband and it's the same\n")
 		---#logging LOGS:flush()
 
-		local current_upkeep = BASE_UNIT_UPKEEP
+		local current_upkeep = DATA.unit_type_get_base_cost(current_type)
 
 		DATA.warband_inc_units_current(current_warband, current_type, -1)
 		DATA.warband_inc_total_upkeep(current_warband, -current_upkeep)
@@ -86,7 +86,7 @@ function WarbandEffects.set_as_unit(warband, character, unit)
 		DATA.warband_unit_set_type(current_unit, unit)
 	end
 
-	fat_warband.total_upkeep = fat_warband.total_upkeep + BASE_UNIT_UPKEEP
+	fat_warband.total_upkeep = fat_warband.total_upkeep + new_upkeep
 	DATA.warband_inc_units_current(warband, unit, 1)
 
 	---#logging LOGS:write("taking up command was successful\n")
@@ -105,7 +105,7 @@ function WarbandEffects.fire_unit(warband, pop)
 	assert(warband == fat_membership.warband, "INVALID OPERATION: POP WAS IN A WRONG WARBAND")
 
 	DATA.warband_inc_units_current(warband, fat_membership.type, -1)
-	DATA.warband_inc_total_upkeep(warband, -BASE_UNIT_UPKEEP)
+	DATA.warband_inc_total_upkeep(warband, -DATA.unit_type_get_base_cost(fat_membership.type))
 
 	local recruit = DATA.get_warband_recruiter_from_warband(warband)
 	if recruit ~= INVALID_ID then

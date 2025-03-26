@@ -405,7 +405,7 @@ float age_multiplier(dcon::pop_id pop) {
 	if (age < adult_age) {
 		age_multiplier = 0.25 + 0.75 * age / adult_age; // [.25,1.f)
 	} else if (age >= middle_age) {
-		age_multiplier = 1.f - 0.25 * (age - middle_age) / (max_age - middle_age); // [1.f,.75)
+		age_multiplier = 1.f - 0.1 * (age - middle_age) / (max_age - middle_age); // [1.f,.75)
 	}
 	return age_multiplier;
 }

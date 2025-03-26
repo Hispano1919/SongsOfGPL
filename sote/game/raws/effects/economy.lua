@@ -781,6 +781,262 @@ function EconomicEffects.character_buy_use(character, use, amount)
 	end
 end
 
+---attempt to move a given amount of a trade good from pop to party
+---, negative values attempt to transfer from party to pop
+---@param pop_id pop_id
+---@param party_id warband_id
+---@param trade_good_id trade_good_id
+---@param amount number
+function EconomicEffects.pop_transfer_good_to_party(pop_id,party_id,trade_good_id,amount)
+	-- can only transfer if at the same location, settlement or tile if outside settlement
+	local party_tile = WARBAND_TILE(party_id)
+	local party_province = TILE_PROVINCE(party_tile)
+	local pop_province = PROVINCE(pop_id)
+	local in_settlement = IN_SETTLEMENT(party_id)
+	if (in_settlement and pop_province ~= party_province)
+		or (not in_settlement and pop_province == INVALID_ID and party_tile ~= WARBAND_TILE(UNIT_OF(pop_id)))
+	then
+		return false
+	end
+
+	-- limit transfer by pop and party inventories
+	local pop_amount = DATA.pop_get_inventory(pop_id,trade_good_id)
+	local party_amount = DATA.warband_get_inventory(party_id,trade_good_id)
+	local consumed_amount = amount > 0 and math.min(amount, pop_amount)
+		or math.max(amount, -party_amount)
+
+	--MAKE TRANSACTION
+	DATA.pop_inc_inventory(pop_id, trade_good_id, -consumed_amount)
+	DATA.warband_inc_inventory(party_id, trade_good_id, consumed_amount)
+
+	-- notify if not giving to own party
+	if WORLD:does_player_see_province_news(pop_province) and UNIT_OF(pop_id) ~= party_id then
+		WORLD:emit_notification(NAME(pop_id) .. " gave " .. ut.to_fixed_point2(consumed_amount)
+			.. " " .. DATA.trade_good_get_name(trade_good_id) .. " to " .. WARBAND_NAME(party_id))
+	end
+end
+
+---attempt to move a given amount of a use case from pop to party
+---, negative values attempt to transfer from party to pop
+---@param pop_id pop_id
+---@param party_id warband_id
+---@param use_case_id use_case_id
+---@param amount number
+function EconomicEffects.pop_transfer_use_to_party(pop_id,party_id,use_case_id,amount)
+	local party_tile = WARBAND_TILE(party_id)
+	local party_province = TILE_PROVINCE(party_tile)
+	local pop_province = PROVINCE(pop_id)
+	local in_settlement = IN_SETTLEMENT(party_id)
+	if (in_settlement and pop_province ~= party_province)
+		or (not in_settlement and pop_province == INVALID_ID and party_tile ~= WARBAND_TILE(UNIT_OF(pop_id)))
+	then
+		return false
+	end
+
+	local use_available = amount > 0 and ev.available_use_case_from_inventory(pop_id, use_case_id)
+		or ev.available_use_case_for_party(party_id, use_case_id)
+
+	---@type {good: trade_good_id, weight: number, price: number, available: number}[]
+	local goods = {}
+	DATA.for_each_use_weight_from_use_case(use_case_id, function (weight_id)
+		local good = DATA.use_weight_get_trade_good(weight_id)
+		local weight = DATA.use_weight_get_weight(weight_id)
+		local goods_available = amount > 0 and DATA.pop_get_inventory(pop_id, good)
+			or DATA.warband_get_inventory(party_id, good)
+		if goods_available > 0 then
+			goods[#goods + 1] = { good = good, weight = weight, available = goods_available }
+		end
+	end)
+	local total_transfer = 0
+	for _, values in pairs(goods) do
+		local good_use_amount = values.available * values.weight
+		local goods_available_weight = math.max(good_use_amount / use_available, 0)
+		local consumed_amount = amount / values.weight * goods_available_weight
+		if goods_available_weight ~= goods_available_weight
+			or consumed_amount ~= consumed_amount
+		then
+			error("POP TO PARTY USE CALCULATED AMOUNT IS NAN"
+				.. "\n use = "
+				.. tostring(use_case_id)
+				.. "\n use_available = "
+				.. tostring(use_available)
+				.. "\n good = "
+				.. tostring(values.good)
+				.. "\n goods_available = "
+				.. tostring(values.available)
+				.. "\n good_use_amount = "
+				.. tostring(good_use_amount)
+				.. "\n good use weight = "
+				.. tostring(values.weight)
+				.. "\n goods_available_weight = "
+				.. tostring(goods_available_weight)
+				.. "\n consumed_amount = "
+				.. tostring(consumed_amount)
+				.. "\n amount = "
+				.. tostring(amount)
+			)
+		end
+
+		total_transfer = total_transfer + consumed_amount * values.weight
+
+		-- we need to get back to use "units" so we multiply consumed amount back by weight
+
+		--MAKE TRANSACTION
+		local party_inventory = DATA.warband_get_inventory(party_id,values.good)
+		DATA.pop_set_inventory(pop_id, values.good, math.max(0,values.available - consumed_amount))
+		DATA.warband_set_inventory(party_id, values.good, math.max(0,party_inventory + consumed_amount))
+	end
+	if total_transfer < amount * 0.7 or total_transfer > amount * 1.3 then
+		print("Potentially invalid attempt to sell use case for the party"
+			.. "\n use = "
+			.. tostring(use_case_id)
+			.. "\n total_transfer = "
+			.. tostring(total_transfer)
+			.. "\n amount = "
+			.. tostring(amount)
+			.. "\n use_available = "
+			.. tostring(use_available)
+		)
+	end
+
+	if WORLD:does_player_see_province_news(pop_province) and UNIT_OF(pop_id) ~= party_id then
+		WORLD:emit_notification(
+			NAME(pop_id) .. " gave " .. ut.to_fixed_point2(total_transfer) .. " " .. DATA.use_case_get_name(use_case_id)
+			.. " to " .. WARBAND_NAME(party_id)
+		)
+	end
+end
+
+---attempts to buy trade good to market to party inventory
+---@param party warband_id
+---@param good trade_good_id
+---@param amount number
+function EconomicEffects.party_buy_good(party,good,amount)
+	local leader = warband_utils.active_leader(party)
+	local province = TILE_PROVINCE(WARBAND_TILE(party))
+	local savings = WARBAND_SAVINGS(party)
+	local available = DATA.province_get_local_storage(province,good)
+	if not IN_SETTLEMENT(party) or available <= 0 or savings <= 0 then
+		return false
+	end
+
+	local price = ev.get_local_price(province,good)
+	local cost = price * amount
+	if cost ~= cost then
+		error(
+			"WRONG BUY OPERATION "
+			.. "\n price = "
+			.. tostring(price)
+			.. "\n amount = "
+			.. tostring(amount)
+		)
+	end
+
+	if leader ~= INVALID_ID then
+		local price_belief = DATA.pop_get_price_belief_sell(leader, good)
+		if price_belief == 0 then
+			DATA.pop_set_price_belief_sell(leader, good, price)
+		else
+			DATA.pop_set_price_belief_sell(leader, good, price_belief * (3 / 4) + price * (1 / 4))
+		end
+	end
+
+	-- limit 
+	local consumed_amount = math.min(amount,available,savings/price)
+	local income = consumed_amount * price
+
+	--MAKE TRANSACTION
+	DATA.province_inc_trade_wealth(province, income)
+	EconomicEffects.add_party_savings(party, -income, ECONOMY_REASON.TRADE)
+
+	DATA.warband_inc_inventory(party, good, consumed_amount)
+	EconomicEffects.change_local_stockpile(province, good, -consumed_amount)
+
+	local trade_volume =
+		DATA.province_get_local_production(province, good)
+		+ DATA.province_get_local_demand(province, good)
+		+ DATA.province_get_local_storage(province, good)
+		+ consumed_amount + 0.01
+	local price_change = consumed_amount / trade_volume * PRICE_SIGNAL_PER_STOCKPILED_UNIT * price
+
+	EconomicEffects.change_local_price(province, good, -price_change)
+
+	if WORLD:does_player_see_province_news(province) then
+		WORLD:emit_notification(
+			WARBAND_NAME(party)
+			.. " bought " .. ut.to_fixed_point2(consumed_amount)	.. " " .. DATA.trade_good_get_name(good)
+			.. " from the " .. PROVINCE_NAME(province)
+			.. " market for " .. ut.to_fixed_point2(income)
+			.. MONEY_SYMBOL
+		)
+	end
+end
+
+---attempts to sell trade good to market from party inventory
+---@param party warband_id
+---@param good trade_good_id
+---@param amount number
+function EconomicEffects.party_sell_good(party,good,amount)
+	local leader = warband_utils.active_leader(party)
+	local province = TILE_PROVINCE(WARBAND_TILE(party))
+	local trade_wealth = DATA.province_get_trade_wealth(province)
+	local available = DATA.warband_get_inventory(party,good)
+	if not IN_SETTLEMENT(party) or available <= 0 or trade_wealth <= 0 then
+		return false
+	end
+
+	local price = ev.get_local_price(province,good)
+	local cost = price * amount
+	if cost ~= cost then
+		error(
+			"WRONG BUY OPERATION "
+			.. "\n price = "
+			.. tostring(price)
+			.. "\n amount = "
+			.. tostring(amount)
+		)
+	end
+
+	if leader ~= INVALID_ID then
+		local price_belief = DATA.pop_get_price_belief_sell(leader, good)
+		if price_belief == 0 then
+			DATA.pop_set_price_belief_sell(leader, good, price)
+		else
+			DATA.pop_set_price_belief_sell(leader, good, price_belief * (3 / 4) + price * (1 / 4))
+		end
+	end
+
+	-- limit 
+	local consumed_amount = math.min(amount,available,trade_wealth/price)
+	local income = consumed_amount * price
+
+	--MAKE TRANSACTION
+	DATA.province_inc_trade_wealth(province, -income)
+	EconomicEffects.add_party_savings(party, income, ECONOMY_REASON.TRADE)
+
+	DATA.warband_inc_inventory(party, good, -consumed_amount)
+	EconomicEffects.change_local_stockpile(province, good, consumed_amount)
+
+	local trade_volume =
+		DATA.province_get_local_production(province, good)
+		+ DATA.province_get_local_demand(province, good)
+		+ DATA.province_get_local_storage(province, good)
+		+ consumed_amount + 0.01
+	local price_change = consumed_amount / trade_volume * PRICE_SIGNAL_PER_STOCKPILED_UNIT * price
+
+	EconomicEffects.change_local_price(province, good, -price_change)
+
+	if WORLD:does_player_see_province_news(province) then
+		WORLD:emit_notification(
+			WARBAND_NAME(party)
+			.. " sold " .. ut.to_fixed_point2(consumed_amount)	.. " " .. DATA.trade_good_get_name(good)
+			.. " to the " .. PROVINCE_NAME(province)
+			.. " market for " .. ut.to_fixed_point2(income)
+			.. MONEY_SYMBOL
+		)
+	end
+end
+
 ---attempts to buy use case from market for parties
 ---@param party warband_id
 ---@param use use_case_id
@@ -847,7 +1103,7 @@ function EconomicEffects.party_buy_use(party, use, amount)
 		if goods_available_weight ~= goods_available_weight
 			or consumed_amount ~= consumed_amount
 		then
-			error("CHARACTER BUY USE CALCULATED AMOUNT IS NAN"
+			error("PARTY BUY USE CALCULATED AMOUNT IS NAN"
 				.. "\n use = "
 				.. tostring(use)
 				.. "\n use_available = "
@@ -920,13 +1176,160 @@ function EconomicEffects.party_buy_use(party, use, amount)
 		)
 	end
 
-	EconomicEffects.add_party_savings(party, -math.min(spendings, DATA.pop_get_savings(party)), ECONOMY_REASON.TRADE)
+	EconomicEffects.add_party_savings(party, -math.min(spendings, DATA.warband_get_treasury(party)), ECONOMY_REASON.TRADE)
 
 	if WORLD:does_player_see_province_news(province) then
 		WORLD:emit_notification(
 			WARBAND_NAME(party)
 			.. " bought " .. ut.to_fixed_point2(amount)	.. " " .. DATA.use_case_get_name(use)
-			.. " for " .. ut.to_fixed_point2(spendings)
+			.. " from the " .. PROVINCE_NAME(province)
+			.. " market for " .. ut.to_fixed_point2(spendings)
+			.. MONEY_SYMBOL
+		)
+	end
+end
+
+---attempts to sell use case to market from party inventory
+---@param party warband_id
+---@param use use_case_id
+---@param amount number
+function EconomicEffects.party_sell_use(party,use,amount)
+	local leader = warband_utils.active_leader(party)
+	local province = TILE_PROVINCE(WARBAND_TILE(party))
+	local trade_wealth = DATA.province_get_trade_wealth(province)
+	local use_available = ev.available_use_case_for_party(party,use)
+	if not IN_SETTLEMENT(party) or use_available <= 0 or trade_wealth <= 0 then
+		return false
+	end
+
+	local price = ev.get_local_price_of_use(province, use)
+	local cost = price * amount
+	if cost ~= cost then
+		error(
+			"WRONG BUY OPERATION "
+			.. "\n price = "
+			.. tostring(price)
+			.. "\n amount = "
+			.. tostring(amount)
+		)
+	end
+
+	local price_expectation = ev.get_local_price_of_use(province, use)
+	local use_available = ev.available_use_case_for_party(party, use)
+
+	local total_sold = 0
+	local total_income = 0
+	local budget = DATA.province_get_trade_wealth(province)
+
+	---@type {good: trade_good_id, weight: number, price: number, available: number}[]
+	local goods = {}
+	DATA.for_each_use_weight_from_use_case(use, function (weight_id)
+		local good = DATA.use_weight_get_trade_good(weight_id)
+		local weight = DATA.use_weight_get_weight(weight_id)
+		local good_price = ev.get_local_price(province, good)
+		if leader ~= INVALID_ID then
+			local price_belief = DATA.pop_get_price_belief_sell(leader, good)
+			if price_belief == 0 then
+				DATA.pop_set_price_belief_sell(leader, good, good_price)
+			else
+				DATA.pop_set_price_belief_sell(leader, good, price_belief * (3 / 4) + good_price * (1 / 4))
+			end
+		end
+		local goods_available = DATA.warband_get_inventory(party, good)
+		if goods_available > 0 then
+			goods[#goods + 1] = { good = good, weight = weight, price = good_price, available = goods_available }
+		end
+	end)
+	for _, values in pairs(goods) do
+		local good_use_amount = values.available * values.weight
+		local goods_available_weight = math.max(good_use_amount / use_available, 0)
+		local consumed_amount = amount / values.weight * goods_available_weight
+		if goods_available_weight ~= goods_available_weight
+			or consumed_amount ~= consumed_amount
+		then
+			error("PARTY SELL USE CALCULATED AMOUNT IS NAN"
+				.. "\n use = "
+				.. tostring(use)
+				.. "\n use_available = "
+				.. tostring(use_available)
+				.. "\n good = "
+				.. tostring(values.good)
+				.. "\n good_price = "
+				.. tostring(values.price)
+				.. "\n goods_available = "
+				.. tostring(values.available)
+				.. "\n good_use_amount = "
+				.. tostring(good_use_amount)
+				.. "\n good use weight = "
+				.. tostring(values.weight)
+				.. "\n goods_available_weight = "
+				.. tostring(goods_available_weight)
+				.. "\n consumed_amount = "
+				.. tostring(consumed_amount)
+				.. "\n amount = "
+				.. tostring(amount)
+			)
+		end
+
+		local income = consumed_amount * values.price
+
+		if budget <= income then
+			consumed_amount = budget / values.price
+			income = budget
+			budget = 0
+		else
+			budget = budget - income
+		end
+
+		total_sold = total_sold + consumed_amount * values.weight
+
+		-- we need to get back to use "units" so we multiply consumed amount back by weight
+
+		total_income = total_income + income
+
+		--MAKE TRANSACTION
+		DATA.province_inc_trade_wealth(province, -income)
+		---pop's savings are reduced later
+
+		DATA.warband_inc_inventory(party, values.good, -consumed_amount)
+		EconomicEffects.change_local_stockpile(province, values.good, consumed_amount)
+
+		local trade_volume =
+			DATA.province_get_local_production(province, values.good)
+			+ DATA.province_get_local_demand(province, values.good)
+			+ DATA.province_get_local_storage(province, values.good)
+			+ consumed_amount + 0.01
+		local price_change = consumed_amount / trade_volume * PRICE_SIGNAL_PER_STOCKPILED_UNIT * values.price
+
+		EconomicEffects.change_local_price(province, values.good, -price_change)
+	end
+	if total_sold < amount * 0.7 or total_sold > amount * 1.3 then
+		print("Potentially invalid attempt to sell use case for the party"
+			.. "\n use = "
+			.. tostring(use)
+			.. "\n trade_wealth = "
+			.. tostring(trade_wealth)
+			.. "\n total_income = "
+			.. tostring(total_income)
+			.. "\n total_sold = "
+			.. tostring(total_sold)
+			.. "\n amount = "
+			.. tostring(amount)
+			.. "\n price_expectation = "
+			.. tostring(price_expectation)
+			.. "\n use_available = "
+			.. tostring(use_available)
+		)
+	end
+
+	EconomicEffects.add_party_savings(party, total_income, ECONOMY_REASON.TRADE)
+
+	if WORLD:does_player_see_province_news(province) then
+		WORLD:emit_notification(
+			WARBAND_NAME(party)
+			.. " sold " .. ut.to_fixed_point2(amount)	.. " " .. DATA.use_case_get_name(use)
+			.. " to the " .. PROVINCE_NAME(province)
+			.. " market for " .. ut.to_fixed_point2(total_income)
 			.. MONEY_SYMBOL
 		)
 	end

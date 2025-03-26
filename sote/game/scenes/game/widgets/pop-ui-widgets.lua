@@ -26,17 +26,15 @@ function pui.render_age(rect, pop_id, alignment)
 		birth_minute_string = "0" .. birth_minute_string
 	end
 
-	ut.generic_string_field(
-		"",
+	ui.centered_text(
 		tostring(age_years),
-		rect,
+		rect)
+	ui.tooltip(
 		NAME(pop_id) .. " is " .. age_years .. " years and " .. age_months .. " months old. "
 			.. strings.title(HESHE(pop_id)) .. " was born " .. birth_hour .. ":" .. birth_minute_string
 			.. " " .. ut.months[birth_month+1] .. " " .. birth_day
-			.. ", " .. birth_year .. ".",
-		ut.NAME_MODE.NAME,
-		false,
-		alignment)
+			.. ", " .. birth_year,
+		rect)
 end
 
 ---comment
@@ -84,22 +82,22 @@ function pui.render_forage_time(rect,pop_id)
 	ut.generic_number_field("basket.png", forage_time, rect, tooltip, ut.NUMBER_MODE.PERCENTAGE, ut.NAME_MODE.ICON,true)
 end
 
----draw projected time spent for warband with tooltip of warband status
+---draw projected time spent for party with tooltip of party status
 ---@param rect Rect
 ---@param pop_id pop_id
 function pui.render_warband_time(rect,pop_id)
 	local pop_name = NAME(pop_id)
-	local warband_id = UNIT_OF(pop_id)
-	if warband_id ~= INVALID_ID then
+	local party_id = UNIT_OF(pop_id)
+	if party_id ~= INVALID_ID then
 		local _, warband_time, _, _ = POP_TIME(pop_id)
-		local status = DATA.warband_get_current_status(warband_id)
+		local status = DATA.warband_get_current_status(party_id)
 		local tooltip = pop_name .. " has spent " .. ut.to_fixed_point2(warband_time*100)
-			.. "% of " .. HISHER(pop_id) .. " time with " .. WARBAND_NAME(warband_id) .. " this month. "
-			.. strings.title(HESHE(pop_id)) ..  " is currently " .. DATA.warband_status_get_description(status)
-			.. ", increasing this month's warband time towards " .. ut.to_fixed_point2(DATA.warband_status_get_time_used(status)*100) .. "%."
+			.. "% of " .. HISHER(pop_id) .. " time with " .. WARBAND_NAME(party_id) .. " this month. "
+			.. strings.title(HESHE(pop_id)) ..  " is currently " .. DATA.warband_status_get_action_string(status)
+			.. ", increasing this month's party time towards " .. ut.to_fixed_point2(DATA.warband_status_get_time_used(status)*100) .. "%."
 		ut.generic_number_field("guards.png", warband_time, rect, tooltip, ut.NUMBER_MODE.PERCENTAGE, ut.NAME_MODE.ICON,true)
 	else
-		local tooltip = pop_name .. " is not part of a warband."
+		local tooltip = pop_name .. " is not part of a party."
 		ut.generic_number_field("guards.png", 0, rect, tooltip, ut.NUMBER_MODE.PERCENTAGE, ut.NAME_MODE.ICON,true)
 	end
 end
@@ -205,8 +203,8 @@ end
 ---@param tooltip string?
 function pui.render_unit_icon(rect, pop_id, tooltip)
 	local center_square = rect:centered_square()
-	local warband = UNIT_OF(pop_id)
-	if warband~=INVALID_ID then
+	local party_id = UNIT_OF(pop_id)
+	if party_id~=INVALID_ID then
 		ut.render_icon(center_square, DATA.unit_type_get_icon(UNIT_TYPE_OF(pop_id)), .8, .8, .8, 1, true)
 	else
 		ut.render_icon(center_square,"inner-self.png", .8, .8, .8, 1, true)
@@ -271,7 +269,7 @@ function pui.render_warband_income(rect, pop_id)
 		local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 		local wage, unit = 0, "noncombatant"
 		if unit_type_id ~= INVALID_ID then
-			wage = BASE_UNIT_UPKEEP
+			wage = DATA.unit_type_get_base_cost(UNIT_TYPE_OF(pop_id))
 			unit = strings.title(DATA.unit_type_get_name(unit_type_id))
 		end
 		ut.generic_number_field(
@@ -286,7 +284,7 @@ function pui.render_warband_income(rect, pop_id)
 			true)
 	else
 		ut.generic_string_field("receive-money.png","n/a",rect,"Unknown",ut.NAME_MODE.ICON,true,"right")
-		ui.tooltip(NAME(pop_id) .. " is not in a warband!", rect)
+		ui.tooltip(NAME(pop_id) .. " is not in a party!", rect)
 	end
 end
 
@@ -297,9 +295,9 @@ function pui.occupation_tooltip(pop_id)
 	local teen_age = DATA.race_get_teen_age(DATA.pop_get_race(pop_id))
 	local occupation = DATA.get_employment_from_worker(pop_id)
     local employer_id = DATA.employment_get_building(occupation)
-	local warband_id = UNIT_OF(pop_id)
+	local party_id = UNIT_OF(pop_id)
 
-	-- first spend warband time, then attempt to forage, finally use remaining time to work
+	-- first spend party time, then attempt to forage, finally use remaining time to work
 	local free_time,warband_time,forage_time,work_time  = POP_TIME(pop_id)
 
 	local tooltip = "Foraging\t" .. ut.to_fixed_point2(forage_time*100)
@@ -316,14 +314,14 @@ function pui.occupation_tooltip(pop_id)
 			tooltip = strings.title(employer_name) .. "\t" .. ut.to_fixed_point2(work_time*100) .. "%"
 				.. "\n\t" .. tooltip
 		end
-		if warband_id ~= INVALID_ID then
+		if party_id ~= INVALID_ID then
 			local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 			local unit_name = DATA.unit_type_get_name(unit_type_id)
-			tooltip = WARBAND_NAME(warband_id)
+			tooltip = WARBAND_NAME(party_id)
 				.. "\t" .. ut.to_fixed_point2(warband_time*100) .. "%"
 				.. "\n\t" .. tooltip
 		end
-		if warband_id ~= INVALID_ID then
+		if party_id ~= INVALID_ID then
 			local unit_type_id = pop_utils.get_unit_type_of(pop_id)
 			local unit_name = DATA.unit_type_get_name(unit_type_id)
 			tooltip = strings.title(unit_name) .. "\t(" .. ut.to_fixed_point2(free_time*100) .. "%)"
@@ -642,8 +640,8 @@ function pui.render_visibility(rect,pop_id)
 	local race_mod = DATA.race_get_visibility(race_id)
 	local size = pop_utils.get_size(pop_id)
 	local tooltip = "Visibilty"
-		.. "\n\t" .. ut.to_fixed_point2(size) .. " (Size)"
-		.. "\n\t × " .. ut.to_fixed_point2(race_mod).. " (" .. strings.title(DATA.race_get_name(race_id)) .. ")"
+		.. "\n\t" .. ut.to_fixed_point2(race_mod).. " (" .. strings.title(DATA.race_get_name(race_id)) .. ")"
+		.. "\n\t × " .. ut.to_fixed_point2(size) .. " (Size)"
 
 	ut.generic_number_field(
 		"high-grass.png",
@@ -738,9 +736,11 @@ end
 ---@param pop_id pop_id
 function pui.render_supply_capacity(rect,pop_id)
 	local value = pop_utils.get_supply_capacity(pop_id)
-	local base = JOB_EFFICIENCY(pop_id, JOBTYPE.HAULING)
+	local base = pop_utils.get_size(pop_id)
+	local mod = JOB_EFFICIENCY(pop_id, JOBTYPE.HAULING)
 	local tooltip = "Supply Capacity"
-		.. "\n\t" .. ut.to_fixed_point2(base) .. " (Hauling)"
+		.. "\n\t" .. ut.to_fixed_point2(base) .. " (Size)"
+		.. "\n\t × " .. ut.to_fixed_point2(base) .. " (Hauling)"
 	ut.generic_number_field(
 		"cardboard-box.png",
 		value,
@@ -793,29 +793,6 @@ function pui.render_infrastructure_needs(rect,pop_id)
 	)
 end
 
-
----@param rect Rect
----@param pop_id pop_id
-function pui.render_party_speed(rect,pop_id)
-	local warband = UNIT_OF(pop_id)
-	if warband ~= INVALID_ID then
-		local total, mean = require "game.entities.warband".speed(warband)
-		local size = require "game.entities.warband".size(warband)
-		local tooltip = NAME(pop_id) .. "'s party has a speed of " .. ut.to_fixed_point2(mean)
-			.. " from " .. size .. " units combined " .. ut.to_fixed_point2(total) .. " speed."
-		ut.generic_number_field(
-			"fast-forward-button.png",
-			mean,
-			rect,
-			tooltip,
-			ut.NUMBER_MODE.PERCENTAGE,
-			ut.NAME_MODE.ICON
-		)
-	else
-		pui.render_speed(rect,pop_id)
-	end
-end
-
 function pui.render_location_buttons(game,rect,pop_id)
 	local name = NAME(pop_id)
 	local province_id = LOCAL_PROVINCE(pop_id)
@@ -830,18 +807,64 @@ function pui.render_location_buttons(game,rect,pop_id)
 		ib.icon_button_to_realm(game,realm_id,icon_rect,
 			name .. " is currently in the capitol of " .. (realm_id ~= INVALID_ID and DATA.realm_get_name(realm_id) or " unclaimed wildlands."))
 		pui.render_realm_popularity(info_rect,pop_id,realm_id)
-	else -- has a warband location and speed
-		local warband = UNIT_OF(pop_id)
-		tile_id = WARBAND_TILE(warband)
+	else -- has a party location and speed
+		local party_id = UNIT_OF(pop_id)
+		tile_id = WARBAND_TILE(party_id)
 		local biome = DATA.tile_get_biome(tile_id)
 		local biome_tooltip = name .. " is currently roaming " .. DATA.biome_get_name(biome) .. "."
 		ui.panel(icon_rect,2,true)
 		ut.render_icon(icon_rect,"horizon-road.png",DATA.biome_get_r(biome),DATA.biome_get_g(biome),DATA.biome_get_b(biome),1,true)
 		ui.tooltip(biome_tooltip,icon_rect)
-		pui.render_party_speed(info_rect,pop_id)
+		require "game.scenes.game.widgets.party-ui-widgets".render_travel_speed(info_rect,party_id)
 	end
 	ib.text_button_to_province_tile(game,tile_id,rect:subrect(0,0,rect.width-icon_size*4,rect.height,"left","up"),
 		NAME(pop_id) .. " is currently in the province of " .. PROVINCE_NAME(province_id) .. ".")
+end
+
+
+---draws a ib overlay portrait with title, location, and some basic info
+---, rect.height should be a minimum 4 ut.BASE_HEIGHT!
+---@param game GameScene
+---@param rect Rect
+---@param pop_id pop_id
+---@param title string
+function pui.render_pop_overview(game,rect,pop_id,title)
+	local player_id = WORLD.player_character
+    ui.panel(rect,nil,nil,true)
+    local title_rect = rect:subrect(0,0,rect.width,ut.BASE_HEIGHT,"left","up")
+    ui.text(title,title_rect,"left","center")
+
+    local portrait_size = rect.height-ut.BASE_HEIGHT
+    local portrait_rect = rect:subrect(0,0,portrait_size,portrait_size,"left","down")
+    ib.render_portrait_with_overlay(game,portrait_rect,pop_id,pui.pop_tooltip(pop_id))
+    local lines_rect = rect:subrect(0,0,rect.width-portrait_size,ut.BASE_HEIGHT*3,"right","down")
+    local lines_layout = ui.layout_builder():position(lines_rect.x,lines_rect.y):vertical():build()
+
+    -- basic info
+    local line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
+    local line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
+    pui.render_age(line_layout:next(line_rect.width-ut.BASE_HEIGHT*10,ut.BASE_HEIGHT),pop_id,"right")
+    pui.render_female_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),pop_id)
+    ui.render_race_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),RACE(pop_id),ui.race_tooltip(RACE(pop_id)))
+    ui.render_culture_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),CULTURE(pop_id),ui.culture_tooltip(CULTURE(pop_id)))
+    ui.render_faith_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),DATA.pop_get_faith(pop_id),ui.faith_tooltip(DATA.pop_get_faith(pop_id)))
+    pui.render_basic_needs_satsifaction(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
+    pui.render_life_needs_satsifaction(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
+
+    -- location and popularity
+    line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
+    line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
+    pui.render_location_buttons(game,line_layout:next(line_rect.width,ut.BASE_HEIGHT),pop_id)
+
+    -- home populatiry
+    line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
+    line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
+    pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id,REALM(pop_id))
+    -- occupation, savings, income
+    pui.render_occupation_icon(line_layout:next(ut.BASE_HEIGHT,ut.BASE_HEIGHT),pop_id,pui.occupation_tooltip(pop_id))
+    pui.render_savings(line_layout:next(line_rect.width-ut.BASE_HEIGHT*7,ut.BASE_HEIGHT),pop_id)
+    pui.render_pending_income(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id)
+
 end
 
 return pui

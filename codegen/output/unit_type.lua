@@ -12,13 +12,16 @@ local ffi = require("ffi")
 ---@field name string 
 ---@field description string 
 ---@field icon string 
+---@field base_cost number 
 
 ---@class struct_unit_type
+---@field base_cost number 
 
 ---@class (exact) unit_type_id_data_blob_definition
 ---@field name string 
 ---@field description string 
 ---@field icon string 
+---@field base_cost number 
 ---Sets values of unit_type for given id
 ---@param id unit_type_id
 ---@param data unit_type_id_data_blob_definition
@@ -26,9 +29,12 @@ function DATA.setup_unit_type(id, data)
     DATA.unit_type_set_name(id, data.name)
     DATA.unit_type_set_description(id, data.description)
     DATA.unit_type_set_icon(id, data.icon)
+    DATA.unit_type_set_base_cost(id, data.base_cost)
 end
 
 ffi.cdef[[
+void dcon_unit_type_set_base_cost(int32_t, float);
+float dcon_unit_type_get_base_cost(int32_t);
 int32_t dcon_create_unit_type();
 bool dcon_unit_type_is_valid(int32_t);
 void dcon_unit_type_resize(uint32_t sz);
@@ -103,12 +109,30 @@ end
 function DATA.unit_type_set_icon(unit_type_id, value)
     DATA.unit_type_icon[unit_type_id] = value
 end
+---@param unit_type_id unit_type_id valid unit_type id
+---@return number base_cost 
+function DATA.unit_type_get_base_cost(unit_type_id)
+    return DCON.dcon_unit_type_get_base_cost(unit_type_id - 1)
+end
+---@param unit_type_id unit_type_id valid unit_type id
+---@param value number valid number
+function DATA.unit_type_set_base_cost(unit_type_id, value)
+    DCON.dcon_unit_type_set_base_cost(unit_type_id - 1, value)
+end
+---@param unit_type_id unit_type_id valid unit_type id
+---@param value number valid number
+function DATA.unit_type_inc_base_cost(unit_type_id, value)
+    ---@type number
+    local current = DCON.dcon_unit_type_get_base_cost(unit_type_id - 1)
+    DCON.dcon_unit_type_set_base_cost(unit_type_id - 1, current + value)
+end
 
 local fat_unit_type_id_metatable = {
     __index = function (t,k)
         if (k == "name") then return DATA.unit_type_get_name(t.id) end
         if (k == "description") then return DATA.unit_type_get_description(t.id) end
         if (k == "icon") then return DATA.unit_type_get_icon(t.id) end
+        if (k == "base_cost") then return DATA.unit_type_get_base_cost(t.id) end
         return rawget(t, k)
     end,
     __newindex = function (t,k,v)
@@ -122,6 +146,10 @@ local fat_unit_type_id_metatable = {
         end
         if (k == "icon") then
             DATA.unit_type_set_icon(t.id, v)
+            return
+        end
+        if (k == "base_cost") then
+            DATA.unit_type_set_base_cost(t.id, v)
             return
         end
         rawset(t, k, v)
@@ -146,11 +174,14 @@ index_unit_type = DATA.create_unit_type()
 DATA.unit_type_set_name(index_unit_type, "warrior")
 DATA.unit_type_set_description(index_unit_type, "combatant")
 DATA.unit_type_set_icon(index_unit_type, "guards.png")
+DATA.unit_type_set_base_cost(index_unit_type, 0.5)
 index_unit_type = DATA.create_unit_type()
 DATA.unit_type_set_name(index_unit_type, "civilian")
 DATA.unit_type_set_description(index_unit_type, "noncombatant")
 DATA.unit_type_set_icon(index_unit_type, "minions.png")
+DATA.unit_type_set_base_cost(index_unit_type, 0.25)
 index_unit_type = DATA.create_unit_type()
 DATA.unit_type_set_name(index_unit_type, "follower")
 DATA.unit_type_set_description(index_unit_type, "follower")
 DATA.unit_type_set_icon(index_unit_type, "ages.png")
+DATA.unit_type_set_base_cost(index_unit_type, 0)

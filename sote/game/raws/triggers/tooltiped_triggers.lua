@@ -138,7 +138,7 @@ function Trigger.Pretrigger.is_unit_type(unit_type)
 			return { "You are not in a party!" }
 		end,
 		condition = function(root)
-			return UNIT_OF(root) ~= nil and UNIT_TYPE_OF(root) ~= unit_type
+			return UNIT_OF(root) ~= nil and UNIT_TYPE_OF(root) == unit_type
 		end
 	}
 	return result
@@ -150,13 +150,13 @@ function Trigger.Pretrigger.not_unit_type(unit_type)
 		tooltip_on_condition_failure = function(root, primary_target)
 			local warband = UNIT_OF(root)
 			if warband ~= INVALID_ID then
-				return { "You are a " .. DATA.unit_type_name(UNIT_TYPE_OF(root))
+				return { "You are a " .. DATA.unit_type_get_name(UNIT_TYPE_OF(root))
 				.. " of " .. WARBAND_NAME(warband) }
 			end
 			return { "You are not in a party!" }
 		end,
 		condition = function(root)
-			return UNIT_OF(root) ~= nil and UNIT_TYPE_OF(root) == unit_type
+			return UNIT_OF(root) ~= nil and UNIT_TYPE_OF(root) ~= unit_type
 		end
 	}
 	return result

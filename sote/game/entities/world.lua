@@ -534,7 +534,8 @@ function world.World:tick()
 			if treasury > total_upkeep then
 				DATA.warband_inc_treasury(warband_id, -total_upkeep)
 				DATA.for_each_warband_unit_from_warband(warband_id, function (unit)
-					local unit_upkeep = warband_utils.upkeep_per_unit
+					local unit_type = DATA.warband_unit_get_type(unit)
+					local unit_upkeep = DATA.unit_type_get_base_cost(unit_type)
 					local pop = DATA.warband_unit_get_unit(unit)
 					economy_effects.add_pop_savings(pop, unit_upkeep, ECONOMY_REASON.UPKEEP)
 				end)
@@ -612,7 +613,6 @@ function world.World:tick()
 	--- daily
 	if WORLD.sub_daily_tick == 2 then
 		PROFILER:start_timer("warband movement")
-		local hours_per_day = 10
 
 		DATA.for_each_warband(function (item)
 			-- add yesterday's stance time to warband monthly tracking
@@ -634,10 +634,8 @@ function world.World:tick()
 				1
 			)
 
-			-- forage with missing % at half time if > 100 % supplies?
-
 			--- depending on amount of available supplies, move the party
-			progress = progress - hours_per_day * supplies_availability
+			progress = progress - supplies_availability * TRAVEL_DAY_HOURS
 			while progress <= 0 and #current_path > 0 do
 				local last_tile = table.remove(current_path, #current_path)
 				travel_effects.move_party(item, last_tile)
