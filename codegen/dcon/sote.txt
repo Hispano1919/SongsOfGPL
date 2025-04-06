@@ -41,6 +41,21 @@ object {
         tag { scenario }
     }
     property{
+        name { x }
+        type { float }
+        tag { scenario }
+    }
+    property{
+        name { y }
+        type { float }
+        tag { scenario }
+    }
+    property{
+        name { z }
+        type { float }
+        tag { scenario }
+    }
+    property{
         name { elevation }
         type { float }
         tag { scenario }
@@ -409,7 +424,12 @@ object {
         tag { scenario }
     }
     property{
-        name { age }
+        name { birth_year }
+        type { int32_t }
+        tag { scenario }
+    }
+    property{
+        name { birth_tick }
         type { uint32_t }
         tag { scenario }
     }
@@ -440,6 +460,11 @@ object {
     }
     property{
         name { savings }
+        type { float }
+        tag { scenario }
+    }
+    property{
+        name { expected_wage }
         type { float }
         tag { scenario }
     }
@@ -786,8 +811,13 @@ object {
         tag { scenario }
     }
     property{
-        name { current_free_time_ratio }
+        name { current_time_used_ratio }
         type { float }
+        tag { scenario }
+    }
+    property{
+        name { inventory }
+        type { array{trade_good_id}{float} }
         tag { scenario }
     }
     property{
@@ -818,6 +848,11 @@ object {
     property{
         name { morale }
         type { float }
+        tag { scenario }
+    }
+    property{
+        name { in_settlement }
+        type { bitfield }
         tag { scenario }
     }
 }
@@ -1058,7 +1093,7 @@ relationship {
 object {
     name { building }
     storage_type { erasable }
-    size { 600000 }
+    size { 6000000 }
     tag {scenario}
     property{
         name { current_type }
@@ -1739,6 +1774,11 @@ object {
     storage_type { contiguous }
     size { 10 }
     tag {scenario}
+    property{
+        name { time_used }
+        type { float }
+        tag { scenario }
+    }
 }
 object {
     name { warband_stance }
@@ -1784,8 +1824,13 @@ object {
 object {
     name { unit_type }
     storage_type { contiguous }
-    size { 4 }
+    size { 5 }
     tag {scenario}
+    property{
+        name { base_cost }
+        type { float }
+        tag { scenario }
+    }
 }
 object {
     name { law_trade }

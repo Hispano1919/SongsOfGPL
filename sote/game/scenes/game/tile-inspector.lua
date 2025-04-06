@@ -19,9 +19,12 @@ local economy_effects = require "game.raws.effects.economy"
 local military_effects = require "game.raws.effects.military"
 
 re.cached_scrollbar = 0
----@alias TileCharacterTab "All" | "Home" | "Guest"
+---@alias TileCharacterTab "LOCAL" | "HOME" | "CHAR" | "GUEST"
 ---@type TileCharacterTab
-re.cached_character_tab = "All"
+re.cached_character_tab = "LOCAL"
+re.character_local_state = nil
+re.character_guest_state = nil
+re.character_home_state = nil
 
 ---@return Rect
 local function get_main_panel()
@@ -1171,76 +1174,87 @@ function re.draw(gam)
 				tab_content.height = tab_content.height - unit * 1.2
 				re.cached_character_tab = uit.tabs(re.cached_character_tab, tab_layout, {
 					{
-						text = "All",
-						tooltip = "All characters in province",
+						text = "LOCAL",
+						tooltip = "All pop currently in " .. PROVINCE_NAME(province),
 						closure = function()
-							local response = require "game.scenes.game.widgets.character-list" (
+							re.cached_character_local_state = require "game.scenes.game.widgets.character-list" (
+								gam,
 								tab_content,
 								tabb.map_array(
-									DATA.filter_array_character_location_from_location(
+									DATA.filter_array_pop_location_from_location(
 										province,
 										function (item) return true end
 									),
 									DATA.character_location_get_character
-								)
+								),
+								re.cached_character_local_state
 							)()
-							if response then
-								gam.selected.character = response
-								gam.inspector = "character"
-							end
 						end
 					},
 					{
-						text = "Home",
-						tooltip = "Characters that are at home.",
+						text = "HOME",
+						tooltip = "All pop that consider " .. PROVINCE_NAME(province) .. " home.",
 						closure = function()
-							local response = require "game.scenes.game.widgets.character-list" (
+							re.cached_pop_home_state = require "game.scenes.game.widgets.character-list" (
+								gam,
+								tab_content,
+								tabb.map_array(
+									DATA.filter_array_home_from_home(
+										province,
+										function (item)
+											return true
+										end
+									),
+									DATA.pop_location_get_pop
+								),
+								re.cached_pop_home_state
+							)()
+						end
+					},
+					{
+						text = "CHAR",
+						tooltip = "Notable characters present in " .. PROVINCE_NAME(province) .. ".",
+						closure = function()
+							re.cached_pop_guest_state = require "game.scenes.game.widgets.character-list" (
+								gam,
 								tab_content,
 								tabb.map_array(
 									DATA.filter_array_character_location_from_location(
 										province,
 										function (item)
-											local character = DATA.character_location_get_character(item)
-											local home_location = DATA.get_home_from_pop(character)
-											local home_province = DATA.home_get_home(home_location)
-											return home_province == province
+											return true
 										end
 									),
 									DATA.character_location_get_character
-								)
+								),
+								re.cached_pop_guest_state
 							)()
-							if response then
-								gam.selected.character = response
-								gam.inspector = "character"
-							end
 						end
 					},
 					{
-						text = "Guest",
-						tooltip = "All foreign characters present.",
+						text = "GUEST",
+						tooltip = "Foreign pops present in " .. PROVINCE_NAME(province) .. ".",
 						closure = function()
-							local response = require "game.scenes.game.widgets.character-list" (
+							re.cached_pop_guest_state = require "game.scenes.game.widgets.character-list" (
+								gam,
 								tab_content,
 								tabb.map_array(
-									DATA.filter_array_character_location_from_location(
+									DATA.filter_array_pop_location_from_location(
 										province,
 										function (item)
-											local character = DATA.character_location_get_character(item)
+											local character = DATA.pop_location_get_pop(item)
 											local home_location = DATA.get_home_from_pop(character)
 											local home_province = DATA.home_get_home(home_location)
 											return home_province ~= province
 										end
 									),
 									DATA.character_location_get_character
-								)
+								),
+								re.cached_pop_guest_state
 							)()
-							if response then
-								gam.selected.character = response
-								gam.inspector = "character"
-							end
 						end
 					}
-				}, 1.2)
+				}, 1, uit.BASE_HEIGHT*3)
 			end
 		},
 		{

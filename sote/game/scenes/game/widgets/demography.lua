@@ -108,7 +108,7 @@ local function demography(provinces, ui_panel, collapsed)
                 local employment = DATA.get_employment_from_worker(pop)
                 local employer = DATA.employment_get_building(employment)
                 local job = DATA.employment_get_job(employment)
-                local age = DATA.pop_get_age(pop)
+                local age = AGE_YEARS(pop)
                 local race = DATA.pop_get_race(pop)
                 local teen_age = DATA.race_get_teen_age(race)
                 if employer ~= INVALID_ID then

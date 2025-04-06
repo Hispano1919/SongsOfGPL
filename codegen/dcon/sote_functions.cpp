@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <random>
+#include <iostream>
 #include "objs.hpp"
 #define DCON_LUADLL_EXPORTS
 #include "sote_functions.hpp"
@@ -28,6 +29,45 @@ struct tile_cube_coord {
 	int32_t y;
 	int32_t f;
 };
+
+// backend time tracking
+static uint32_t WORLD_CURRENT_YEAR;
+static uint32_t WORLD_CURRENT_TICK;
+static uint32_t WORLD_TICKS_PER_MINUTE;
+static uint32_t WORLD_TICKS_PER_HOUR;
+static uint32_t WORLD_TICKS_PER_DAY;
+static uint32_t WORLD_TICKS_PER_MONTH;
+
+void set_world_current_year(uint32_t year) {
+	WORLD_CURRENT_YEAR = year;
+}
+uint32_t get_world_current_year(void) {
+	return WORLD_CURRENT_YEAR;
+}
+void set_world_current_tick(uint32_t tick) {
+	WORLD_CURRENT_TICK = tick;
+}
+uint32_t get_world_current_tick(void) {
+	return WORLD_CURRENT_TICK;
+}
+void set_world_tick_definitions(uint32_t minute, uint32_t hour, uint32_t day, uint32_t month) {
+	WORLD_TICKS_PER_MINUTE = minute;
+	WORLD_TICKS_PER_HOUR = hour;
+	WORLD_TICKS_PER_DAY = day;
+	WORLD_TICKS_PER_MONTH = month;
+}
+uint32_t get_world_ticks_per_minute(void) {
+	return WORLD_TICKS_PER_MINUTE;
+}
+uint32_t get_world_ticks_per_hour(void) {
+	return WORLD_TICKS_PER_HOUR;
+}
+uint32_t get_world_ticks_per_day(void) {
+	return WORLD_TICKS_PER_DAY;
+}
+uint32_t get_world_ticks_per_month(void) {
+	return WORLD_TICKS_PER_MONTH;
+}
 
 // Given a tile ID, returns x/y/f coordinates.
 tile_cube_coord id_to_coords(int32_t tile_id, uint32_t world_size) {
@@ -220,9 +260,6 @@ constexpr inline float MAX_INDUCED_DEMAND = 3.f;
 // how much of income is siphoned to local wealth pool
 constexpr inline float INCOME_TO_LOCAL_WEALTH_MULTIPLIER = 0.125f / 4.f;
 
-// buying prices for pops are multiplied on this number
-constexpr inline float POP_BUY_PRICE_MULTIPLIER = 3.0f;
-
 // pops work at least this time
 constexpr inline float MINIMAL_WORKING_RATIO = 0.2f;
 
@@ -306,32 +343,117 @@ void load_state(char const* name) {
 #endif
 }
 
+// converting birth tick into human readable values
+uint32_t birth_month(dcon::pop_id pop) {
+	auto birthtick = state.pop_get_birth_tick(pop);
+	auto month = birthtick / WORLD_TICKS_PER_MONTH;
+//	std::cout << std::to_string(month) + " = " + std::to_string(birthtick) + " / " + std::to_string(WORLD_TICKS_PER_MONTH) + "\n";
+	return month;
+}
+uint32_t birth_day(dcon::pop_id pop) {
+	auto birthtick = state.pop_get_birth_tick(pop);
+	auto month = birthtick / WORLD_TICKS_PER_MONTH;
+	auto day_tick = birthtick - month * WORLD_TICKS_PER_MONTH;
+	auto day = day_tick / WORLD_TICKS_PER_DAY;
+//	std::cout << std::to_string(day) + " = " + std::to_string(day_tick) + " / " + std::to_string(WORLD_TICKS_PER_DAY) + "\n";
+	return day+1; // since day cycles between 1 and 30
+}
+uint32_t birth_hour(dcon::pop_id pop) {
+	auto birthtick = state.pop_get_birth_tick(pop);
+	auto month = birthtick / WORLD_TICKS_PER_MONTH;
+	auto day_tick = birthtick - month * WORLD_TICKS_PER_MONTH;
+	auto day = day_tick / WORLD_TICKS_PER_DAY;
+	auto hour_tick = day_tick - day * WORLD_TICKS_PER_DAY;
+	auto hour = hour_tick / WORLD_TICKS_PER_HOUR;
+//	std::cout << std::to_string(hour) + " = " + std::to_string(hour_tick) + " / " + std::to_string(WORLD_TICKS_PER_HOUR) + "\n";
+	return hour;
+}
+uint32_t birth_minute(dcon::pop_id pop) {
+	auto birthtick = state.pop_get_birth_tick(pop);
+	auto month = birthtick / WORLD_TICKS_PER_MONTH;
+	auto day_tick = birthtick - month * WORLD_TICKS_PER_MONTH;
+	auto day = day_tick / WORLD_TICKS_PER_DAY;
+	auto hour_tick = day_tick - day * WORLD_TICKS_PER_DAY;
+	auto hour = hour_tick / WORLD_TICKS_PER_HOUR;
+	auto minute_tick = hour_tick - hour * WORLD_TICKS_PER_HOUR;
+	auto minute = minute_tick / WORLD_TICKS_PER_MINUTE;
+//	std::cout << std::to_string(minute) + " = " + std::to_string(minute_tick) + " / " + std::to_string(WORLD_TICKS_PER_MINUTE) + "\n";
+	return minute;
+}
+// converting birth year and tick into age values
+uint32_t age_ticks(dcon::pop_id pop) {
+	return (WORLD_CURRENT_YEAR - state.pop_get_birth_year(pop))
+		* WORLD_TICKS_PER_MONTH * 12 + WORLD_CURRENT_TICK - state.pop_get_birth_tick(pop);
+}
+uint32_t age_months(dcon::pop_id pop) {
+	return age_ticks(pop) / WORLD_TICKS_PER_MONTH;
+}
+uint32_t age_years(dcon::pop_id pop) {
+	return age_ticks(pop) / WORLD_TICKS_PER_MONTH / 12;
+}
+// using age values
 float age_multiplier(dcon::pop_id pop) {
-	auto age_multiplier = 1.f;
-	auto age = state.pop_get_age(pop);
+	float age_multiplier = 1.f;
+	auto age = age_ticks(pop);
 	auto race = state.pop_get_race(pop);
 
-	auto child_age = state.race_get_child_age(race);
-	auto teen_age = state.race_get_teen_age(race);
-	auto adult_age = state.race_get_adult_age(race);
-	auto middle_age = state.race_get_middle_age(race);
-	auto elder_age = state.race_get_elder_age(race);
-	auto max_age = state.race_get_max_age(race);
+	auto conversion = WORLD_TICKS_PER_MONTH * 12;
+	auto adult_age = state.race_get_adult_age(race) * conversion;
+	auto middle_age = state.race_get_middle_age(race) * conversion;
+	auto max_age = state.race_get_max_age(race) * conversion;
 
-	if (age < child_age) {
-		age_multiplier = 0.25;
-	} else if (age < teen_age) {
-		age_multiplier = 0.5;
-	} else if (age < adult_age) {
-		age_multiplier = 0.75;
-	} else if (age < middle_age) {
-		age_multiplier = 1;
-	} else if (age < elder_age) {
-		age_multiplier = 0.95;
-	} else if (age < max_age) {
-		age_multiplier = 0.9;
+	if (age < adult_age) {
+		age_multiplier = 0.25 + 0.75 * age / adult_age; // [.25,1.f)
+	} else if (age >= middle_age) {
+		age_multiplier = 1.f - 0.1 * (age - middle_age) / (max_age - middle_age); // [1.f,.75)
 	}
 	return age_multiplier;
+}
+// pop time calculations
+float pop_free_time(dcon::pop_id pop) {
+	auto age = age_ticks(pop);
+	auto race = state.pop_get_race(pop);
+	auto teen = state.race_get_teen_age(race) * WORLD_TICKS_PER_MONTH * 12;
+	if (age < teen) {
+		return age / teen;
+	} else {
+		return 1.f;
+	}
+}
+float pop_warband_time(dcon::pop_id pop, float free) {
+	auto remaining = free - 0.05f;
+	if (remaining <= 0.f) {
+		return 0.f;
+	}
+	auto unitship = state.pop_get_warband_unit_as_unit(pop);
+	auto warband = state.warband_unit_get_warband(unitship);
+	if (state.warband_is_valid(warband)) {
+		auto time = state.warband_get_current_time_used_ratio(warband);
+		if (remaining < time) {
+			return remaining;
+		} else {
+			return time;
+		}
+	} else {
+		return 0.f;
+	}
+}
+float pop_forage_time(dcon::pop_id pop, float free, float warband) {
+	auto remaining = free - warband;
+	auto desire = state.pop_get_forage_ratio(pop);
+	if (remaining < desire) {
+		return remaining;
+	} else {
+		return desire;
+	}
+}
+float pop_work_time(dcon::pop_id pop, float free, float warband, float forage) {
+	auto remaining = free - warband - forage;
+	if (remaining < 0.f) {
+		return 0.f;
+	} else {
+		return remaining;
+	}
 }
 
 float job_efficiency(dcon::race_id race, bool female, uint8_t jobtype) {
@@ -340,13 +462,44 @@ float job_efficiency(dcon::race_id race, bool female, uint8_t jobtype) {
 	}
 	return state.race_get_male_efficiency(race, jobtype);
 }
-
 float job_efficiency(dcon::pop_id pop, uint8_t jobtype) {
 	return job_efficiency(
 		state.pop_get_race(pop),
 		state.pop_get_female(pop),
 		jobtype
 	) * age_multiplier(pop);
+}
+
+bool pop_same_location(dcon::pop_id a, dcon::pop_id b) {
+	auto a_location = state.pop_location_get_location(state.pop_get_pop_location_as_pop(a));
+	auto b_location = state.pop_location_get_location(state.pop_get_pop_location_as_pop(a));
+	if (state.province_is_valid(a_location) && a_location == b_location) {
+		return true;
+	} // if not in same settlement, check if in same party
+	auto a_warband = state.warband_unit_get_warband(state.pop_get_warband_unit_as_unit(a));
+	auto b_warband = state.warband_unit_get_warband(state.pop_get_warband_unit_as_unit(b));
+	if (state.warband_is_valid(a_warband) && a_warband == b_warband) {
+		return true;
+	}
+	return false;
+}
+
+bool is_dependent_of(dcon::pop_id pop, dcon::pop_id parent) {
+	auto age = age_years(pop);
+	auto race = state.pop_get_race(pop);
+	auto teen_age = state.race_get_teen_age(race);
+	if (age < teen_age && parent && pop_same_location(pop,parent))
+		return true;
+	return false;
+}
+bool is_dependent(dcon::pop_id pop) {
+	auto age = age_years(pop);
+	auto race = state.pop_get_race(pop);
+	auto teen_age = state.race_get_teen_age(race);
+	auto parent = state.parent_child_relation_get_parent(state.pop_get_parent_child_relation_as_child(pop));
+	if (age < teen_age && parent && pop_same_location(pop,parent))
+		return true;
+	return false;
 }
 
 void update_vegetation(float speed) {
@@ -741,18 +894,14 @@ void record_use_demand(dcon::province_id province, dcon::use_case_id use_case, f
 
 void pop_forage_update(dcon::pop_id pop, dcon::province_id province) {
 	auto size = state.province_get_size(province);
-	auto forage_time = state.pop_get_forage_ratio(pop);
+	auto free_time = pop_free_time(pop);
+	auto warband_time = pop_warband_time(pop,free_time);
+	auto forage_time = pop_forage_time(pop,free_time,warband_time);
+	auto work_time = pop_work_time(pop,free_time,warband_time,forage_time);
+	// set actual work time for production call so as to not recalculate it
+	state.pop_set_work_ratio(pop,work_time);
 
 	auto estimated_profit = 0.f;
-
-	auto work_profit = 0.f;
-	auto employment = state.pop_get_employment(pop);
-	if (state.employment_get_building(employment)) {
-		work_profit = state.employment_get_worker_income(employment);
-	} else {
-		forage_time = 1.f;
-	}
-
 
 	for (uint32_t i = 0; i < state.province_get_foragers_targets_size(); i++){
 		base_types::forage_container& forage_case = state.province_get_foragers_targets(province, i);
@@ -816,20 +965,19 @@ void pop_forage_update(dcon::pop_id pop, dcon::province_id province) {
 		);
 	}
 
-	// update forage time:
+	// update forage time based on profit:
 	// forage profit is considered as unreliable
 	// to allow advanced production
 	estimated_profit = estimated_profit * 0.5f;
-	auto work_time = state.pop_get_work_ratio(pop);
+	auto employment = state.pop_get_employment(pop);
 	if (state.employment_get_building(employment)) {
+		auto work_profit = state.employment_get_worker_income(employment);
 		if(state.pop_get_free_will(pop) && !state.pop_get_is_player(pop)) {
 			// estimated forage profit is already modified by work time
 			if (work_profit / work_time > estimated_profit / forage_time * 1.05f && forage_time > 0.05f) {
-				state.pop_set_forage_ratio(pop, forage_time - 0.01f);
-				state.pop_set_work_ratio(pop, state.pop_get_work_ratio(pop) + 0.01f);
+				state.pop_set_forage_ratio(pop, forage_time * 0.98f);
 			} else if (work_profit / work_time < estimated_profit / forage_time * 0.95f && forage_time < 0.95f) {
-				state.pop_set_forage_ratio(pop, forage_time + 0.01f);
-				state.pop_set_work_ratio(pop, state.pop_get_work_ratio(pop) - 0.01f);
+				state.pop_set_forage_ratio(pop, forage_time * 1.02f);
 			}
 		}
 	}
@@ -857,11 +1005,6 @@ void pops_produce(dcon::province_id province) {
 		state.province_get_foragers(province) += state.pop_get_forage_ratio(pop);
 	});
 
-	state.province_for_each_character_location(province, [&](auto location) {
-		auto pop = state.character_location_get_character(location);
-		state.province_get_foragers(province) += state.pop_get_forage_ratio(pop);
-	});
-
 	state.province_set_forage_efficiency(province, forage_efficiency(
 		state.province_get_foragers(province),
 		state.province_get_foragers_limit(province)
@@ -869,11 +1012,6 @@ void pops_produce(dcon::province_id province) {
 
 	state.province_for_each_pop_location(province, [&](auto location) {
 		auto pop = state.pop_location_get_pop(location);
-		pop_forage_update(pop, province);
-	});
-
-	state.province_for_each_character_location(province, [&](auto location) {
-		auto pop = state.character_location_get_character(location);
 		pop_forage_update(pop, province);
 	});
 }
@@ -897,14 +1035,12 @@ void update_building_scale() {
 		}, worker, associated_job) * (2.f - worktime);
 
 		auto scale = worktime * efficiency;
-		auto output_scale = worktime * efficiency * efficiency;
-		auto input_scale = worktime * efficiency;
 
 		auto final_production_scale = scale * state.province_get_throughput_boosts(province, production_method);
-		auto final_output_scale = output_scale
+		auto final_output_scale = scale
 			* (1 + state.province_get_output_efficiency_boosts(province, production_method))
 			* (state.province_get_local_efficiency_boosts(province, production_method));
-		auto final_input_scale = input_scale * (1 - state.province_get_input_efficiency_boosts(province, production_method));
+		auto final_input_scale = scale * (1 - state.province_get_input_efficiency_boosts(province, production_method));
 
 		state.building_set_production_scale(building, final_production_scale);
 		state.building_set_output_scale(building, final_output_scale);
@@ -1026,8 +1162,7 @@ void pops_consume() {
 	static auto uses_buffer = state.trade_good_category_make_vectorizable_float_buffer();
 
 	state.for_each_pop([&](auto pop){
-		auto parent = state.parent_child_relation_get_parent(state.pop_get_parent_child_relation_as_child(pop));
-		if (parent) return;
+		if (is_dependent(pop)) return;
 
 		// std::cout << "pop: " << pop.index();
 
@@ -1039,13 +1174,23 @@ void pops_consume() {
 
 			auto demanded = need.demanded;
 
+			auto use = dcon::use_case_id{dcon::use_case_id::value_base_t(need.use_case - 1)};
+
 			state.pop_for_each_parent_child_relation_as_parent(pop, [&](auto child_rel) {
 				auto child = state.parent_child_relation_get_child(child_rel);
-				base_types::need_satisfaction& need_child = state.pop_get_need_satisfaction(child, i);
-				demanded += need_child.demanded;
+				if (is_dependent_of(pop,child)) {
+					base_types::need_satisfaction& need_child = state.pop_get_need_satisfaction(child, i);
+					demanded += need_child.demanded;
+					// transfer half of relevent trade goods for collective satisfaction
+					state.use_case_for_each_use_weight_as_use_case(use, [&](auto weight_id){
+						auto trade_good = state.use_weight_get_trade_good(weight_id);
+						auto amount = state.pop_get_inventory(child,trade_good);
+						state.pop_set_inventory(child,trade_good,amount*0.5);
+						state.pop_set_inventory(pop,trade_good,state.pop_get_inventory(pop,trade_good)+amount*0.5);
+					});
+				}
 			});
 
-			auto use = dcon::use_case_id{dcon::use_case_id::value_base_t(need.use_case - 1)};
 
 			auto actual_consumption_rate = state.use_case_get_good_consumption(use);
 			auto satisfied = 0.f;
@@ -1076,8 +1221,12 @@ void pops_consume() {
 			need.consumed = need.demanded * satisfaction;
 			state.pop_for_each_parent_child_relation_as_parent(pop, [&](auto child_rel) {
 				auto child = state.parent_child_relation_get_child(child_rel);
-				base_types::need_satisfaction& need_child = state.pop_get_need_satisfaction(child, i);
-				need_child.consumed = need.demanded * satisfaction;
+				auto child_age = age_years(child);
+				auto teen_age = state.race_get_teen_age(state.pop_get_race(child));
+				if (child_age < teen_age) {
+					base_types::need_satisfaction& need_child = state.pop_get_need_satisfaction(child, i);
+					need_child.consumed = need.demanded * satisfaction;
+				}
 			});
 		}
 	});
@@ -1103,7 +1252,7 @@ void pops_sell() {
 
 		auto race = state.pop_get_race(pop);
 		auto max_age = state.race_get_max_age(race);
-		auto age = state.pop_get_age(pop);
+		auto age = age_years(pop);
 
 		auto base_income = 10.f * age / max_age;
 
@@ -1160,7 +1309,7 @@ void pops_demand() {
 				auto price = state.province_get_local_prices(province, trade_good);
 				auto score = need.demanded * price_score(price / weight);
 				total_score += score;
-				total_cost += need.demanded * score * price * POP_BUY_PRICE_MULTIPLIER;
+				total_cost += need.demanded * score * price;
 			});
 		};
 
@@ -1297,7 +1446,7 @@ void pops_buy() {
 				assert(score >= 0.f);
 
 				total_score += score;
-				total_cost += need.demanded * score * price * POP_BUY_PRICE_MULTIPLIER;
+				total_cost += need.demanded * score * price;
 			});
 		};
 
@@ -1344,7 +1493,7 @@ void pops_buy() {
 				state.pop_set_pending_economy_income(
 					pop,
 					std::max(0.f, state.pop_get_pending_economy_income(pop)
-					- demand * demand_satisfaction * price * POP_BUY_PRICE_MULTIPLIER)
+					- demand * demand_satisfaction * price)
 				);
 			});
 		};
@@ -1378,6 +1527,17 @@ void pops_update_stats() {
 		auto basic_satisfaction = (total_basic_consumed + total_life_consumed) / (total_basic_demanded + total_life_demanded);
 		state.pop_set_life_needs_satisfaction(pop, life_satisfaction);
 		state.pop_set_basic_needs_satisfaction(pop, basic_satisfaction);
+
+		// shift foraging based on life satisfaction
+		auto forage_ratio = state.pop_get_forage_ratio(pop);
+		if (life_satisfaction < 0.5f) {
+			forage_ratio *= 1.05f;
+		} else if (life_satisfaction >= 1.f) {
+			forage_ratio *= 0.95f;
+		}
+		if (forage_ratio < 0.05f) forage_ratio = 0.05f;
+		else if (forage_ratio > 0.95f) forage_ratio = 0.95f;
+		state.pop_set_forage_ratio(pop, forage_ratio);
 	});
 }
 
@@ -1404,14 +1564,14 @@ void estates_buy() {
 			auto last_change = state.estate_get_balance_last_tick(estates);
 
 			state.estate_set_savings(estates, ve::max(0.f, budget - cost));
-			state.estate_set_balance_last_tick(estates, budget - cost);
+			state.estate_set_balance_last_tick(estates, last_change - cost);
 			state.estate_set_inventory_bought_last_tick(estates, trade_good, bought);
 			state.estate_set_inventory(estates, trade_good, stock + bought);
 		});
 	});
 }
 
-constexpr inline float WORKERS_SHARE = 0.05f;
+constexpr inline float WORKERS_SHARE = 0.01f;
 
 // estates can interact only with local pops
 // can do in parallel over provinces
@@ -1481,6 +1641,10 @@ void update_economy() {
 		});
 	});
 
+	// update pops self value
+	state.execute_serial_over_pop([&](auto pops) {
+		state.pop_set_expected_wage(pops, ve::max(state.pop_get_savings(pops) * 0.01f, state.pop_get_expected_wage(pops)));
+	});
 
 	auto eps = 0.001f;
 
@@ -1658,12 +1822,14 @@ void update_economy() {
 		ve::apply([&](dcon::province_id p) { pops_produce(p); }, provinces);
 	});
 	state.for_each_warband([&](auto warband) {
-		auto tile = state.warband_get_location_from_warband_location(warband);
-		auto province = state.tile_get_province_from_tile_province_membership(tile);
-		state.warband_for_each_warband_unit(warband, [&](auto warband_unit) {
-			auto pop = state.warband_unit_get_unit(warband_unit);
-			pop_forage_update(pop, province);
-		});
+		if (!state.warband_get_in_settlement(warband)) {
+			auto tile = state.warband_get_location_from_warband_location(warband);
+			auto province = state.tile_get_province_from_tile_province_membership(tile);
+			state.warband_for_each_warband_unit(warband, [&](auto warband_unit) {
+				auto pop = state.warband_unit_get_unit(warband_unit);
+				pop_forage_update(pop, province);
+			});
+		}
 	});
 
 	pops_consume();
@@ -1680,7 +1846,7 @@ void update_economy() {
 			auto produced = state.province_get_local_production(province, trade_good);
 			auto price = state.province_get_local_prices(province, trade_good);
 
-			auto balance = demanded * satisfied * POP_BUY_PRICE_MULTIPLIER - produced * price;
+			auto balance = demanded * satisfied - produced * price;
 			auto wealth = state.province_get_trade_wealth(province);
 
 			auto result = ve::select(balance + wealth > 0.f, balance + wealth, 0.f);
@@ -1779,7 +1945,7 @@ float estimate_building_type_income(int32_t province_lua, int32_t building_type_
 		}
 
 		auto use = dcon::use_case_id {dcon::use_case_id::value_base_t(input.use - 1)};
-		income -= input_modifier * estimate_province_use_price(province, use) * input.amount * POP_BUY_PRICE_MULTIPLIER;
+		income -= input_modifier * estimate_province_use_price(province, use) * input.amount;
 	}
 	for (uint32_t i = 0; i < state.production_method_get_outputs_size(); i++) {
 		base_types::trade_good_container& output = state.production_method_get_outputs(method, i);

@@ -11,9 +11,9 @@ local realm_utils = require "game.entities.realm".Realm
 local province_utils = require "game.entities.province".Province
 local travel_effects = require "game.raws.effects.travel"
 
-local travelling = {}
+local traveling = {}
 
-function travelling.run()
+function traveling.run()
 	--- ai merchants travel around to sell and buy at good prices
 	local index = WORLD.current_tick_in_month
 	while index < DATA.warband_size do
@@ -160,4 +160,4 @@ function travelling.run()
 	end
 end
 
-return travelling
+return traveling

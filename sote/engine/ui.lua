@@ -1454,7 +1454,7 @@ end
 
 
 
----@class (exact) TableColumn<TableEntry>: {render_closure: fun(rect: Rect, k:TableKey, v:TableEntry), header: string, width: number, value: (fun(k: TableKey, v: TableEntry): TableField), active: boolean|nil}
+---@class (exact) TableColumn<TableEntry>: {render_closure: fun(rect: Rect, k:TableKey, v:TableEntry), header: string, width: number, value: (fun(k: TableKey, v: TableEntry): TableField), active: boolean|nil, clickable: boolean?}
 
 ---@alias TableField number|string
 ---@alias TableKey table|string
@@ -1504,7 +1504,7 @@ function ui.table(rect, data, columns, state, circle_style, slider_arrow_images)
 	for index = 1, #columns do
 		local header_rect = layout:next(columns[index].width * weight, state.individual_height)
 		header_rect.height = rect.height
-		if not columns[index].active and ui.text_button("", header_rect) then
+		if not columns[index].clickable and not columns[index].active and ui.text_button("", header_rect) then
 			if state.sorted_field == index then
 				state.sorting_order = not state.sorting_order
 			else

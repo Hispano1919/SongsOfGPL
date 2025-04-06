@@ -1,6 +1,7 @@
 local economy_values = require "game.raws.values.economy"
 local demography_values = require "game.raws.values.demography"
 local demography_effects = require "game.raws.effects.demography"
+local economy_effects = require "game.raws.effects.economy"
 
 local tabb = require "engine.table"
 
@@ -13,6 +14,8 @@ local function find_workers(province)
 	if current_worker == nil then
 		return
 	end
+
+	local cost = economy_values.pop_employment_cost(current_worker)
 
 	--- for now let owners grab the worker from the pool
 	local buildings = demography_values.vacant_buildings_owned_by_locally_present_pops(province)
@@ -33,13 +36,21 @@ local function find_workers(province)
 				DATA.pop_get_female(current_worker)
 			)
 
-			if prediction > 1 then
+			if
+				prediction > 1
+				and prediction > DATA.pop_get_expected_wage(current_worker)
+				and SAVINGS(owner) > cost
+			then
+				economy_effects.gift_to_pop(owner, current_worker, cost)
 				demography_effects.employ_pop(current_worker, value)
 				return
 			end
 		end
 	end
 
+	-- if pop failed all employment checks, his self-value decreases
+	local current_value = DATA.pop_get_expected_wage(current_worker)
+	DATA.pop_set_expected_wage(current_worker, math.max(0, current_value - 0.1))
 
 	PROFILER:end_timer("employment ai")
 end

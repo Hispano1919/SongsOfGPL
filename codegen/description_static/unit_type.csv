@@ -1,3 +1,4 @@
-name
-warrior
-civilian
+name;description;icon;base_cost
+warrior;combatant;guards.png;0.5
+civilian;noncombatant;minions.png;0.25
+follower;follower;ages.png;0

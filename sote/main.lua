@@ -102,6 +102,23 @@ PRICE_DIFFUSION = 0.3
 
 DISPLAY_INCOME_OWNER_RATIO = 0
 
+EMPLOYMENT_YEARS = 2
+
+--TODO GLOBALIZE
+---@enum BURIAL_RITES
+BURIAL_RIGHTS = {
+	INVALID = 0,
+	CREMATION = 1,
+	BURIAL = 2,
+	NONE = 3
+}
+BURIAL_NAMES = {
+	[BURIAL_RIGHTS.INVALID] = "INVALID",
+	[BURIAL_RIGHTS.CREMATION] = "CREMATION",
+	[BURIAL_RIGHTS.BURIAL] = "BURIAL",
+	[BURIAL_RIGHTS.NONE] = "NONE",
+}
+
 local bs = require "engine.bitser"
 -- Extra classes
 bs.registerClass('Queue', require "engine.queue")

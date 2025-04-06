@@ -1,5 +1,8 @@
 --- Helper functions to reduce key presses to type names of common wrappers
 
+CLICK_STRING = "\nClick here to learn more!"
+OBSERVER_BUTTON_TOOLTIP = "Observers cannot interact with the world!"
+
 ---@enum AI_GOAL
 AI_GOAL = {
 	RAID = 0,
@@ -18,6 +21,14 @@ AI_GOAL = {
 
 ---@type table<world_tile_id, tile_id>
 TILE_FROM_WORLD_ID = {}
+
+TRAVEL_DAY_HOURS = 12
+
+function MONTH_WEIGHTED_JAN_JUL(jan_value,jul_value,month)
+	local jan_weight = math.cos(5/3 * month / math.pi) / 2 + .5
+	local jul_weight = math.cos(5/3 * (month + 6) / math.pi) / 2 + .5
+	return jan_weight * jan_value + jul_weight * jul_value
+end
 
 function REGENERATE_RAWS()
 	local w = {}
@@ -191,6 +202,16 @@ end
 -- -@class world_tile_id : number
 -- -@field is_world_tile_id nil
 
+
+---Returns age adjust racial efficiency
+---@param pop pop_id
+---@param jobtype jobtype_id
+---@return number
+function JOB_EFFICIENCY(pop, jobtype)
+	return DCON.job_efficiency(pop,jobtype)
+end
+
+-- TODO UNIFY LOCATION STORAGE
 ---Returns province of a pop
 ---@param pop_id pop_id
 ---@return province_id
@@ -239,10 +260,17 @@ function PROVINCE_REALM(province)
 end
 
 ---commenting
----@param pop_id pop_id
+---@param pop_id pop_id|`INVALID_ID`
 ---@return number
 function SAVINGS(pop_id)
 	return DATA.pop_get_savings(pop_id)
+end
+
+---commenting
+---@param warband_id warband_id|`INVALID_ID`
+---@return number
+function WARBAND_SAVINGS(warband_id)
+	return DATA.warband_get_treasury(warband_id)
 end
 
 ---commenting
@@ -343,10 +371,112 @@ function BUSY(pop_id)
 	return DATA.pop_get_busy(pop_id)
 end
 
+
+---@param pop_id pop_id
+---@return boolean
+function FEMALE(pop_id)
+	return DATA.pop_get_female(pop_id)
+end
+
+---@param pop_id pop_id
+---@return string
+function HESHE(pop_id)
+	if FEMALE(pop_id) then
+		return "she"
+	else
+		return "he"
+	end
+end
+---@param pop_id pop_id
+---@return string
+function HIMHER(pop_id)
+	if FEMALE(pop_id) then
+		return "her"
+	else
+		return "him"
+	end
+end
+---@param pop_id pop_id
+---@return string
+function HISHER(pop_id)
+	if FEMALE(pop_id) then
+		return "her"
+	else
+		return "his"
+	end
+end
+---@param pop_id pop_id
+---@return string
+function HISHERS(pop_id)
+	if FEMALE(pop_id) then
+		return "hers"
+	else
+		return "his"
+	end
+end
+
 ---@param pop_id pop_id
 ---@return number
-function AGE(pop_id)
-	return DATA.pop_get_age(pop_id)
+function AGE_YEARS(pop_id)
+	return DCON.age_years(pop_id)
+end
+
+---@param pop_id pop_id
+---@return number
+function AGE_MONTHS(pop_id)
+	return DCON.age_months(pop_id)
+end
+
+---@param pop_id pop_id
+---@return number
+function AGE_TICKS(pop_id)
+	return DCON.age_ticks(pop_id)
+end
+
+---@param pop_id pop_id
+---@return number
+function AGE_MULTIPLIER(pop_id)
+	return DCON.age_multiplier(pop_id)
+end
+
+---@param pop_id pop_id
+---@return number year
+---@return number month
+---@return number day
+---@return number hour
+---@return number minute
+function BIRTHDATE(pop_id)
+	return
+		DATA.pop_get_birth_year(pop_id),
+		DCON.birth_month(pop_id),
+		DCON.birth_day(pop_id),
+		DCON.birth_hour(pop_id),
+		DCON.birth_minute(pop_id)
+end
+
+---@param pop_id pop_id
+---@return number free_time
+---@return number warband_time
+---@return number forage_time
+---@return number work_time
+function POP_TIME(pop_id)
+	local free_time = DCON.pop_free_time(pop_id)
+	local warband_time = DCON.pop_warband_time(pop_id,free_time)
+	local forage_time = DCON.pop_forage_time(pop_id,free_time,warband_time)
+	local work_time = DCON.pop_work_time(pop_id,free_time,warband_time,forage_time)
+	return free_time,warband_time,forage_time,work_time
+end
+
+---@param pop_id pop_id
+---@return boolean
+function IS_DEPENDENT(pop_id)
+	return DCON.is_dependent(pop_id)
+end
+---@param pop_id pop_id
+---@param parent pop_id
+---@return boolean
+function IS_DEPENDENT_OF(pop_id,parent)
+	return DCON.is_dependent_of(pop_id,parent)
 end
 
 ---@param pop_id pop_id
@@ -428,6 +558,13 @@ function LEADER_OF_WARBAND(leader)
 	return DATA.warband_leader_get_warband(leadership)
 end
 
+
+---@param party warband_id
+---@return boolean
+function IN_SETTLEMENT(party)
+	return DATA.warband_get_in_settlement(party)
+end
+
 ---@param warband warband_id
 function WARBAND_TILE(warband)
 	return DATA.warband_location_get_location(DATA.get_warband_location_from_warband(warband))
@@ -459,6 +596,14 @@ end
 function UNIT_OF(unit)
 	local unitship = DATA.get_warband_unit_from_unit(unit)
 	return DATA.warband_unit_get_warband(unitship)
+end
+
+---commenting
+---@param unit pop_id
+---@return unit_type_id
+function UNIT_TYPE_OF(unit)
+	local unitship = DATA.get_warband_unit_from_unit(unit)
+	return DATA.warband_unit_get_type(unitship)
 end
 
 ---@param pop_id pop_id
@@ -493,6 +638,13 @@ end
 ---@return string
 function PROVINCE_NAME(province_id)
 	return DATA.province_get_name(province_id)
+end
+
+---commenting
+---@param warband_id warband_id
+---@return string
+function WARBAND_NAME(warband_id)
+	return DATA.warband_get_name(warband_id)
 end
 
 ---commenting

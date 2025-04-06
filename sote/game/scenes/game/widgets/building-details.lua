@@ -3,6 +3,7 @@ local demography_effects = require "game.raws.effects.demography"
 
 local ut = require "game.ui-utils"
 local ui = require "engine.ui"
+local pui = require "game.scenes.game.widgets.pop-ui-widgets"
 local portrait_widget = require "game.scenes.game.widgets.portrait"
 local pop_utils = require "game.entities.pop".POP
 local province_utils = require "game.entities.province".Province
@@ -18,7 +19,7 @@ local function pop_display_occupation(pop)
 	local warband = UNIT_OF(pop)
 	if occupation ~= INVALID_ID then
 		display_name = DATA.job_get_name(occupation)
-	elseif AGE(pop) < F_RACE(pop).teen_age then
+	elseif AGE_YEARS(pop) < F_RACE(pop).teen_age then
 		display_name = "child"
 	elseif warband ~= INVALID_ID then
 		display_name = "warrior"
@@ -168,14 +169,14 @@ return function (rect, building)
 	if DATA.pop_get_female(worker) then
 		f = "f"
 	end
-	ui.centered_text(NAME(worker) .. "(" .. tostring(AGE(worker)) .. f .. ")", name_rect)
+	ui.centered_text(NAME(worker) .. "(" .. tostring(AGE_YEARS(worker)) .. f .. ")", name_rect)
 	name_rect.x = name_rect.x + name_rect.width
 	ui.centered_text(pop_display_occupation(worker), name_rect)
 
 	description_rect.y = description_rect.y + description_rect.height
 	description_rect.width = description_rect.width / 6
 
-	ut.render_pop_satsifaction(description_rect, worker)
+	pui.render_basic_needs_satsifaction(description_rect, worker)
 	description_rect.x = description_rect.x + description_rect.width
 
 	ut.money_entry(
@@ -186,38 +187,11 @@ return function (rect, building)
 		.. "Characters spend them on buying food and other commodities."
 	)
 	description_rect.x = description_rect.x + description_rect.width
-
-	ut.generic_number_field(
-		"chart.png",
-		DATA.pop_get_work_ratio(worker),
-		description_rect,
-		"Percentage of time workers spent toiling.",
-		ut.NUMBER_MODE.PERCENTAGE,
-		ut.NAME_MODE.ICON
-	)
+	pui.render_work_time(description_rect, worker)
 	description_rect.x = description_rect.x + description_rect.width
-
-	local tooltip = "Base productivity of this character."
-	local job_efficiency = pop_utils.job_efficiency(worker, DATA.production_method_get_job_type(method))
-	tooltip = tooltip .. " The character's base job efficiency is ".. ut.to_fixed_point2(job_efficiency * 100) .. "%."
-		.. " Province infrastructure modifies this by ".. ut.to_fixed_point2(efficiency_from_infrastructure * 100) .. "%."
-	tooltip = tooltip .. " This is further changed by ".. ut.to_fixed_point2(local_method_efficiency * 100) .. "% based on the building's province."
-	ut.generic_number_field(
-		"",
-		job_efficiency * efficiency_from_infrastructure * forage_efficiency * local_method_efficiency,
-		description_rect,
-		tooltip,
-		ut.NUMBER_MODE.PERCENTAGE,
-		ut.NAME_MODE.NAME
-	)
+	pui.render_job_efficiency(description_rect, worker, DATA.production_method_get_job_type(method))
 	description_rect.x = description_rect.x + description_rect.width
-
-	ut.money_entry(
-		"",
-		worker_income,
-		description_rect,
-		"Net profit character made from toiling. "
-	)
+	pui.render_worker_income(description_rect, worker)
 	description_rect.x = description_rect.x + description_rect.width
 
 	local icon = ASSETS.icons["cancel.png"]

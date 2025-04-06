@@ -213,15 +213,24 @@ function eco_values.get_local_amount_of_use(province, use)
 end
 
 ---Returns total food supply from warband
----@param warband warband_id
+---@param party warband_id
 ---@return number
-function eco_values.get_supply_available(warband)
-	local leader = DATA.get_warband_leader_from_warband(warband)
-	if leader == INVALID_ID then
-		return 0
-	end
-	local pop = DATA.warband_leader_get_leader(leader)
-	return eco_values.available_use_case_from_inventory(pop, CALORIES_USE_CASE)
+function eco_values.get_supply_available(party)
+	return eco_values.available_use_case_for_party(party, CALORIES_USE_CASE)
+end
+---Returns available units for satisfying a use case from pop inventory
+---@param party warband_id
+---@param use_case use_case_id
+---@return number
+function eco_values.available_use_case_for_party(party, use_case)
+	local supply = 0
+    DATA.for_each_use_weight_from_use_case(use_case, function(item)
+		local good = DATA.use_weight_get_trade_good(item)
+		local weight = DATA.use_weight_get_weight(item)
+		local good_in_inventory = DATA.warband_get_inventory(party, good)
+		supply = supply + good_in_inventory * weight
+	end)
+	return supply
 end
 
 ---Returns available units for satisfying a use case from pop inventory
@@ -229,14 +238,12 @@ end
 ---@param use_case use_case_id
 ---@return number
 function eco_values.available_use_case_from_inventory(pop, use_case)
-	local supply = tabb.accumulate(DATA.get_use_weight_from_use_case(use_case), 0, function(a, _, weight_id)
-		local good = DATA.use_weight_get_trade_good(weight_id)
-		local weight = DATA.use_weight_get_weight(weight_id)
+	local supply = 0
+    DATA.for_each_use_weight_from_use_case(use_case, function(item)
+		local good = DATA.use_weight_get_trade_good(item)
+		local weight = DATA.use_weight_get_weight(item)
 		local good_in_inventory = DATA.pop_get_inventory(pop, good)
-		if good_in_inventory > 0 then
-			a = a + good_in_inventory * weight
-		end
-		return a
+		supply = supply + good_in_inventory * weight
 	end)
 	return supply
 end
@@ -253,6 +260,13 @@ function eco_values.days_of_travel(warband)
 	end
 
 	return supplies / per_day
+end
+
+---commenting
+---@param pop pop_id
+---@return number
+function eco_values.pop_employment_cost(pop)
+    return math.floor(DATA.pop_get_expected_wage(pop) * 12 * EMPLOYMENT_YEARS + 1)
 end
 
 return eco_values

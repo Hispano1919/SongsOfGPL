@@ -14,7 +14,7 @@ function emp.run(province)
 			local employment = DATA.get_employment_from_building(building)
 			local start = DATA.employment_get_start_date(employment)
 			local now = WORLD.day + WORLD.month * 30 + WORLD.year * 12 * 30
-			if now - start > 12 * 30 * 2 then
+			if now - start > 12 * 30 * EMPLOYMENT_YEARS then
 				table.insert(fire_list, DATA.employment_get_worker(employment))
 			end
 		end)

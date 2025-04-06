@@ -42,6 +42,26 @@ function tile.Tile:new()
 	tt.real_b = 0.1
 	tt.pathfinding_index = 0
 
+	do
+		local x, y, f = tile.index_to_coords(tile_dcon_id)
+		local ws = WORLD.world_size
+		local fx, fy = 0, 0
+		if f == cube.BOTTOM then
+			fx = ws - 1 - x + 0.5
+			fy = ws - 1 - y + 0.5
+		else
+			fx = x + 0.5
+			fy = y + 0.5
+		end
+		fx = fx / ws
+		fy = fy / ws
+		local pos_x, pos_y, pos_z = cube.cube_to_pos(fx, fy, f)
+		local rr = math.sqrt(pos_x * pos_x + pos_y * pos_y + pos_z * pos_z)
+		tt.x = pos_x / rr
+		tt.y = pos_y / rr
+		tt.z = pos_z / rr
+	end
+
 	return tile_dcon_id
 end
 
@@ -364,24 +384,7 @@ end
 ---@return number y
 ---@return number z
 function tile.get_cartesian(tile_id)
-	local x, y, f = tile.index_to_coords(tile_id)
-	local ws = WORLD.world_size
-
-	local fx, fy = 0, 0
-	if f == cube.BOTTOM then
-		fx = ws - 1 - x + 0.5
-		fy = ws - 1 - y + 0.5
-	else
-		fx = x + 0.5
-		fy = y + 0.5
-	end
-
-	fx = fx / ws
-	fy = fy / ws
-
-	local pos_x, pos_y, pos_z = cube.cube_to_pos(fx, fy, f)
-	local rr = math.sqrt(pos_x * pos_x + pos_y * pos_y + pos_z * pos_z)
-	return pos_x / rr, pos_y / rr, pos_z / rr
+	return DATA.tile_get_x(tile_id), DATA.tile_get_y(tile_id), DATA.tile_get_z(tile_id)
 end
 
 ---Returns great circle distance to a tile.

@@ -2,17 +2,6 @@ local language_utils = require "game.entities.language".Language
 
 local cl = {}
 
----@enum BURIAL_RITES
-BURIAL_RIGHTS = {
-	INVALID = 0,
-	CREMATION = 1,
-	BURIAL = 2,
-	NONE = 3
-}
-
----@alias BurialRites 'cremation' | 'burial' | 'none'
-
-
 cl.Religion = {}
 cl.Religion.__index = cl.Religion
 ---@param culture culture_id

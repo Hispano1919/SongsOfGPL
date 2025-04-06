@@ -31,33 +31,43 @@ end
 ---Returns scalar field representing how fast warband can move in this tile
 ---@param warband Warband
 ---@return speed
+---@return number weight_mod
 function military_values.warband_speed(warband)
-	local leader = warband_utils.active_leader(warband)
 
 	local total_hauling = warband_utils.total_hauling(warband)
-	local total_weight = 1
-	DATA.for_each_trade_good(function (item)
-		-- TODO: implement weight of trade goods
-		total_weight = total_weight + DATA.pop_get_inventory(leader, item) / 10
-	end)
+	local total_weight = warband_utils.current_hauling(warband)
 
+    -- speed is a minimal speed across all units
 	---@type speed
-	local result = character_values.travel_speed(leader)
+	local result = {
+		base = 9999,
+		can_fly = true,
+		forest_fast = true,
+		river_fast = true
+	}
 
-    -- speed is a minimal speed across all warbands
 	DATA.for_each_warband_unit_from_warband(warband, function (item)
 		local pop = DATA.warband_unit_get_unit(item)
-		local speed = character_values.travel_speed(pop)
-
-		result.base = math.min(result.base, speed.base)
-		result.can_fly = result.can_fly and speed.can_fly
-		result.forest_fast = result.forest_fast and speed.forest_fast
-		result.river_fast = result.river_fast and speed.river_fast
+		local age = AGE_YEARS(pop)
+		local child_age = DATA.race_get_child_age(RACE(pop))
+--		if age < child_age then
+--			-- babies are carried, add to total weight
+--			total_weight = total_weight + require "game.entities.pop".POP.get_size(pop)
+--		else
+			local speed = character_values.travel_speed(pop)
+			result.base = math.min(result.base, speed.base)
+			result.can_fly = result.can_fly and speed.can_fly
+			result.forest_fast = result.forest_fast and speed.forest_fast
+			result.river_fast = result.river_fast and speed.river_fast
+--		end
 	end)
 
-	result.base = result.base * math.min(2, (1 + total_hauling / total_weight / 50))
+	-- from ~100% @ 0% to ~0% @ 200% weight:hauling
+	-- 1/(1+math.exp(-3(0/_-1))) = 0.04742587317
+	local weight_mod = math.min(1,1.048 - 1 / (1+math.exp(-3*(total_weight/total_hauling-1))))
+	result.base = result.base * weight_mod
 
-	return result
+	return result, weight_mod
 end
 
 return military_values

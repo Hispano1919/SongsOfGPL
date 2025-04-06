@@ -54,7 +54,7 @@ function inspector.draw(gam)
     rect.y = rect.y + base_unit
     rect.height = rect.height - base_unit
 
-    require "game.scenes.game.widgets.pop-list" (rect, base_unit, province)()
+    require "game.scenes.game.widgets.pop-list" (gam, rect, base_unit, province)()
 end
 
 return inspector

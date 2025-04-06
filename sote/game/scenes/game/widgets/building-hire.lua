@@ -1,15 +1,16 @@
 local demography_values = require "game.raws.values.demography"
+local economy_values = require "game.raws.values.economy"
 local demography_effects = require "game.raws.effects.demography"
 local economy_effects = require "game.raws.effects.economy"
 
 local ut = require "game.ui-utils"
 local ui = require "engine.ui"
+local pui = require "game.scenes.game.widgets.pop-ui-widgets"
 local portrait_widget = require "game.scenes.game.widgets.portrait"
 local pop_utils = require "game.entities.pop".POP
 local province_utils = require "game.entities.province".Province
 local production_method_utils = require "game.raws.production-methods"
 local dbm = require "game.economy.diet-breadth-model"
-local warband_utils = require "game.entities.warband"
 
 ---@param rect Rect
 ---@param building building_id
@@ -88,37 +89,24 @@ return function (rect, building)
 			info_rect.width = info_rect.width - portrait_rect.width
 			info_rect.height = info_rect.height / 2
 
+			local cost = economy_values.pop_employment_cost(worker)
+
 			if ut.text_button(
-				tostring(warband_utils.base_unit_price) .. MONEY_SYMBOL,
+				ut.to_fixed_point2(cost) .. MONEY_SYMBOL,
 				info_rect,
-				"Cost: " .. tostring(warband_utils.base_unit_price),
-				SAVINGS(player) > warband_utils.base_unit_price
+				"Cost: " .. cost,
+				SAVINGS(player) > cost
 			) then
 				demography_effects.employ_pop(worker, building)
 				economy_effects.gift_to_pop(
 					player,
 					unemployed_pops[index],
-					warband_utils.base_unit_price
+					cost
 				)
 			end
 
 			info_rect.y = info_rect.y + info_rect.height
-
-			local tooltip = "Base productivity of this character."
-			local job_efficiency = pop_utils.job_efficiency(worker, DATA.production_method_get_job_type(method))
-			tooltip = tooltip .. " The character's base job efficiency is ".. ut.to_fixed_point2(job_efficiency * 100) .. "%."
-				.. " Province infrastructure modifies this by ".. ut.to_fixed_point2(efficiency_from_infrastructure * 100) .. "%."
-			tooltip = tooltip .. " This is further changed by ".. ut.to_fixed_point2(local_method_efficiency * 100) .. "% based on the building's province."
-
-			ut.generic_number_field(
-				"",
-				job_efficiency * efficiency_from_infrastructure * forage_efficiency * local_method_efficiency,
-				info_rect,
-				tooltip,
-				ut.NUMBER_MODE.PERCENTAGE,
-				ut.NAME_MODE.NAME
-			)
-
+			pui.render_job_efficiency(info_rect, worker, DATA.production_method_get_job_type(method))
 			index = index + 1
 		end
 	end

@@ -5,6 +5,9 @@ is_border bool
 is_coast bool
 has_river bool
 has_marsh bool
+x float
+y float
+z float
 elevation float
 slope float
 grass float

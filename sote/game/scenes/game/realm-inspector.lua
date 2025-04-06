@@ -216,7 +216,7 @@ function re.draw(gam)
 						ib.text_button_to_character(gam, k, rect, name, tooltip)
 					end
 					local function render_province(rect, k, v)
-						ib.text_button_to_province(gam, PROVINCE(k), rect, PROVINCE_NAME(PROVINCE(v)))
+						ib.text_button_to_province_tile(gam, DATA.province_get_center(PROVINCE(v)), rect, PROVINCE_NAME(PROVINCE(v)))
 					end
 					local function pop_sex(pop)
 						local f = "m"
@@ -317,11 +317,11 @@ function re.draw(gam)
 								{
 									header = "age",
 									render_closure = function (rect, k, v)
-										ui.centered_text(tostring(AGE(v)), rect)
+										ui.centered_text(tostring(AGE_YEARS(v)), rect)
 									end,
 									width = 2,
 									value = function(k, v)
-										return AGE(v)
+										return AGE_TICKS(v)
 									end
 								},
 								{
@@ -366,7 +366,7 @@ function re.draw(gam)
 								{
 									header = "satisfac.",
 									render_closure = function (rect, k, v)
-										uit.render_pop_satsifaction(rect, v)
+										require "game.scenes.game.widgets.pop-ui-widgets".render_basic_needs_satsifaction(rect, v)
 									end,
 									width = 2,
 									value = function(k, v)

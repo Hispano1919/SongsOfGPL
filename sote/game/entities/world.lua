@@ -60,7 +60,9 @@ local dbm              = require "game.economy.diet-breadth-model"
 ---@field current_tick_in_month number
 ---@field current_tick_in_year number
 ---@field current_tick_in_decade number
+---@field ticks_per_minute number
 ---@field ticks_per_hour number
+---@field ticks_per_day number
 ---@field ticks_per_month number
 ---@field ticks_per_year number
 ---@field ticks_per_decade number
@@ -153,12 +155,14 @@ function world.World:new()
 	w.climate_grid_size = 256
 	w.sub_hourly_tick = 0
 	w.sub_daily_tick = 0
-	w.ticks_per_hour = 120
-	w.ticks_per_month = 30 * 24 * w.ticks_per_hour
+	w.ticks_per_minute = 2
+	w.ticks_per_hour = w.ticks_per_minute * 60
+	w.ticks_per_day = w.ticks_per_hour * 24
+	w.ticks_per_month = w.ticks_per_day * 30
 	w.ticks_per_year = w.ticks_per_month * 12
 	w.ticks_per_decade = w.ticks_per_year * 10
 	w.hour = 0
-	w.day = 0
+	w.day = 1
 	w.month = 0
 	w.year = 0
 	w.current_tick_in_month = 0
@@ -249,6 +253,11 @@ end
 function world.empty()
 	print("World allocated!")
 	world.World:new()
+	-- trasfer world time to backend
+	DCON.set_world_tick_definitions(WORLD.ticks_per_minute, WORLD.ticks_per_hour, WORLD.ticks_per_day, WORLD.ticks_per_month)
+--	print(DCON.get_world_ticks_per_minute(),DCON.get_world_ticks_per_hour(),DCON.get_world_ticks_per_day(),DCON.get_world_ticks_per_month())
+	DCON.set_world_current_tick(WORLD.current_tick_in_year)
+	DCON.set_world_current_year(WORLD.year)
 end
 
 ---Schedules an event
@@ -478,6 +487,8 @@ function world.World:tick()
 		WORLD.sub_daily_tick = 0
 	end
 	WORLD.current_tick_in_month = WORLD.current_tick_in_month + 1
+	WORLD.current_tick_in_year = WORLD.current_tick_in_year + 1
+	DCON.set_world_current_tick(WORLD.current_tick_in_year)
 
 
 	if WORLD.current_tick_in_month == 1 then
@@ -511,20 +522,26 @@ function world.World:tick()
 	end
 
 	if WORLD.current_tick_in_month == 3 then
-		PROFILER:start_timer("warband wages")
+		PROFILER:start_timer("warband update")
 		DATA.for_each_warband(function (warband_id)
+			--reset monthly trackers
+			DATA.warband_set_current_time_used_ratio(warband_id,0)
+			--run warband growth
+			require "game.society.pop-growth".warband(warband_id)
+			--pay wages
 			local treasury = DATA.warband_get_treasury(warband_id)
 			local total_upkeep = DATA.warband_get_total_upkeep(warband_id)
 			if treasury > total_upkeep then
 				DATA.warband_inc_treasury(warband_id, -total_upkeep)
 				DATA.for_each_warband_unit_from_warband(warband_id, function (unit)
-					local unit_upkeep = warband_utils.upkeep_per_unit
+					local unit_type = DATA.warband_unit_get_type(unit)
+					local unit_upkeep = DATA.unit_type_get_base_cost(unit_type)
 					local pop = DATA.warband_unit_get_unit(unit)
 					economy_effects.add_pop_savings(pop, unit_upkeep, ECONOMY_REASON.UPKEEP)
 				end)
 			end
 		end)
-		PROFILER:end_timer("warband wages")
+		PROFILER:end_timer("warband update")
 	end
 
 	do
@@ -564,9 +581,9 @@ function world.World:tick()
 		PROFILER:end_timer("decisions travel")
 	end
 
-	PROFILER:start_timer("travelling")
+	PROFILER:start_timer("traveling")
 	require "game.ai.travels".run()
-	PROFILER:end_timer("travelling")
+	PROFILER:end_timer("traveling")
 
 	do
 		local index = WORLD.current_tick_in_month
@@ -596,11 +613,17 @@ function world.World:tick()
 	--- daily
 	if WORLD.sub_daily_tick == 2 then
 		PROFILER:start_timer("warband movement")
-		local hours_per_day = 10
 
 		DATA.for_each_warband(function (item)
+			-- add yesterday's stance time to warband monthly tracking
+			local status = DATA.warband_get_current_status(item)
+			local status_ratio = DATA.warband_status_get_time_used(status)
+			DATA.warband_inc_current_time_used_ratio(item,status_ratio/30)
+			-- check if traveling at all for the day
 			local current_path = DATA.warband_get_current_path(item)
 			if current_path == nil or #current_path == 0 then
+				DATA.warband_set_current_status(item, WARBAND_STATUS.IDLE)
+				-- add possible daily foraging?
 				return
 			end
 			--- counted in hours
@@ -610,8 +633,9 @@ function world.World:tick()
 				item,
 				1
 			)
+
 			--- depending on amount of available supplies, move the party
-			progress = progress - hours_per_day * supplies_availability
+			progress = progress - supplies_availability * TRAVEL_DAY_HOURS
 			while progress <= 0 and #current_path > 0 do
 				local last_tile = table.remove(current_path, #current_path)
 				travel_effects.move_party(item, last_tile)
@@ -623,6 +647,7 @@ function world.World:tick()
 				end
 			end
 			DATA.warband_set_movement_progress(item, math.max(0, progress))
+			DATA.warband_set_current_status(item, WARBAND_STATUS.TRAVELING)
 		end)
 
 		PROFILER:end_timer("warband movement")
@@ -698,12 +723,9 @@ function world.World:tick()
 			recruit.run(settled_province)
 			PROFILER:end_timer("province")
 
-			PROFILER:start_timer("growth")
-			-- "POP" update
-			local pop_growth = require "game.society.pop-growth"
-			--print("Pop growth")
-			pop_growth.growth(settled_province)
-			PROFILER:end_timer("growth")
+			PROFILER:start_timer("growth-province")
+			require "game.society.pop-growth".province(settled_province)
+			PROFILER:end_timer("growth-province")
 
 			--print("done")
 		end
@@ -828,24 +850,25 @@ function world.World:tick()
 			PROFILER:end_timer("events_queue")
 
 			if WORLD.day == 31 then
-				WORLD.day = 0
+				WORLD.day = 1
 				WORLD.current_tick_in_month = 0
 				WORLD.month = WORLD.month + 1
 				-- monthly tick
 				--print("Monthly tick")
-				DATA.check_state()
+				--- DATA.check_state()
 
 				if WORLD.month == 12 then
 					WORLD.month = 0
 					WORLD.year = WORLD.year + 1
+					WORLD.current_tick_in_year = 0
+					DCON.set_world_current_year(WORLD.year)
+					DCON.set_world_current_tick(WORLD.current_tick_in_year)
 					-- yearly tick
 					--print("Yearly tick!")
 
 					---#logging LOGS:write("aging\n")
 					---#logging LOGS:flush()
 
-					local pop_aging = require "game.society.pop-aging"
-					pop_aging.age()
 					DATA.for_each_realm(function (realm)
 						DATA.realm_set_budget_tax_collected_this_year(realm, 0)
 					end)

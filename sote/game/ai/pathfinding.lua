@@ -2,7 +2,6 @@ local tabb = require "engine.table"
 
 -- TODO: use an actual min heap
 
-local movement_cost = require "game.world-gen.province-movement-cost".single_tile_cost
 local tile_utils = require "game.entities.tile"
 
 local pa = {}
@@ -63,32 +62,50 @@ function pa.tile_speed(tile, speed)
 	return speed_value
 end
 
----works only for neighbors
+local base_distance_multiplier = 2000
+
+---almost precise distance between neighbours
 ---@param A tile_id
 ---@param B tile_id
 ---@param speed speed
----@param is_corner boolean|nil
 ---@return number
-function pa.tile_distance(A, B, speed, is_corner)
-	if is_corner == nil then
-		is_corner = true
-		for neigh in tile_utils.iter_neighbors(A) do
-			if neigh == B then
-				is_corner = false
-			end
-		end
-	end
+function pa.tile_distance(A, B, speed)
+	local dx = DATA.tile_get_x(B) - DATA.tile_get_x(A)
+	local dy = DATA.tile_get_y(B) - DATA.tile_get_y(A)
+	local dz = DATA.tile_get_z(B) - DATA.tile_get_z(A)
 
-	local move_cost_A = movement_cost(A)
-	local move_cost_B = movement_cost(B)
-	local movement_cost_mod = 100
+	local base_distance = math.sqrt(dx * dx + dy * dy + dz * dz) * base_distance_multiplier
+
+	local movement_cost_mod = 1
 	if not speed.can_fly then
 		movement_cost_mod = movement_cost_mod * (1 + math.max(0, DATA.tile_get_elevation(A) - DATA.tile_get_elevation(B)) / 50)
 	end
-	if is_corner then
-		movement_cost_mod = movement_cost_mod * root_of_two
+	local altitude_modifier = 1000
+	if speed.can_fly then
+		--- flying pops adapt better to high altitudes:
+		altitude_modifier = 100000
 	end
-	return 0.5 * (move_cost_A / pa.tile_speed(A, speed) + move_cost_B / pa.tile_speed(B, speed)) * movement_cost_mod
+	movement_cost_mod = movement_cost_mod * (1 + math.max(0, DATA.tile_get_elevation(A) + DATA.tile_get_elevation(B)) / altitude_modifier)
+
+	local average_speed = (pa.tile_speed(A, speed) + pa.tile_speed(B, speed)) / 2
+
+	return base_distance * movement_cost_mod / average_speed
+end
+
+---very very rough approximation of distance
+---@param A tile_id
+---@param B tile_id
+---@param speed speed
+---@return number
+local function distance_heuristic(A, B, speed)
+	local dx = DATA.tile_get_x(B) - DATA.tile_get_x(A)
+	local dy = DATA.tile_get_y(B) - DATA.tile_get_y(A)
+	local dz = DATA.tile_get_z(B) - DATA.tile_get_z(A)
+
+	local base_distance = math.sqrt(dx * dx + dy * dy + dz * dz) * base_distance_multiplier
+
+	--- 2 is here to account for distance multipliers
+	return base_distance * 2 / speed.base
 end
 
 ---Pathfinds from origin province to target province, returns the travel time in hours and the path itself (can only pathfind from land to land or from sea to sea)
@@ -108,11 +125,13 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 	end
 
 	---@type table<tile_id, number>
-	local qq = {} -- maps tiles to their distances
+	local distance_to_queued_nodes = {} -- maps tiles in our queue to their distances
 	---@type table<tile_id, number>
-	local qq_adjusted = {} -- maps tiles to their adjusted distances
-	---@type table<tile_id, number>
-	local distance_cache = {}
+	local adjusted_distance_to_queued_nodes = {} -- maps tiles in our queue to their adjusted distances
+
+	-- -@type table<tile_id, number>
+	-- local distance_cache = {}
+
 	---@type table<tile_id, boolean>
 	local visited = {}
 	---@type table<tile_id, tile_id>
@@ -133,8 +152,8 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 	-- queue size
 	---@type number
 	local q_size = 1
-	qq[origin] = 0
-	distance_cache[origin] = 0
+	distance_to_queued_nodes[origin] = 0
+	adjusted_distance_to_queued_nodes[origin] = distance_heuristic(origin, target, speed)
 
 	---@type tile_id[]
 	local path = nil
@@ -171,7 +190,7 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 		PROFILER:start_timer("pathfinding")
 		-- Djikstra flood fill thing
 		while q_size > 0 do
-			local tile, dist = get_min(qq)
+			local tile, adjusted_dist = get_min(adjusted_distance_to_queued_nodes)
 			q_size = q_size - 1
 			visited[tile] = true
 
@@ -204,18 +223,25 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 
 			for _, neigh in pairs(candidates) do
 				if visited[neigh] ~= true then
-					local alt = dist + pa.tile_distance(tile, neigh, speed, false)
-					local old_distance = distance_cache[neigh] or math.huge
+					local edge_distance = pa.tile_distance(tile, neigh, speed)
+					local estimated_distance_to_target = distance_heuristic(neigh, target, speed)
+					local dist = distance_to_queued_nodes[tile]
+					local new_true_distance = dist + edge_distance
+					local new_adjusted_distance = dist + edge_distance + estimated_distance_to_target
 
-					if alt < old_distance then
-						distance_cache[neigh] = alt
+					local cached_distance = distance_to_queued_nodes[neigh]
+
+					if cached_distance == nil then
+						distance_to_queued_nodes[neigh] = new_true_distance
+						adjusted_distance_to_queued_nodes[neigh] = new_adjusted_distance
 						prev[neigh] = tile
-						if qq[neigh] == nil then
-							qq[neigh] = alt
-							---@type number
-							q_size = q_size + 1
-						else
-							qq[neigh] = alt
+						---@type number
+						q_size = q_size + 1
+					else
+						if new_true_distance < cached_distance then
+							distance_to_queued_nodes[neigh] = new_true_distance
+							adjusted_distance_to_queued_nodes[neigh] = new_adjusted_distance
+							prev[neigh] = tile
 						end
 					end
 				end
@@ -228,17 +254,25 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 
 				local neigh = corner
 				if visited[neigh] ~= true then
-					local alt = dist + pa.tile_distance(tile, neigh, speed, true)
-					local old_distance = distance_cache[neigh] or math.huge
-					if alt < old_distance then
-						distance_cache[neigh] = alt
+					local edge_distance = pa.tile_distance(tile, neigh, speed)
+					local dist = distance_to_queued_nodes[tile]
+					local estimated_distance_to_target = distance_heuristic(neigh, target, speed)
+					local new_true_distance = dist + edge_distance
+					local new_adjusted_distance = dist + edge_distance + estimated_distance_to_target
+
+					local cached_distance = distance_to_queued_nodes[neigh]
+
+					if cached_distance == nil then
+						distance_to_queued_nodes[neigh] = new_true_distance
+						adjusted_distance_to_queued_nodes[neigh] = new_adjusted_distance
 						prev[neigh] = tile
-						if qq[neigh] == nil then
-							qq[neigh] = alt
-							---@type number
-							q_size = q_size + 1
-						else
-							qq[neigh] = alt
+						---@type number
+						q_size = q_size + 1
+					else
+						if new_true_distance < cached_distance then
+							distance_to_queued_nodes[neigh] = new_true_distance
+							adjusted_distance_to_queued_nodes[neigh] = new_adjusted_distance
+							prev[neigh] = tile
 						end
 					end
 				end
@@ -273,7 +307,7 @@ function pa.pathfind(origin, target, speed, allowed_provinces)
 			PATHFINDING_CACHE[cache_index][starting_province][ending_province] = path
 		end
 
-		return total_cost, path
+		return total_cost, tabb.copy(path)
 	else
 		PROFILER:start_timer("path cost calculation")
 		local current = origin

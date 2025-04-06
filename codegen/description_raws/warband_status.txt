@@ -1,1 +1,4 @@
 name string
+action_string string
+time_used float
+icon string

@@ -404,7 +404,7 @@ function Decision.CharacterSelf:new_from_trigger_lists(
 			for _, pretrigger in ipairs(pretriggers) do
 				if not pretrigger.condition(root) then
 					for _, actual_tooltip in ipairs(pretrigger.tooltip_on_condition_failure(root)) do
-						tooltip_result = tooltip_result .. actual_tooltip .. "\n"
+						tooltip_result = tooltip_result .. "\n - " .. actual_tooltip
 					end
 				end
 			end

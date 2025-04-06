@@ -85,7 +85,7 @@ local function load()
 		end,
 		effect = function(root, primary_target, secondary_target)
 			if WORLD.player_character == root then
-				WORLD:emit_notification("I requested loyalty from ".. primary_target.name)
+				WORLD:emit_notification("I requested loyalty from ".. NAME(primary_target))
 			end
 			WORLD:emit_immediate_event('request-loyalty', primary_target, root)
 		end
@@ -105,7 +105,7 @@ local function load()
                 return true
             end
 			local race = F_RACE(root)
-            return AGE(root) > race.elder_age * 0.5 + race.middle_age * 0.5
+            return AGE_YEARS(root) > race.elder_age * 0.5 + race.middle_age * 0.5
 		end,
 		clickable = function(root, primary_target)
 			if primary_target == root then

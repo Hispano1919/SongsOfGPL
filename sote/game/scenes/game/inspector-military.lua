@@ -11,15 +11,16 @@ local window = {}
 local slider_warbands = 0
 
 
+
 ---@return Rect
-function window.rect()
-    local unit = uit.BASE_HEIGHT
-    local fs = ui.fullscreen()
-    return fs:subrect(unit * 2, unit * 2, unit * (16 + 4), unit * 34, "left", "up")
+local function get_main_panel()
+	local fs = ui.fullscreen()
+	local panel = fs:subrect(uit.BASE_HEIGHT * 2, 0, uit.BASE_HEIGHT * 16, uit.BASE_HEIGHT * 25, "left", "down")
+	return panel
 end
 
 function window.mask()
-    if ui.trigger(window.rect()) then
+    if ui.trigger(get_main_panel()) then
 		return false
 	else
 		return true
@@ -40,7 +41,7 @@ function window.draw(game)
         return
     end
 
-    local ui_panel = window.rect()
+    local ui_panel = get_main_panel()
     -- draw a panel
     ui.panel(ui_panel)
 
@@ -59,37 +60,23 @@ function window.draw(game)
     slider_warbands = uit.scrollview(ui_panel, function(i, rect)
         if i > 0 then
             local realm_icon_rect = rect:subrect(0, 0, rect.height, rect.height, "left", "up")
+            local leader_icon_rect = rect:subrect(rect.height, 0, rect.height, rect.height, "left", "up")
+            local warband_name_rect = rect:subrect(rect.height*3, 0, (rect.width-rect.height*3)/2, rect.height, "left", "up")
+            local warband_status_rect = rect:subrect(0, 0, (rect.width-rect.height*3)/2, rect.height, "right", "up")
 
-            ---@type Rect
-            local r = rect
-            r.x = r.x + rect.height
-            r.width = r.width - r.height
-            local width_unit = r.width / 4
-            local x = r.x
-
-            r.width = width_unit * 2
             ---@type Warband
-            local warband = warbands[i]
-            local leader = WARBAND_LEADER(warband)
-            local warband_realm = warband_utils.realm(warband)
+            local party_id = warbands[i]
+            local leader = require "game.entities.warband".active_leader(party_id)
+            local warband_realm = warband_utils.realm(party_id)
 
-            if leader ~= INVALID_ID then
-                ib.icon_button_to_character(game, leader, realm_icon_rect)
+            ib.icon_button_to_realm(game, warband_realm, realm_icon_rect)
+            if leader and leader ~= INVALID_ID then
+                ib.icon_button_to_character(game, leader, leader_icon_rect)
             else
-                ib.icon_button_to_realm(game, warband_realm, realm_icon_rect)
+                ib.icon_button_to_realm(game, warband_realm, leader_icon_rect)
             end
-
-            ib.text_button_to_warband(game, warband, r,
-                DATA.warband_get_name(warband))
-
-            r.width = width_unit
-            r.x = x + width_unit * 2
-
-            ui.centered_text(DATA.warband_status_get_name(DATA.warband_get_current_status(warband)), r)
-
-            r.x = x + width_unit * 3
-            ui.left_text("units: ", r)
-            ui.right_text(warband_utils.war_size(warband) .. " / " .. warband_utils.target_size(warband) .. " (" .. warband_utils.size(warband) .. ") ", r)
+            ib.text_button_to_party(game, party_id, warband_name_rect,DATA.warband_get_name(party_id))
+            ui.centered_text(DATA.warband_status_get_name(DATA.warband_get_current_status(party_id)), warband_status_rect)
         end
     end, uit.BASE_HEIGHT, tabb.size(warbands), uit.BASE_HEIGHT, slider_warbands)
 end

@@ -13,7 +13,7 @@ local ffi = require("ffi")
 ---@field guard_of Realm? 
 ---@field current_status WARBAND_STATUS 
 ---@field idle_stance WARBAND_STANCE 
----@field current_free_time_ratio number How much of "idle" free time they are actually idle. Set by events.
+---@field current_time_used_ratio number How much monthly time is actualy used by warband. Accumulated daily.
 ---@field treasury number 
 ---@field total_upkeep number 
 ---@field predicted_upkeep number 
@@ -22,19 +22,22 @@ local ffi = require("ffi")
 ---@field morale number 
 ---@field current_path table<tile_id> 
 ---@field movement_progress number 
+---@field in_settlement boolean 
 
 ---@class struct_warband
 ---@field units_current table<unit_type_id, number> Current distribution of units in the warband
 ---@field units_target table<unit_type_id, number> Units to recruit
 ---@field current_status WARBAND_STATUS 
 ---@field idle_stance WARBAND_STANCE 
----@field current_free_time_ratio number How much of "idle" free time they are actually idle. Set by events.
+---@field current_time_used_ratio number How much monthly time is actualy used by warband. Accumulated daily.
+---@field inventory table<trade_good_id, number> 
 ---@field treasury number 
 ---@field total_upkeep number 
 ---@field predicted_upkeep number 
 ---@field supplies number 
 ---@field supplies_target_days number 
 ---@field morale number 
+---@field in_settlement boolean 
 
 
 ffi.cdef[[
@@ -48,8 +51,11 @@ void dcon_warband_set_current_status(int32_t, uint8_t);
 uint8_t dcon_warband_get_current_status(int32_t);
 void dcon_warband_set_idle_stance(int32_t, uint8_t);
 uint8_t dcon_warband_get_idle_stance(int32_t);
-void dcon_warband_set_current_free_time_ratio(int32_t, float);
-float dcon_warband_get_current_free_time_ratio(int32_t);
+void dcon_warband_set_current_time_used_ratio(int32_t, float);
+float dcon_warband_get_current_time_used_ratio(int32_t);
+void dcon_warband_resize_inventory(uint32_t);
+void dcon_warband_set_inventory(int32_t, int32_t, float);
+float dcon_warband_get_inventory(int32_t, int32_t);
 void dcon_warband_set_treasury(int32_t, float);
 float dcon_warband_get_treasury(int32_t);
 void dcon_warband_set_total_upkeep(int32_t, float);
@@ -62,6 +68,8 @@ void dcon_warband_set_supplies_target_days(int32_t, float);
 float dcon_warband_get_supplies_target_days(int32_t);
 void dcon_warband_set_morale(int32_t, float);
 float dcon_warband_get_morale(int32_t);
+void dcon_warband_set_in_settlement(int32_t, bool);
+bool dcon_warband_get_in_settlement(int32_t);
 void dcon_delete_warband(int32_t j);
 int32_t dcon_create_warband();
 bool dcon_warband_is_valid(int32_t);
@@ -82,8 +90,9 @@ DATA.warband_movement_progress= {}
 ---warband: LUA bindings---
 
 DATA.warband_size = 50000
-DCON.dcon_warband_resize_units_current(5)
-DCON.dcon_warband_resize_units_target(5)
+DCON.dcon_warband_resize_units_current(6)
+DCON.dcon_warband_resize_units_target(6)
+DCON.dcon_warband_resize_inventory(101)
 ---@return warband_id
 function DATA.create_warband()
     ---@type warband_id
@@ -199,21 +208,42 @@ function DATA.warband_set_idle_stance(warband_id, value)
     DCON.dcon_warband_set_idle_stance(warband_id - 1, value)
 end
 ---@param warband_id warband_id valid warband id
----@return number current_free_time_ratio How much of "idle" free time they are actually idle. Set by events.
-function DATA.warband_get_current_free_time_ratio(warband_id)
-    return DCON.dcon_warband_get_current_free_time_ratio(warband_id - 1)
+---@return number current_time_used_ratio How much monthly time is actualy used by warband. Accumulated daily.
+function DATA.warband_get_current_time_used_ratio(warband_id)
+    return DCON.dcon_warband_get_current_time_used_ratio(warband_id - 1)
 end
 ---@param warband_id warband_id valid warband id
 ---@param value number valid number
-function DATA.warband_set_current_free_time_ratio(warband_id, value)
-    DCON.dcon_warband_set_current_free_time_ratio(warband_id - 1, value)
+function DATA.warband_set_current_time_used_ratio(warband_id, value)
+    DCON.dcon_warband_set_current_time_used_ratio(warband_id - 1, value)
 end
 ---@param warband_id warband_id valid warband id
 ---@param value number valid number
-function DATA.warband_inc_current_free_time_ratio(warband_id, value)
+function DATA.warband_inc_current_time_used_ratio(warband_id, value)
     ---@type number
-    local current = DCON.dcon_warband_get_current_free_time_ratio(warband_id - 1)
-    DCON.dcon_warband_set_current_free_time_ratio(warband_id - 1, current + value)
+    local current = DCON.dcon_warband_get_current_time_used_ratio(warband_id - 1)
+    DCON.dcon_warband_set_current_time_used_ratio(warband_id - 1, current + value)
+end
+---@param warband_id warband_id valid warband id
+---@param index trade_good_id valid
+---@return number inventory 
+function DATA.warband_get_inventory(warband_id, index)
+    assert(index ~= 0)
+    return DCON.dcon_warband_get_inventory(warband_id - 1, index - 1)
+end
+---@param warband_id warband_id valid warband id
+---@param index trade_good_id valid index
+---@param value number valid number
+function DATA.warband_set_inventory(warband_id, index, value)
+    DCON.dcon_warband_set_inventory(warband_id - 1, index - 1, value)
+end
+---@param warband_id warband_id valid warband id
+---@param index trade_good_id valid index
+---@param value number valid number
+function DATA.warband_inc_inventory(warband_id, index, value)
+    ---@type number
+    local current = DCON.dcon_warband_get_inventory(warband_id - 1, index - 1)
+    DCON.dcon_warband_set_inventory(warband_id - 1, index - 1, current + value)
 end
 ---@param warband_id warband_id valid warband id
 ---@return number treasury 
@@ -337,6 +367,16 @@ end
 function DATA.warband_set_movement_progress(warband_id, value)
     DATA.warband_movement_progress[warband_id] = value
 end
+---@param warband_id warband_id valid warband id
+---@return boolean in_settlement 
+function DATA.warband_get_in_settlement(warband_id)
+    return DCON.dcon_warband_get_in_settlement(warband_id - 1)
+end
+---@param warband_id warband_id valid warband id
+---@param value boolean valid boolean
+function DATA.warband_set_in_settlement(warband_id, value)
+    DCON.dcon_warband_set_in_settlement(warband_id - 1, value)
+end
 
 local fat_warband_id_metatable = {
     __index = function (t,k)
@@ -344,7 +384,7 @@ local fat_warband_id_metatable = {
         if (k == "guard_of") then return DATA.warband_get_guard_of(t.id) end
         if (k == "current_status") then return DATA.warband_get_current_status(t.id) end
         if (k == "idle_stance") then return DATA.warband_get_idle_stance(t.id) end
-        if (k == "current_free_time_ratio") then return DATA.warband_get_current_free_time_ratio(t.id) end
+        if (k == "current_time_used_ratio") then return DATA.warband_get_current_time_used_ratio(t.id) end
         if (k == "treasury") then return DATA.warband_get_treasury(t.id) end
         if (k == "total_upkeep") then return DATA.warband_get_total_upkeep(t.id) end
         if (k == "predicted_upkeep") then return DATA.warband_get_predicted_upkeep(t.id) end
@@ -353,6 +393,7 @@ local fat_warband_id_metatable = {
         if (k == "morale") then return DATA.warband_get_morale(t.id) end
         if (k == "current_path") then return DATA.warband_get_current_path(t.id) end
         if (k == "movement_progress") then return DATA.warband_get_movement_progress(t.id) end
+        if (k == "in_settlement") then return DATA.warband_get_in_settlement(t.id) end
         return rawget(t, k)
     end,
     __newindex = function (t,k,v)
@@ -372,8 +413,8 @@ local fat_warband_id_metatable = {
             DATA.warband_set_idle_stance(t.id, v)
             return
         end
-        if (k == "current_free_time_ratio") then
-            DATA.warband_set_current_free_time_ratio(t.id, v)
+        if (k == "current_time_used_ratio") then
+            DATA.warband_set_current_time_used_ratio(t.id, v)
             return
         end
         if (k == "treasury") then
@@ -406,6 +447,10 @@ local fat_warband_id_metatable = {
         end
         if (k == "movement_progress") then
             DATA.warband_set_movement_progress(t.id, v)
+            return
+        end
+        if (k == "in_settlement") then
+            DATA.warband_set_in_settlement(t.id, v)
             return
         end
         rawset(t, k, v)

@@ -57,7 +57,7 @@ DATA.culture_name= {}
 ---culture: LUA bindings---
 
 DATA.culture_size = 10000
-DCON.dcon_culture_resize_traditional_units(5)
+DCON.dcon_culture_resize_traditional_units(6)
 DCON.dcon_culture_resize_traditional_forager_targets(11)
 ---@return culture_id
 function DATA.create_culture()

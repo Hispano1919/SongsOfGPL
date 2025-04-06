@@ -1,2 +1,3 @@
 name string
 action_word string
+icon string

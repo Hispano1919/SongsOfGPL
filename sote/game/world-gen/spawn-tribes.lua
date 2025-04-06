@@ -68,7 +68,8 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 			faith,
 			culture,
 			love.math.random() > male_percentage,
-			age
+			-age,
+			love.math.random(1,WORLD.ticks_per_year)
 		)
 		province_utils.add_pop(capitol_id, new_pop)
 		province_utils.set_home(capitol_id, new_pop)
@@ -80,7 +81,7 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 		local elite_character = pe.generate_new_noble(r, capitol_id, race_id, faith, culture)
 		local popularity = DATA.force_create_popularity(elite_character, r)
 		local fat_popularity = DATA.fatten_popularity(popularity)
-		fat_popularity.value = DATA.pop_get_age(elite_character) / 10
+		fat_popularity.value = AGE_YEARS(elite_character) / 10
 		pe.transfer_power(r, elite_character, POLITICS_REASON.INITIALRULER)
 	end
 
@@ -89,7 +90,7 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 		local contender = pe.generate_new_noble(r, capitol_id, race_id, faith, culture)
 		local popularity = DATA.force_create_popularity(contender, r)
 		local fat_popularity = DATA.fatten_popularity(popularity)
-		fat_popularity.value = DATA.pop_get_age(contender) / 15
+		fat_popularity.value = AGE_YEARS(contender) / 15
 	end
 
 	-- set up capitol
@@ -129,25 +130,25 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 	-- match children pop to some possible parent
 	DATA.for_each_pop_location_from_location(capitol_id, function (item)
 		local child = DATA.pop_location_get_pop(item)
-		local fat_child = DATA.fatten_pop(child)
+		local child_age = AGE_YEARS(child)
 
-		if fat_child.age > race.teen_age then
+		if child_age > race.adult_age then
 			return
 		end
-		if IS_CHARACTER(child) then
-			return
-		end
+		local child_rank = IS_CHARACTER(child)
 
 		---@type pop_id[]
 		local parents = {}
 
 		DATA.for_each_pop_location_from_location(capitol_id, function (parent_location)
 			local potential_parent_id = DATA.pop_location_get_pop(parent_location)
-			local fat_potential_parent = DATA.fatten_pop(potential_parent_id)
-			if fat_potential_parent.age <= fat_child.age + race.adult_age then
+			local age = AGE_YEARS(potential_parent_id)
+			local rank = IS_CHARACTER(potential_parent_id)
+			if rank ~= child_rank then
 				return
-			end
-			if fat_potential_parent.age >= fat_child.age + race.elder_age then
+			elseif age <= child_age + race.adult_age then
+				return
+			elseif age >= child_age + race.elder_age then
 				return
 			end
 			table.insert(parents, potential_parent_id)
@@ -188,11 +189,16 @@ function ProvinceCheck(race, province)
 	if realm ~= INVALID_ID then return false end
 	if (not fat_province.on_a_river) and fat_race.requires_large_river then return false end
 	if (not fat_province.on_a_forest) and fat_race.requires_large_forest then return false end
-	local ja_r, ja_t, ju_r, ju_t = tile.get_climate_data(center)
-	if fat_race.minimum_comfortable_temperature > (ja_t + ju_t) / 2 then return false end
-	if fat_race.minimum_absolute_temperature > ja_r then return false end
+	local min_t,avg_t,avg_e,count = 0,0,0,0
+	DATA.for_each_tile_province_membership_from_province(province, function(item)
+		local ja_r, ja_t, ju_r, ju_t = tile.get_climate_data(item)
+		min_t, avg_t, avg_e, count = min_t + math.min(ja_t,ju_t), avg_t + (ja_t + ju_t)/2, avg_e + DATA.tile_get_elevation(item), count + 1
+	end)
+	min_t, avg_t, avg_e = min_t / count, avg_t / count, avg_e / count
+	if fat_race.minimum_comfortable_temperature > avg_t then return false end
+	if fat_race.minimum_absolute_temperature > min_t then return false end
 	local elev = fat_center.elevation
-	if fat_race.minimum_comfortable_elevation > elev then return false end
+	if fat_race.minimum_comfortable_elevation > avg_e then return false end
 	return true
 end
 
