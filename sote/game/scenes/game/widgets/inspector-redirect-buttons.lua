@@ -89,6 +89,9 @@ end
 ---@param rect Rect
 ---@param tooltip string?
 function ib.text_button_to_province_tile(gamescene, tile_id, rect, tooltip)
+    if tooltip == nil then
+        tooltip = ""
+    end
     local player = WORLD.player_character
     local potential = true
     local province = TILE_PROVINCE(tile_id)

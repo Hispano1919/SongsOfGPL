@@ -76,7 +76,7 @@ function inspector.draw(gamescene)
 	ui.image(ASSETS.images.settlement, settlement_image_rect)
 	ui.panel(settlement_image_rect, 0, true, false)
 
-	ib.text_button_to_province(gamescene, province, settlement_name_rect)
+	ib.text_button_to_province_tile(gamescene, LOCAL_TILE(player), settlement_name_rect, "")
 
 	local action_rect = actions_rect:subrect(0, 0, actions_rect.width * 0.8, actions_rect.height / 9, "center", "up")
 

@@ -1,5 +1,5 @@
 """
-Code generator of Songs of GPL data manager.
+Code generator of Songs of FOSS data manager.
 Creates properly typed LUA bindings for these arrays.
 Handles (de)serialisation routines.
 """
