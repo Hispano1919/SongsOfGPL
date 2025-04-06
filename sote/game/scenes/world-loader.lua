@@ -507,7 +507,6 @@ function wl.load_default()
 		print(love.timer.getTime() - time)
 	end
 
-
 	print("All maps loaded!")
 	--]]
 end
@@ -613,6 +612,12 @@ function wl.load_save()
 	assert(WORLD)
 	require "game.entities.world".reset_metatable(WORLD)
 	require "game.raws.raws"(true, true)
+
+	-- trasfer world time to backend
+	DCON.set_world_tick_definitions(WORLD.ticks_per_minute, WORLD.ticks_per_hour, WORLD.ticks_per_day, WORLD.ticks_per_month)
+	print(DCON.get_world_ticks_per_minute(),DCON.get_world_ticks_per_hour(),DCON.get_world_ticks_per_day(),DCON.get_world_ticks_per_month())
+	DCON.set_world_current_tick(WORLD.current_tick_in_year)
+	DCON.set_world_current_year(WORLD.year)
 
 	print("loading options")
 	OPTIONS = require "game.options".load()

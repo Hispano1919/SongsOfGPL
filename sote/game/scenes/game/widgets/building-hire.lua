@@ -11,7 +11,6 @@ local pop_utils = require "game.entities.pop".POP
 local province_utils = require "game.entities.province".Province
 local production_method_utils = require "game.raws.production-methods"
 local dbm = require "game.economy.diet-breadth-model"
-local warband_utils = require "game.entities.warband"
 
 ---@param rect Rect
 ---@param building building_id

@@ -13,7 +13,8 @@ local ffi = require("ffi")
 ---@field race race_id 
 ---@field faith faith_id 
 ---@field culture culture_id 
----@field age number 
+---@field birth_year number 
+---@field birth_tick number 
 ---@field name string 
 ---@field savings number 
 ---@field expected_wage number 
@@ -37,7 +38,8 @@ local ffi = require("ffi")
 ---@field race race_id 
 ---@field faith faith_id 
 ---@field culture culture_id 
----@field age number 
+---@field birth_year number 
+---@field birth_tick number 
 ---@field traits table<number, TRAIT> 
 ---@field need_satisfaction table<number, struct_need_satisfaction> 
 ---@field inventory table<trade_good_id, number> 
@@ -70,8 +72,10 @@ void dcon_pop_set_faith(int32_t, int32_t);
 int32_t dcon_pop_get_faith(int32_t);
 void dcon_pop_set_culture(int32_t, int32_t);
 int32_t dcon_pop_get_culture(int32_t);
-void dcon_pop_set_age(int32_t, uint32_t);
-uint32_t dcon_pop_get_age(int32_t);
+void dcon_pop_set_birth_year(int32_t, int32_t);
+int32_t dcon_pop_get_birth_year(int32_t);
+void dcon_pop_set_birth_tick(int32_t, uint32_t);
+uint32_t dcon_pop_get_birth_tick(int32_t);
 void dcon_pop_resize_traits(uint32_t);
 void dcon_pop_set_traits(int32_t, int32_t, uint8_t);
 uint8_t dcon_pop_get_traits(int32_t, int32_t);
@@ -221,21 +225,38 @@ function DATA.pop_set_culture(pop_id, value)
     DCON.dcon_pop_set_culture(pop_id - 1, value - 1)
 end
 ---@param pop_id pop_id valid pop id
----@return number age 
-function DATA.pop_get_age(pop_id)
-    return DCON.dcon_pop_get_age(pop_id - 1)
+---@return number birth_year 
+function DATA.pop_get_birth_year(pop_id)
+    return DCON.dcon_pop_get_birth_year(pop_id - 1)
 end
 ---@param pop_id pop_id valid pop id
 ---@param value number valid number
-function DATA.pop_set_age(pop_id, value)
-    DCON.dcon_pop_set_age(pop_id - 1, value)
+function DATA.pop_set_birth_year(pop_id, value)
+    DCON.dcon_pop_set_birth_year(pop_id - 1, value)
 end
 ---@param pop_id pop_id valid pop id
 ---@param value number valid number
-function DATA.pop_inc_age(pop_id, value)
+function DATA.pop_inc_birth_year(pop_id, value)
     ---@type number
-    local current = DCON.dcon_pop_get_age(pop_id - 1)
-    DCON.dcon_pop_set_age(pop_id - 1, current + value)
+    local current = DCON.dcon_pop_get_birth_year(pop_id - 1)
+    DCON.dcon_pop_set_birth_year(pop_id - 1, current + value)
+end
+---@param pop_id pop_id valid pop id
+---@return number birth_tick 
+function DATA.pop_get_birth_tick(pop_id)
+    return DCON.dcon_pop_get_birth_tick(pop_id - 1)
+end
+---@param pop_id pop_id valid pop id
+---@param value number valid number
+function DATA.pop_set_birth_tick(pop_id, value)
+    DCON.dcon_pop_set_birth_tick(pop_id - 1, value)
+end
+---@param pop_id pop_id valid pop id
+---@param value number valid number
+function DATA.pop_inc_birth_tick(pop_id, value)
+    ---@type number
+    local current = DCON.dcon_pop_get_birth_tick(pop_id - 1)
+    DCON.dcon_pop_set_birth_tick(pop_id - 1, current + value)
 end
 ---@param pop_id pop_id valid pop id
 ---@return string name 
@@ -635,7 +656,8 @@ local fat_pop_id_metatable = {
         if (k == "race") then return DATA.pop_get_race(t.id) end
         if (k == "faith") then return DATA.pop_get_faith(t.id) end
         if (k == "culture") then return DATA.pop_get_culture(t.id) end
-        if (k == "age") then return DATA.pop_get_age(t.id) end
+        if (k == "birth_year") then return DATA.pop_get_birth_year(t.id) end
+        if (k == "birth_tick") then return DATA.pop_get_birth_tick(t.id) end
         if (k == "name") then return DATA.pop_get_name(t.id) end
         if (k == "savings") then return DATA.pop_get_savings(t.id) end
         if (k == "expected_wage") then return DATA.pop_get_expected_wage(t.id) end
@@ -672,8 +694,12 @@ local fat_pop_id_metatable = {
             DATA.pop_set_culture(t.id, v)
             return
         end
-        if (k == "age") then
-            DATA.pop_set_age(t.id, v)
+        if (k == "birth_year") then
+            DATA.pop_set_birth_year(t.id, v)
+            return
+        end
+        if (k == "birth_tick") then
+            DATA.pop_set_birth_tick(t.id, v)
             return
         end
         if (k == "name") then

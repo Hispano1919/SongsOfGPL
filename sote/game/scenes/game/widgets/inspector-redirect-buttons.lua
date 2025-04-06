@@ -53,7 +53,7 @@ function ib.icon_button_to_realm(gamescene, realm, rect, tooltip)
         ut.icon_button(ASSETS.icons["uncertainty.png"],center,"Unknown realm!",false)
     end
     if tooltip then
-        ui.tooltip(tooltip,rect)
+        ui.tooltip(tooltip .. CLICK_STRING,rect)
     end
 end
 
@@ -68,7 +68,7 @@ function ib.icon_button_to_character(gamescene, character, rect, tooltip)
         gamescene.inspector = "character"
     end
     if tooltip then
-        ui.tooltip(tooltip, rect)
+        ui.tooltip(tooltip .. CLICK_STRING, rect)
     end
 end
 
@@ -85,19 +85,20 @@ function ib.text_button_to_character(gamescene, character, rect, text, tooltip, 
 end
 
 ---@param gamescene GameScene
----@param province Province
+---@param tile_id tile_id
 ---@param rect Rect
 ---@param tooltip string?
-function ib.text_button_to_province(gamescene, province, rect, tooltip)
+function ib.text_button_to_province_tile(gamescene, tile_id, rect, tooltip)
     local player = WORLD.player_character
     local potential = true
+    local province = TILE_PROVINCE(tile_id)
     if province ~= INVALID_ID then
         if player ~= INVALID_ID and not ib.is_visible_to_player(province,player) then
             potential = false
         end
-        if ut.text_button(PROVINCE_NAME(province), rect, tooltip, potential) then
+        if ut.text_button(PROVINCE_NAME(province), rect, tooltip .. CLICK_STRING, potential) then
             gamescene.selected.province = province
-            gamescene.selected.tile = DATA.province_get_center(province)
+            gamescene.selected.tile = tile_id
             gamescene.inspector = "tile"
         end
     else
@@ -107,47 +108,82 @@ end
 
 ---@param gamescene GameScene
 ---@param estate estate_id
+---@param building building_id
 ---@param rect Rect
 ---@param tooltip string?
----@param potential boolean?
----@param active boolean?
-function ib.text_button_to_estate(gamescene, estate, rect, text, tooltip, potential, active)
-    if ut.text_button(text, rect, tooltip, potential, active) then
-        gamescene.selected.building = INVALID_ID
-        gamescene.selected.estate = estate
-        gamescene.inspector = "building"
+function ib.text_button_to_estate(gamescene, estate, building, rect, text, tooltip)
+    local player = WORLD.player_character
+    local potential = true
+    if estate ~= INVALID_ID then
+        local province = ESTATE_PROVINCE(estate)
+        if player ~= INVALID_ID and not ib.is_visible_to_player(province,player) then
+            potential = false
+        end
+        if ut.text_button(text, rect, tooltip .. CLICK_STRING, potential) then
+            gamescene.selected.building = building
+            gamescene.selected.estate = estate
+            gamescene.inspector = "building"
+        end
+    else
+        ut.text_button(text,rect,tooltip,false)
+    end
+end
+
+function ib.icon_button_to_building(gamescene,building_id,rect,tooltip,potential,active)
+    local player = WORLD.player_character
+    local potential = true
+    if building_id ~= INVALID_ID then
+        local estate_id = BUILDING_ESTATE(building_id)
+        local province = ESTATE_PROVINCE(estate_id)
+        if player ~= INVALID_ID and not ib.is_visible_to_player(province,player) then
+            potential = false
+        end
+        local building_type = DATA.building_get_current_type(building_id)
+        if ut.color_icon_button(
+            DATA.building_type_get_icon(building_type),
+            DATA.building_type_get_r(building_type),
+            DATA.building_type_get_g(building_type),
+            DATA.building_type_get_b(building_type),
+            1, rect,tooltip .. CLICK_STRING,potential)
+        then
+            gamescene.selected.building = building_id
+            gamescene.selected.estate = estate_id
+            gamescene.inspector = "building"
+        end
+    else
+        ut.icon_button(ASSETS.icons["uncertainty.png"],rect,tooltip .. CLICK_STRING,false)
     end
 end
 
 ---@param gamescene GameScene
----@param warband_id warband_id
+---@param party_id warband_id
 ---@param rect Rect
 ---@param tooltip string?
-function ib.icon_button_to_warband(gamescene, warband_id, rect, tooltip)
+function ib.text_button_to_party(gamescene, party_id, rect, tooltip)
     local warband_utils = require "game.entities.warband"
     local player = WORLD.player_character
     local potential = true
-    if warband_id ~= INVALID_ID then
-        local province = warband_utils.location(warband_id)
+    if party_id ~= INVALID_ID then
+        local province = TILE_PROVINCE(warband_utils.location(party_id))
         if player ~= INVALID_ID and not ib.is_visible_to_player(province,player) then
             potential = false
         end
-        if ut.icon_button(ASSETS.icons["minions.png"],rect,tooltip,potential) then
-            gamescene.selected.warband = warband_id
+        if ut.text_button(WARBAND_NAME(party_id),rect,tooltip .. CLICK_STRING,potential) then
+            gamescene.selected.warband = party_id
             gamescene.inspector = "warband"
         end
     else
-        ut.icon_button(ASSETS.icons["uncertainty.png"],rect,tooltip)
+        ut.text_button(WARBAND_NAME(party_id),rect,tooltip,false)
     end
 end
 
 ---renders text and square close button to the right
----@param game any
----@param rect any
----@param inspector_name any
+---@param game GameScene
+---@param rect Rect
+---@param inspector_name string
 function ib.render_inspector_header(game,rect,inspector_name)
     ui.panel(rect,2,true,true)
-    ui.text("Character View", rect:subrect(0,0,rect.width-rect.height,rect.height,"left","up"),"left","center")
+    ui.text(inspector_name, rect:subrect(0,0,rect.width-rect.height,rect.height,"left","up"),"left","center")
     -- add a back (last inspector and target) button?
     ib.icon_button_to_close(game,rect:subrect(0,0,rect.height,rect.height,"right","up"))
 end
@@ -155,10 +191,9 @@ end
 ---renders clickable portrait redirect with additional icons and tooltips on top
 ---@param rect Rect
 ---@param pop_id pop_id
----@param player_id pop_id
 ---@param tooltip string?
-function ib.render_portrait_with_overlay(game, rect, pop_id, player_id, tooltip)
-
+function ib.render_portrait_with_overlay(game, rect, pop_id, tooltip)
+    local player_id = WORLD.player_character
     -- first validate that pop_id is valid
     if pop_id == INVALID_ID then
         return
@@ -168,7 +203,7 @@ function ib.render_portrait_with_overlay(game, rect, pop_id, player_id, tooltip)
     end
 
     local left_up_rect = rect:subrect(0,0,ut.BASE_HEIGHT,ut.BASE_HEIGHT,"left","up")
-    local center_up_rect = rect:subrect(0,0,ut.BASE_HEIGHT,ut.BASE_HEIGHT,"center","up")
+    local center_up_rect = rect:subrect(0,0,rect.width,ut.BASE_HEIGHT,"center","up")
     local right_up_rect  = rect:subrect(0,0,ut.BASE_HEIGHT,ut.BASE_HEIGHT,"right","up")
     local right_center_rect  = rect:subrect(0,0,ut.BASE_HEIGHT,ut.BASE_HEIGHT,"right","center")
     local left_center_rect  = rect:subrect(0,0,ut.BASE_HEIGHT,ut.BASE_HEIGHT,"left","center")
@@ -182,56 +217,66 @@ function ib.render_portrait_with_overlay(game, rect, pop_id, player_id, tooltip)
     ib.icon_button_to_character(game,pop_id,rect,tooltip)
 
     -- draw over portrait
+    require "game.scenes.game.widgets.pop-ui-widgets".render_age(center_up_rect,pop_id)
     local realm_id = REALM(pop_id)
     ib.icon_button_to_realm(game, realm_id, right_down_rect, pop_name .. " is a " .. rank_name(pop_id)
         .. " of " .. DATA.realm_get_name(realm_id) .. ".")
     if DATA.pop_get_busy(pop_id) then
-        ut.render_icon(right_center_rect,"stopwatch.png",.8,.8,.8,1,true)
-        ui.tooltip(pop_name .. " is currently busy.",right_center_rect)
+        ut.render_icon(right_up_rect,"stopwatch.png",.8,.8,.8,1,true)
+        ui.tooltip(pop_name .. " is currently busy.",left_up_rect)
     end
     -- only draw loyalty and blood if player
     if player_id and player_id ~= INVALID_ID then
 		local character_loyalty = LOYAL_TO(pop_id)
-        local player_loyalty = LOYAL_TO(player_id)--player_id and player_id ~= INVALID_ID and LOYAL_TO(player_id) or INVALID_ID -- something weird going on with player_id...
+        local player_loyalty = LOYAL_TO(player_id)
         if character_loyalty ~= INVALID_ID and character_loyalty == player_id then
-            ut.render_icon(center_up_rect,"kneeling.png",0,1,0,1,true)
-            ui.tooltip(pop_name .. " has sorn loyalty to me.",center_up_rect)
+            ut.render_icon(left_down_rect,"kneeling.png",0,1,0,1,true)
+            ui.tooltip(pop_name .. " has sorn loyalty to me.",left_down_rect)
         elseif player_loyalty ~= INVALID_ID and player_loyalty == pop_id then
-            ut.render_icon(center_up_rect,"despair.png",0,1,0,1,true)
-            ui.tooltip("I have sworn loyalty to " .. pop_name .. ".",center_up_rect)
+            ut.render_icon(left_down_rect,"despair.png",0,1,0,1,true)
+            ui.tooltip("I have sworn loyalty to " .. pop_name .. ".",left_down_rect)
         end
 		-- blood relationship
         if player_id == pop_id then
             ut.render_icon(center_down_rect,"self-love.png",0.72,0.13,0.27,1,true)
             ui.tooltip("This is me!",center_down_rect)
 		else -- only check for relations and not looking at player character
-			local is_child, is_parent = false, false
+			local is_child, is_parent, is_sibling = false, false, false
 			local parent = PARENT(pop_id)
 			if parent ~= INVALID_ID and parent == player_id then
 				is_parent = true
 			end
             local player_parent = PARENT(player_id)
-			if player_parent ~= INVALID_ID and player_parent == pop_id then
-				is_child = true
+			if player_parent ~= INVALID_ID then
+                if player_parent == pop_id then
+				    is_child = true
+                else -- check player parent to see if any of its children
+                    DATA.for_each_parent_child_relation_from_parent(player_parent, function (item)
+                        local child = DATA.parent_child_relation_get_child(item)
+                        if child == pop_id then
+                            is_sibling = true
+                        end
+                    end)
+                end
 			end
 			-- draw blood relation only if there is one
 			if is_parent then
-				ut.render_icon(center_down_rect,"inner-self.png",0.72,0.13,0.27,1,true)
-                ui.tooltip(pop_name .. " is my child.",center_down_rect)
-            elseif is_child then
 				ut.render_icon(center_down_rect,"droplets.png",0.72,0.13,0.27,1,true)
-                ui.tooltip(pop_name .. " is my parent.",center_down_rect)
+                ui.tooltip(pop_name .. " is my child",center_down_rect)
+            elseif is_child then
+				ut.render_icon(center_down_rect,"minions.png",0.72,0.13,0.27,1,true)
+                ui.tooltip(pop_name .. " is my parent",center_down_rect)
+            elseif is_sibling then
+				ut.render_icon(center_down_rect,"ages.png",0.72,0.13,0.27,1,true)
+                ui.tooltip(pop_name .. " is my " .. (FEMALE(pop_id) and "sister" or "brother"),center_down_rect)
 			end
         end
     end
-    -- ??? free_will ???
-    if DATA.pop_get_free_will(pop_id) then
-        ut.render_icon(left_down_rect,"uncertainty.png",.8,.8,.8,1,true)
-        ui.tooltip(pop_name .. " has free will?",left_down_rect)
-    else
-        ut.render_icon(left_down_rect,"uncertainty.png",1,0,0,1,true)
-        ui.tooltip(pop_name .. " does not have free will?",left_down_rect)
-    end
+    local border_width = math.max(1, math.floor(math.min(rect.height, rect.width) / ut.BASE_HEIGHT))
+    left_up_rect:shrink(border_width/2)
+    left_up_rect.x = left_up_rect.x + border_width
+    left_up_rect.y = left_up_rect.y + border_width
+    require "game.scenes.game.widgets.pop-ui-widgets".render_female_icon(left_up_rect,pop_id)
 end
 
 return ib

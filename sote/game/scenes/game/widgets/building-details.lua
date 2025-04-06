@@ -19,7 +19,7 @@ local function pop_display_occupation(pop)
 	local warband = UNIT_OF(pop)
 	if occupation ~= INVALID_ID then
 		display_name = DATA.job_get_name(occupation)
-	elseif AGE(pop) < F_RACE(pop).teen_age then
+	elseif AGE_YEARS(pop) < F_RACE(pop).teen_age then
 		display_name = "child"
 	elseif warband ~= INVALID_ID then
 		display_name = "warrior"
@@ -172,7 +172,7 @@ return function (rect, building)
 	if DATA.pop_get_female(worker) then
 		f = "f"
 	end
-	ui.centered_text(NAME(worker) .. "(" .. tostring(AGE(worker)) .. f .. ")", name_rect)
+	ui.centered_text(NAME(worker) .. "(" .. tostring(AGE_YEARS(worker)) .. f .. ")", name_rect)
 	name_rect.x = name_rect.x + name_rect.width
 	ui.centered_text(pop_display_occupation(worker), name_rect)
 

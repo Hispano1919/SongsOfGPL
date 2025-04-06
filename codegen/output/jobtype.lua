@@ -11,18 +11,21 @@ local ffi = require("ffi")
 ---@field id jobtype_id Unique jobtype id
 ---@field name string 
 ---@field action_word string 
+---@field icon string 
 
 ---@class struct_jobtype
 
 ---@class (exact) jobtype_id_data_blob_definition
 ---@field name string 
 ---@field action_word string 
+---@field icon string 
 ---Sets values of jobtype for given id
 ---@param id jobtype_id
 ---@param data jobtype_id_data_blob_definition
 function DATA.setup_jobtype(id, data)
     DATA.jobtype_set_name(id, data.name)
     DATA.jobtype_set_action_word(id, data.action_word)
+    DATA.jobtype_set_icon(id, data.icon)
 end
 
 ffi.cdef[[
@@ -37,6 +40,8 @@ uint32_t dcon_jobtype_size();
 DATA.jobtype_name= {}
 ---@type (string)[]
 DATA.jobtype_action_word= {}
+---@type (string)[]
+DATA.jobtype_icon= {}
 
 ---jobtype: LUA bindings---
 
@@ -88,11 +93,22 @@ end
 function DATA.jobtype_set_action_word(jobtype_id, value)
     DATA.jobtype_action_word[jobtype_id] = value
 end
+---@param jobtype_id jobtype_id valid jobtype id
+---@return string icon 
+function DATA.jobtype_get_icon(jobtype_id)
+    return DATA.jobtype_icon[jobtype_id]
+end
+---@param jobtype_id jobtype_id valid jobtype id
+---@param value string valid string
+function DATA.jobtype_set_icon(jobtype_id, value)
+    DATA.jobtype_icon[jobtype_id] = value
+end
 
 local fat_jobtype_id_metatable = {
     __index = function (t,k)
         if (k == "name") then return DATA.jobtype_get_name(t.id) end
         if (k == "action_word") then return DATA.jobtype_get_action_word(t.id) end
+        if (k == "icon") then return DATA.jobtype_get_icon(t.id) end
         return rawget(t, k)
     end,
     __newindex = function (t,k,v)
@@ -102,6 +118,10 @@ local fat_jobtype_id_metatable = {
         end
         if (k == "action_word") then
             DATA.jobtype_set_action_word(t.id, v)
+            return
+        end
+        if (k == "icon") then
+            DATA.jobtype_set_icon(t.id, v)
             return
         end
         rawset(t, k, v)
@@ -130,24 +150,32 @@ local index_jobtype
 index_jobtype = DATA.create_jobtype()
 DATA.jobtype_set_name(index_jobtype, "FORAGER")
 DATA.jobtype_set_action_word(index_jobtype, "foraging")
+DATA.jobtype_set_icon(index_jobtype, "basket.png")
 index_jobtype = DATA.create_jobtype()
 DATA.jobtype_set_name(index_jobtype, "FARMER")
 DATA.jobtype_set_action_word(index_jobtype, "farming")
+DATA.jobtype_set_icon(index_jobtype, "plow.png")
 index_jobtype = DATA.create_jobtype()
 DATA.jobtype_set_name(index_jobtype, "LABOURER")
 DATA.jobtype_set_action_word(index_jobtype, "labouring")
+DATA.jobtype_set_icon(index_jobtype, "miner.png")
 index_jobtype = DATA.create_jobtype()
 DATA.jobtype_set_name(index_jobtype, "ARTISAN")
 DATA.jobtype_set_action_word(index_jobtype, "artisianship")
+DATA.jobtype_set_icon(index_jobtype, "stone-crafting.png")
 index_jobtype = DATA.create_jobtype()
 DATA.jobtype_set_name(index_jobtype, "CLERK")
 DATA.jobtype_set_action_word(index_jobtype, "recalling")
+DATA.jobtype_set_icon(index_jobtype, "bookmarklet.png")
 index_jobtype = DATA.create_jobtype()
 DATA.jobtype_set_name(index_jobtype, "WARRIOR")
 DATA.jobtype_set_action_word(index_jobtype, "fighting")
+DATA.jobtype_set_icon(index_jobtype, "guards.png")
 index_jobtype = DATA.create_jobtype()
 DATA.jobtype_set_name(index_jobtype, "HAULING")
 DATA.jobtype_set_action_word(index_jobtype, "hauling")
+DATA.jobtype_set_icon(index_jobtype, "cardboard-box.png")
 index_jobtype = DATA.create_jobtype()
 DATA.jobtype_set_name(index_jobtype, "HUNTING")
 DATA.jobtype_set_action_word(index_jobtype, "hunting")
+DATA.jobtype_set_icon(index_jobtype, "bow-arrow.png")

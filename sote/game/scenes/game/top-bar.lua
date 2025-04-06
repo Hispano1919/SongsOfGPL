@@ -117,6 +117,9 @@ function tb.draw(gam)
 		return
 	end
 
+	local settlment = PROVINCE(character)
+	local province = LOCAL_PROVINCE(character)
+
 	local tr = tb.rect()
 	ui.panel(tr)
 
@@ -125,17 +128,9 @@ function tb.draw(gam)
 	end
 
 	-- portrait
-	local portrait_rect = tr:subrect(0, 0, uit.BASE_HEIGHT * 2, uit.BASE_HEIGHT * 2, "left", "up"):shrink(5)
-	if ui.invisible_button(portrait_rect) then
-		if gam.inspector == 'character' then
-			gam.inspector = nil
-		else
-			gam.selected.character = WORLD.player_character
-			gam.inspector = "character"
-		end
-	end
-	require "game.scenes.game.widgets.portrait" (portrait_rect, WORLD.player_character)
-	ui.tooltip("Click the portrait to open character screen", portrait_rect)
+	local portrait_rect = tr:subrect(0, 0, uit.BASE_HEIGHT * 2, uit.BASE_HEIGHT * 2, "left", "up")
+	require "game.scenes.game.widgets.inspector-redirect-buttons".icon_button_to_character(gam, character, portrait_rect,
+		"I am " .. require "game.scenes.game.widgets.pop-ui-widgets".pop_tooltip(character))
 
 
 	--- current character
@@ -146,7 +141,7 @@ function tb.draw(gam)
 
 	local name_rect = layout:next(7 * uit.BASE_HEIGHT, uit.BASE_HEIGHT)
 	if uit.text_button(NAME(character), name_rect) then
-		gam.selected.character = WORLD.player_character
+		gam.selected.character = character
 		gam.inspector = "character"
 	end
 
@@ -161,31 +156,84 @@ function tb.draw(gam)
 		rect,
 		"My personal savings")
 
-
-	local amount = economy_values.available_use_case_from_inventory(character, CALORIES_USE_CASE)
+	-- food goods in player character inventory
+	local food_amount = economy_values.available_use_case_from_inventory(character, CALORIES_USE_CASE)
+	local food_in_inventory, food_size = "", 0
+	if food_amount > 0 then
+		DATA.for_each_use_weight_from_use_case(CALORIES_USE_CASE,function(item)
+			local good = DATA.use_weight_get_trade_good(item)
+			local count = DATA.pop_get_inventory(character,good)
+			if count > 0 then
+				food_size = food_size + count
+				local weight = DATA.use_weight_get_weight(item)
+				food_in_inventory = food_in_inventory .. "\n\t" .. DATA.trade_good_get_name(good)
+				.. "\t" .. uit.to_fixed_point2(count) .. " at " .. uit.to_fixed_point2(weight) .. " calories"
+				.. "\n\t\t=>\t" .. uit.to_fixed_point2(count*weight) .. "\t[" .. uit.to_fixed_point2(count*weight/food_amount*100) .. "%]"
+			end
+		end)
+		food_in_inventory = "\nFood in my inventory: (" .. food_size .. ")" .. food_in_inventory
+	end
 	uit.sqrt_number_entry_icon(
 		"sliced-bread.png",
-		amount,
+		food_amount,
 		layout:next(uit.BASE_HEIGHT * 4, uit.BASE_HEIGHT),
-		"Food in my inventory")
+		"I have  " .. uit.to_fixed_point2(food_size) .. " units of goods that have a value of "
+			.. uit.to_fixed_point2(food_amount) .. " calories."
+			.. food_in_inventory)
 
-	local days_of_travel = 0
-	if LEADER_OF_WARBAND(character) ~= INVALID_ID then
-		days_of_travel = economy_values.days_of_travel(LEADER_OF_WARBAND(character))
+	-- food goods in player party inventory for travel expenses
+	local days_of_travel, party_food, party_supplies = 0,0,0
+	local party_supplies_tooltip = "."
+	local party = UNIT_OF(character)
+	if party ~= INVALID_ID then
+		party_supplies_tooltip = party_supplies_tooltip .. "\nFood in party inventory:"
+		party_supplies = economy_values.get_supply_available(party)
+		days_of_travel = economy_values.days_of_travel(party)
+		DATA.for_each_use_weight_from_use_case(CALORIES_USE_CASE,function(item)
+			local good = DATA.use_weight_get_trade_good(item)
+			local count = DATA.warband_get_inventory(party,good)
+			if count > 0 then
+				party_food = party_food + count
+				local weight = DATA.use_weight_get_weight(item)
+				party_supplies_tooltip = party_supplies_tooltip .. "\n\t" .. DATA.trade_good_get_name(good)
+					.. "\t" .. uit.to_fixed_point2(count) .. " at " .. uit.to_fixed_point2(weight) .. " calories"
+					.. "\n\t\t=>\t" .. uit.to_fixed_point2(count*weight) .. "\t[" .. uit.to_fixed_point2(count*weight/party_supplies*100) .. "%]"
+			end
+		end)
+		party_supplies_tooltip = " and a traveling cost of "
+			.. uit.to_fixed_point2(warband_utils.daily_supply_consumption(party)) .. " calories per day"
+			.. party_supplies_tooltip
+
+		uit.balance_entry_icon(
+			"horizon-road.png",
+			days_of_travel,
+			layout:next(uit.BASE_HEIGHT * 3, uit.BASE_HEIGHT),
+			"My party can travel for " .. uit.to_fixed_point2(days_of_travel) .. " days from "
+				.. uit.to_fixed_point2(party_food) .. " units of goods that have a value of "
+				.. uit.to_fixed_point2(party_supplies) .. " calories"
+				.. party_supplies_tooltip)
+		require "game.scenes.game.widgets.inspector-redirect-buttons".text_button_to_party(
+			gam,
+			party,
+			layout:next(uit.BASE_HEIGHT*6,uit.BASE_HEIGHT),
+			"Inspect my party")
+	else
+		if uit.text_button(
+			"Gather party",
+			layout:next(uit.BASE_HEIGHT*9,uit.BASE_HEIGHT),
+			"Gather my own party?")
+		then
+			require "game.raws.effects.military".gather_warband(character)
+		end
 	end
-	uit.balance_entry_icon(
-		"horizon-road.png",
-		days_of_travel,
-		layout:next(uit.BASE_HEIGHT * 3, uit.BASE_HEIGHT),
-		"Days my party can travel. Zero if I do not lead any party.")
 
 
+	-- local popularity
+	if settlment ~= INVALID_ID then
+		pui.render_realm_popularity(layout:next(uit.BASE_HEIGHT*3,uit.BASE_HEIGHT),character,PROVINCE_REALM(settlment))
+	else
 
-	uit.balance_entry_icon(
-		"duality-mask.png",
-		politics_values.popularity(character, LOCAL_REALM(character)),
-		layout:next(uit.BASE_HEIGHT * 3, uit.BASE_HEIGHT),
-		"My popularity")
+	end
 
 	pui.render_basic_needs_satsifaction(
 		layout:next(uit.BASE_HEIGHT * 3, uit.BASE_HEIGHT),
@@ -274,10 +322,10 @@ function tb.draw(gam)
 
 	local race = F_RACE(character);
 
-	if AGE(character) > race.elder_age then
+	if AGE_YEARS(character) > race.elder_age then
 		table.insert(alerts, {
 			["icon"] = "tombstone.png",
-			["tooltip"] = "You have reached elder age age will make a death roll of " .. uit.to_fixed_point2((race.max_age - AGE(character)) / (race.max_age - race.elder_age) * race.fecundity / 12 / 7).. "% each month. This chance increases each year you continue to live.",
+			["tooltip"] = "You have reached elder age age will make a death roll of " .. uit.to_fixed_point2((race.max_age - AGE_YEARS(character)) / (race.max_age - race.elder_age) * race.fecundity / 12 / 7).. "% each month. This chance increases each year you continue to live.",
 		})
 	end
 

@@ -2,11 +2,10 @@ local tabb = require "engine.table"
 
 local pop_utils = require "game.entities.pop".POP
 local province_utils = require "game.entities.province".Province
-local warband_utils = require "game.entities.warband"
 
 local demography_effects = require "game.raws.effects.demography"
 local politics_values = require "game.raws.values.politics"
-local warband_effect = require "game.raws.effects.warband"
+local warband_effects = require "game.raws.effects.warband"
 local messages_effects = require "game.raws.effects.messages"
 
 local PoliticalEffects = {}
@@ -177,7 +176,8 @@ end
 function PoliticalEffects.set_guard_leader(realm, guard_leader)
 	local realm_guard = DATA.get_realm_guard_from_realm(realm)
 	local guard = DATA.realm_guard_get_guard(realm_guard)
-	warband_effect.set_recruiter(guard, guard_leader)
+	demography_effects.recruit(guard_leader, guard, UNIT_TYPE.CIVILIAN)
+	warband_effects.set_recruiter(guard, guard_leader)
 
 	if WORLD:does_player_see_realm_news(realm) then
 		WORLD:emit_notification(NAME(guard_leader) .. " now commands guards of " .. DATA.realm_get_name(realm) .. ".")
@@ -198,16 +198,7 @@ function PoliticalEffects.remove_guard_leader(realm)
 		return
 	end
 
-	warband_effect.unset_recruiter(guard, guard_leader)
-
-	local command = DATA.get_warband_commander_from_warband(guard)
-	if command ~= INVALID_ID then
-		local commander = DATA.warband_commander_get_commander(command)
-
-		if guard_leader == commander then
-			warband_utils.unset_commander(guard)
-		end
-	end
+	warband_effects.unset_recruiter(guard)
 
 	if guard_leader and WORLD:does_player_see_realm_news(realm) then
 		WORLD:emit_notification(NAME(guard_leader) .. " is no longer a guard commander of " .. DATA.realm_get_name(realm) .. ".")
@@ -314,38 +305,30 @@ end
 
 ---current pop province must be equal to the province where he is promoted
 ---@param pop pop_id
+---@param realm realm_id
 ---@param reason POLITICS_REASON
-function PoliticalEffects.grant_nobility(pop, reason)
+function PoliticalEffects.grant_nobility(pop, realm, reason)
 	-- ---#logging LOGS:write("realm: " .. REALM_NAME(PROVINCE_REALM(province)) .. "\n new noble: " .. pop.name .. "\n" .. "reason: " .. reason .. "\n")
 
 	-- print(pop.name, "becomes noble")
 
-	local province = PROVINCE(pop)
-	local realm = LOCAL_REALM(pop)
+	local province = DATA.realm_get_capitol(realm)
 
-	-- break parent-child link with pops
-	---@type parent_child_relation_id[]
-	local links_to_break = {}
-
+	-- uplift children instead of breaking realtions to keep children alive
 	DATA.for_each_parent_child_relation_from_parent(pop, function (item)
-		table.insert(links_to_break, item)
+		local child = DATA.parent_child_relation_get_child(item)
+		PoliticalEffects.grant_nobility(child,realm,reason)
 	end)
-	local parent = DATA.parent_child_relation_get_parent(DATA.get_parent_child_relation_from_child(pop))
-	if parent ~= INVALID_ID then
-		table.insert(links_to_break, DATA.get_parent_child_relation_from_child(pop))
-	end
-	for _, item in pairs(links_to_break) do
-		DATA.delete_parent_child_relation(item)
-	end
 
 	demography_effects.fire_pop(pop)
-	warband_utils.unregister_military(pop)
+	demography_effects.unrecruit(pop)
 
-	-- local pop_location = DATA.get_pop_location_from_pop(pop)
-	-- DATA.delete_pop_location(pop_location)
-
-	province_utils.add_character(province, pop)
-	province_utils.set_home(province, pop)
+	-- set realm and home if realm has capitol
+	if province ~= INVALID_ID then
+		province_utils.set_home(province, pop)
+	else
+		SET_REALM(pop, realm)
+	end
 
 	DATA.pop_set_rank(pop, CHARACTER_RANK.NOBLE)
 	SET_REALM(pop, realm)
@@ -416,10 +399,13 @@ end
 ---@param province Province
 ---@param reason POLITICS_REASON
 ---@return Character?
-function PoliticalEffects.grant_nobility_to_random_pop(province, reason)
+function PoliticalEffects.grant_nobility_to_random_pop(province, realm, reason)
 	local item = tabb.random_select_from_array(DATA.filter_array_home_from_home(province, function (item)
 		local pop = DATA.home_get_pop(item)
 		if IS_CHARACTER(pop) then
+			return false
+		end
+		if AGE_YEARS(pop) > DATA.race_get_teen_age(RACE(pop)) then
 			return false
 		end
 		if PROVINCE(pop) ~= province then
@@ -429,7 +415,7 @@ function PoliticalEffects.grant_nobility_to_random_pop(province, reason)
 	end))
 
 	if item ~= nil then
-		PoliticalEffects.grant_nobility(DATA.home_get_pop(item), reason)
+		PoliticalEffects.grant_nobility(DATA.home_get_pop(item), realm, reason)
 		return DATA.home_get_pop(item)
 	end
 
@@ -451,18 +437,18 @@ function PoliticalEffects.generate_new_noble(realm, province, race, faith, cultu
 		faith,
 		culture,
 		love.math.random() > fat_race.males_per_hundred_females / (100 + fat_race.males_per_hundred_females),
-		love.math.random(fat_race.adult_age, fat_race.max_age)
+		WORLD.year - love.math.random(fat_race.adult_age, fat_race.max_age),
+		love.math.random(1,WORLD.ticks_per_year)
 	)
 
 	local fat = DATA.fatten_pop(character)
 	fat.rank = CHARACTER_RANK.NOBLE
 
-	fat.savings = fat.savings + math.sqrt(fat.age) * 10
+	fat.savings = fat.savings + math.sqrt(AGE_YEARS(character)) * 10
 
 	roll_traits(character)
 	SET_REALM(character, realm)
 	province_utils.add_character(province, character)
-	province_utils.add_pop(province, character)
 	province_utils.set_home(province, character)
 
 	return character

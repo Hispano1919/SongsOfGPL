@@ -1,5 +1,4 @@
 local pop_utils = require "game.entities.pop".POP
-local warband_utils = require "game.entities.warband"
 
 local character_values = {}
 

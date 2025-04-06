@@ -212,7 +212,7 @@ return function()
 					outcome = function()
 						-- some free time to at least get some water...
 						local free_time = 0.05
-						DATA.warband_set_current_free_time_ratio(LEADER_OF_WARBAND(character), free_time)
+--						DATA.warband_set_current_free_time_ratio(LEADER_OF_WARBAND(character), free_time)
 						local days_left = math.min(
 						associated_data._exploration_days_left / warband_utils.exploration_speed(LEADER_OF_WARBAND(character)), 30)
 						local potential_days = economy_values.days_of_travel(LEADER_OF_WARBAND(character))
@@ -247,7 +247,7 @@ return function()
 					end,
 					outcome = function()
 						local free_time = 0.5
-						DATA.warband_set_current_free_time_ratio(LEADER_OF_WARBAND(character), free_time)
+--						DATA.warband_set_current_free_time_ratio(LEADER_OF_WARBAND(character), free_time)
 						local days_left = math.min(
 						associated_data._exploration_days_left / warband_utils.exploration_speed(LEADER_OF_WARBAND(character)), 30)
 						local potential_days = economy_values.days_of_travel(LEADER_OF_WARBAND(character))
@@ -278,7 +278,7 @@ return function()
 						return true
 					end,
 					outcome = function()
-						DATA.warband_set_current_free_time_ratio(LEADER_OF_WARBAND(character), 1)
+--						DATA.warband_set_current_free_time_ratio(LEADER_OF_WARBAND(character), 1)
 						WORLD:emit_event("exploration-progress", character, associated_data, 30)
 					end,
 					ai_preference = function()
@@ -370,7 +370,7 @@ return function()
 			political_effects.medium_popularity_boost(root, REALM(root))
 			realm_utils.explore(REALM(root), PROVINCE(root))
 			UNSET_BUSY(root)
-			DATA.warband_set_current_free_time_ratio(LEADER_OF_WARBAND(root), 1)
+--			DATA.warband_set_current_free_time_ratio(LEADER_OF_WARBAND(root), 1)
 		end,
 	}
 end

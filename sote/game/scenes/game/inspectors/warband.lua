@@ -70,7 +70,7 @@ end
 ---@param v unit_type_id
 local function render_unit_attack (rect, k, v)
 	local stat = pop_utils.get_attack(k)
-	local job = pop_utils.job_efficiency(k, JOBTYPE.WARRIOR)
+	local job = JOB_EFFICIENCY(k, JOBTYPE.WARRIOR)
 	local female, her = "male", "his"
 	if DATA.pop_get_female(k) then
 		female, her = "female", "her"
@@ -189,7 +189,7 @@ end
 ---@param v unit_type_id
 local function render_unit_hauling (rect, k, v)
 	local base = pop_utils.get_supply_capacity(k)
-	local job = pop_utils.job_efficiency(k, JOBTYPE.HAULING)
+	local job = JOB_EFFICIENCY(k, JOBTYPE.HAULING)
 	local female, her = "male", "his"
 	if DATA.pop_get_female(k) then
 		female, her = "female", "her"
@@ -273,7 +273,7 @@ function window.draw(gamescene)
 		-- warband realm inspector button
 		ib.icon_button_to_realm(gamescene, realm, realm_rect)
 		-- warband name
-		ui.centered_text(DATA.warband_get_name(warband) .. ", " .. desc, top_bar_layout:next(rect.width - (ut.BASE_HEIGHT + spacing) * 2, ut.BASE_HEIGHT))
+		ui.centered_text(WARBAND_NAME(warband) .. ", " .. desc, top_bar_layout:next(rect.width - (ut.BASE_HEIGHT + spacing) * 2, ut.BASE_HEIGHT))
 		-- close button
 		ib.icon_button_to_close(gamescene, top_bar_layout:next(ut.BASE_HEIGHT, ut.BASE_HEIGHT))
 	end
@@ -405,7 +405,7 @@ function window.draw(gamescene)
 		local realm_rect = leader_rect:subrect(ut.BASE_HEIGHT*2,0,leader_rect.width-ut.BASE_HEIGHT*2,ut.BASE_HEIGHT,"left","center")
 		ui.text(REALM_NAME(guarding_realm),realm_rect)
 		ui.tooltip("This warband is the capitol guard of " .. REALM_NAME(guarding_realm) .. ".",realm_rect)
-		ib.text_button_to_province(gamescene, province, leader_rect:subrect(ut.BASE_HEIGHT * 2, 0,leader_rect.width - ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT, "left", "down"),
+		ib.text_button_to_province_tile(gamescene, WARBAND_TILE(warband), leader_rect:subrect(ut.BASE_HEIGHT * 2, 0,leader_rect.width - ut.BASE_HEIGHT * 2, ut.BASE_HEIGHT, "left", "down"),
 			"This warband guards the province of " .. PROVINCE_NAME(province) .. ".")
 	end
 
@@ -606,8 +606,8 @@ function window.draw(gamescene)
 
 		local province = TILE_PROVINCE(location)
 
-		ib.text_button_to_province(gamescene, province, province_name_rect,
-			PROVINCE_NAME(province), "The warband is currently in the province of " .. PROVINCE_NAME(province) .. ".")
+		ib.text_button_to_province_tile(gamescene, location, province_name_rect,
+			"The warband is currently in the province of " .. PROVINCE_NAME(province) .. ".")
 		province_realm = PROVINCE_REALM(province)
 		if province_realm ~= INVALID_ID then
 			ib.icon_button_to_realm(gamescene, province_realm, realm_icon_rect)
@@ -682,7 +682,7 @@ function window.draw(gamescene)
 						rect:subrect(0, -ut.BASE_HEIGHT, ut.BASE_HEIGHT , ut.BASE_HEIGHT, "right", "up"),
 						text, control_warband
 					) then
-						warband_utils.unset_commander(warband)
+						demography_effects.unset_commander(warband)
 					end
 				else
 					ut.render_icon(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
@@ -708,7 +708,7 @@ function window.draw(gamescene)
 						rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"),
 						text, control_warband
 					) then
-						warband_utils.set_commander(warband, player_character, UNIT_TYPE.WARRIOR)
+						demography_effects.set_commander(warband, player_character)
 					end
 				else
 					ut.render_icon(rect:subrect(ut.BASE_HEIGHT * 2, -ut.BASE_HEIGHT, ut.BASE_HEIGHT, ut.BASE_HEIGHT, "left", "up"), "cancel.png", 1, 1, 1, 1)
@@ -738,9 +738,9 @@ function window.draw(gamescene)
 	-- work time ratio
 	ut.generic_number_field(
 		"chart.png",
-		DATA.warband_get_current_free_time_ratio(warband),
+		DATA.warband_get_current_time_used_ratio(warband),
 		status_rect:subrect(0, 0, status_rect.width, ut.BASE_HEIGHT, "left", "center"),
-		"Warriors in this warband are free for " .. ut.to_fixed_point2(DATA.warband_get_current_free_time_ratio(warband) * 100) .. "% of their time.",
+		"Warriors in this warband are free for " .. ut.to_fixed_point2(DATA.warband_get_current_time_used_ratio(warband) * 100) .. "% of their time.",
 		ut.NUMBER_MODE.PERCENTAGE,
 		ut.NAME_MODE.ICON
 	)
@@ -789,7 +789,6 @@ function window.draw(gamescene)
 
 		-- WARBAND STRENGTH
 		local avg_health, avg_armor, avg_attack  = math.max(total_health / count, 0), math.max(total_armor / count, 0), math.max(total_attack / count, 0)
-		local total_speed, avg_speed = warband_utils.speed(warband)
 
 		local strength_width = ut.BASE_HEIGHT * 3
 		local strength_height = ut.BASE_HEIGHT
@@ -989,13 +988,13 @@ function window.draw(gamescene)
 					---@param k POP
 					---@param v unit_type_id
 					render_closure = function (rect, k, v)
-						ui.text(tostring(AGE(k)), rect, "center", "center")
+						ui.text(tostring(AGE_YEARS(k)), rect, "center", "center")
 					end,
 					width = icon_width * 2,
 					---@param k POP
 					---@param v unit_type_id
 					value = function (k, v)
-						return AGE(k)
+						return AGE_TICKS(k)
 					end
 				},
 				{
@@ -1131,9 +1130,9 @@ function window.draw(gamescene)
 							if ut.icon_button(icon, rect, text, can_recruit) then
 								-- check if trying to fire commander first
 								if commander ~= INVALID_ID and commander == k then
-									warband_utils.unset_commander(warband)
+									demography_effects.unset_commander(warband)
 								else
-									warband_utils.fire_unit(warband, k)
+									demography_effects.unrecruit(warband, k)
 								end
 							end
 						end
@@ -1173,10 +1172,7 @@ function window.draw(gamescene)
 					ui.text("No permission to hire units for this warband", unit_panel, "center", "center")
 					return
 				end
-				local province = PROVINCE(WARBAND_LEADER(warband))
-				if recruiter == player_character then
-					province = PROVINCE(WARBAND_RECRUITER(warband))
-				end
+				local province = PROVINCE(WARBAND_RECRUITER(warband))
 				if province == INVALID_ID then
 					ui.text("Can't hire units outside of settlement", unit_panel, "center", "center")
 					return

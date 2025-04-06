@@ -164,7 +164,7 @@ local function load()
 						if successor == INVALID_ID then
 							successor = pop
 						elseif
-							DATA.pop_get_age(pop) > DATA.pop_get_age(successor)
+							AGE_YEARS(pop) > AGE_YEARS(successor)
 						then
 							successor = pop
 						end
@@ -196,7 +196,7 @@ local function load()
 				else
 					-- we found someone
 					if not IS_CHARACTER(successor) then
-						pe.grant_nobility(successor, POLITICS_REASON.NOTENOUGHNOBLES)
+						pe.grant_nobility(successor, realm, POLITICS_REASON.NOTENOUGHNOBLES)
 					end
 					-- now we can guarantee that it's a character:
 
@@ -208,6 +208,17 @@ local function load()
 			for index, realm in ipairs(realms_to_dissolve) do
 				di.dissolve_realm_and_clear_diplomacy(realm)
 			end
+
+			-- notify possible parent and children
+			local parent = DATA.parent_child_relation_get_parent(DATA.get_parent_child_relation_from_child(character))
+			if parent ~= INVALID_ID and parent == WORLD.player_character then
+				WORLD:emit_notification("My child, " .. NAME(character) .. ", has died at the age of " .. AGE_YEARS(character) .. ".")
+			end
+			DATA.for_each_parent_child_relation_from_parent(character, function(item)
+				if WORLD.player_character ~= INVALID_ID and WORLD.player_character == DATA.parent_child_relation_get_child(item) then
+					WORLD:emit_notification("My parent, " .. NAME(character) .. ", has died at the age of " .. AGE_YEARS(character) .. ".")
+				end
+			end)
 
 			-- delete character
 			DATA.delete_pop(character)

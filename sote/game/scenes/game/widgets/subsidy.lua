@@ -12,10 +12,10 @@ return function (rect, estate)
 
 	if ut.icon_button(
 		ASSETS.icons["minus.png"], dec_rect,
-		"Take " .. ut.to_fixed_point2(BUILDING_SUBSIDY_AMOUNT) .. MONEY_SYMBOL .. " out of your local estate treasury."
+		"Take " .. ut.to_fixed_point2(KEY_PRESS_MODIFIER) .. MONEY_SYMBOL .. " out of your local estate treasury."
 		.. "\nPress Ctrl and/or Shift to modify amount.", WORLD.player_character == OWNER(estate)
 	) then
-		local amount_to_transfer = BUILDING_SUBSIDY_AMOUNT
+		local amount_to_transfer = KEY_PRESS_MODIFIER
 		if amount_to_transfer > DATA.estate_get_savings(estate) then
 			amount_to_transfer = DATA.estate_get_savings(estate)
 		end
@@ -23,10 +23,10 @@ return function (rect, estate)
 		DATA.estate_inc_savings(estate, -amount_to_transfer)
 	end
 	if ut.icon_button(ASSETS.icons["plus.png"], inc_rect,
-		"Invest " .. ut.to_fixed_point2(-BUILDING_SUBSIDY_AMOUNT) .. MONEY_SYMBOL .. " into your local estate treasury."
+		"Invest " .. ut.to_fixed_point2(-KEY_PRESS_MODIFIER) .. MONEY_SYMBOL .. " into your local estate treasury."
 		.. "\nPress Ctrl and/or Shift to modify amount.", WORLD.player_character == OWNER(estate)
 	) then
-		local amount_to_transfer = BUILDING_SUBSIDY_AMOUNT
+		local amount_to_transfer = KEY_PRESS_MODIFIER
 		if amount_to_transfer > SAVINGS(owner) then
 			amount_to_transfer = SAVINGS(owner)
 		end

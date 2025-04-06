@@ -214,7 +214,7 @@ function prov.Province.population_weight(province)
 		local pop = DATA.pop_location_get_pop(pop_location)
 		-- weight is dependent on food needs, which are age dependent
 		local race = DATA.pop_get_race(pop)
-		local age_multiplier = pop_utils.get_age_multiplier(pop)
+		local age_multiplier = AGE_MULTIPLIER(pop)
 
 		total = total + DATA.race_get_carrying_capacity_weight(race) * age_multiplier
 	end
@@ -763,6 +763,7 @@ end
 ---@param character Character
 function prov.Province.add_character(province, character)
 	DATA.force_create_character_location(province, character)
+	DATA.force_create_pop_location(province, character)
 end
 
 ---Sets province as pop's home
@@ -791,8 +792,7 @@ function prov.Province.get_spotting(province)
 
 	DATA.for_each_pop_location_from_location(province, function (p)
 		local pop_id = DATA.pop_location_get_pop(p)
-		local race = DATA.pop_get_race(pop_id)
-		s = s + DATA.race_get_spotting(race)
+		s = s + pop_utils.get_spotting(pop_id)
 	end)
 
 	--- TODO:

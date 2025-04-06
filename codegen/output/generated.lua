@@ -171,6 +171,7 @@ function DATA.save_state()
     current_lua_state.realm_known_provinces = DATA.realm_known_provinces
     current_lua_state.jobtype_name = DATA.jobtype_name
     current_lua_state.jobtype_action_word = DATA.jobtype_action_word
+    current_lua_state.jobtype_icon = DATA.jobtype_icon
     current_lua_state.need_name = DATA.need_name
     current_lua_state.character_rank_name = DATA.character_rank_name
     current_lua_state.character_rank_localisation = DATA.character_rank_localisation
@@ -180,6 +181,8 @@ function DATA.save_state()
     current_lua_state.trait_icon = DATA.trait_icon
     current_lua_state.trade_good_category_name = DATA.trade_good_category_name
     current_lua_state.warband_status_name = DATA.warband_status_name
+    current_lua_state.warband_status_action_string = DATA.warband_status_action_string
+    current_lua_state.warband_status_icon = DATA.warband_status_icon
     current_lua_state.warband_stance_name = DATA.warband_stance_name
     current_lua_state.building_archetype_name = DATA.building_archetype_name
     current_lua_state.forage_resource_name = DATA.forage_resource_name
@@ -191,6 +194,8 @@ function DATA.save_state()
     current_lua_state.politics_reason_name = DATA.politics_reason_name
     current_lua_state.politics_reason_description = DATA.politics_reason_description
     current_lua_state.unit_type_name = DATA.unit_type_name
+    current_lua_state.unit_type_description = DATA.unit_type_description
+    current_lua_state.unit_type_icon = DATA.unit_type_icon
     current_lua_state.law_trade_name = DATA.law_trade_name
     current_lua_state.law_building_name = DATA.law_building_name
     current_lua_state.trade_good_name = DATA.trade_good_name
@@ -321,6 +326,7 @@ function DATA.load_state()
     DATA.realm_known_provinces = loaded_lua_state.realm_known_provinces
     DATA.jobtype_name = loaded_lua_state.jobtype_name
     DATA.jobtype_action_word = loaded_lua_state.jobtype_action_word
+    DATA.jobtype_icon = loaded_lua_state.jobtype_icon
     DATA.need_name = loaded_lua_state.need_name
     DATA.character_rank_name = loaded_lua_state.character_rank_name
     DATA.character_rank_localisation = loaded_lua_state.character_rank_localisation
@@ -330,6 +336,8 @@ function DATA.load_state()
     DATA.trait_icon = loaded_lua_state.trait_icon
     DATA.trade_good_category_name = loaded_lua_state.trade_good_category_name
     DATA.warband_status_name = loaded_lua_state.warband_status_name
+    DATA.warband_status_action_string = loaded_lua_state.warband_status_action_string
+    DATA.warband_status_icon = loaded_lua_state.warband_status_icon
     DATA.warband_stance_name = loaded_lua_state.warband_stance_name
     DATA.building_archetype_name = loaded_lua_state.building_archetype_name
     DATA.forage_resource_name = loaded_lua_state.forage_resource_name
@@ -341,6 +349,8 @@ function DATA.load_state()
     DATA.politics_reason_name = loaded_lua_state.politics_reason_name
     DATA.politics_reason_description = loaded_lua_state.politics_reason_description
     DATA.unit_type_name = loaded_lua_state.unit_type_name
+    DATA.unit_type_description = loaded_lua_state.unit_type_description
+    DATA.unit_type_icon = loaded_lua_state.unit_type_icon
     DATA.law_trade_name = loaded_lua_state.law_trade_name
     DATA.law_building_name = loaded_lua_state.law_building_name
     DATA.trade_good_name = loaded_lua_state.trade_good_name
@@ -545,7 +555,7 @@ function DATA.test_set_get_0()
     fat_id.g = 6
     fat_id.b = -18
     fat_id.language = -4
-    for j = 1, 4 do
+    for j = 1, 5 do
         DATA.culture_set_traditional_units(id, j --[[@as unit_type_id]],  12)    end
     fat_id.traditional_militarization = 11
     for j = 1, 10 do
@@ -559,7 +569,7 @@ function DATA.test_set_get_0()
     if not test_passed then print("b", -18, fat_id.b) end
     test_passed = test_passed and fat_id.language == -4
     if not test_passed then print("language", -4, fat_id.language) end
-    for j = 1, 4 do
+    for j = 1, 5 do
         test_passed = test_passed and DATA.culture_get_traditional_units(id, j --[[@as unit_type_id]]) == 12
     end
     if not test_passed then print("traditional_units", 12, DATA.culture[id].traditional_units[0]) end
@@ -604,44 +614,45 @@ function DATA.test_set_get_0()
     fat_id.race = 6
     fat_id.faith = -18
     fat_id.culture = -4
-    fat_id.age = 16
+    fat_id.birth_year = 12
+    fat_id.birth_tick = 15
     for j = 1, 10 do
-        DATA.pop_set_traits(id, j --[[@as number]],  7)    end
+        DATA.pop_set_traits(id, j --[[@as number]],  6)    end
     for j = 1, 20 do
-        DATA.pop_set_need_satisfaction_need(id, j, 6)
+        DATA.pop_set_need_satisfaction_need(id, j, 4)
     end
     for j = 1, 20 do
-        DATA.pop_set_need_satisfaction_use_case(id, j, -1)
+        DATA.pop_set_need_satisfaction_use_case(id, j, 10)
     end
     for j = 1, 20 do
-        DATA.pop_set_need_satisfaction_consumed(id, j, 10)
+        DATA.pop_set_need_satisfaction_consumed(id, j, 2)
     end
     for j = 1, 20 do
-        DATA.pop_set_need_satisfaction_demanded(id, j, 2)
+        DATA.pop_set_need_satisfaction_demanded(id, j, 17)
     end
     for j = 1, 100 do
-        DATA.pop_set_inventory(id, j --[[@as trade_good_id]],  17)    end
+        DATA.pop_set_inventory(id, j --[[@as trade_good_id]],  -7)    end
     for j = 1, 100 do
-        DATA.pop_set_price_belief_sell(id, j --[[@as trade_good_id]],  -7)    end
+        DATA.pop_set_price_belief_sell(id, j --[[@as trade_good_id]],  12)    end
     for j = 1, 100 do
-        DATA.pop_set_price_belief_buy(id, j --[[@as trade_good_id]],  12)    end
-    fat_id.savings = -12
-    fat_id.expected_wage = -2
-    fat_id.life_needs_satisfaction = -12
-    fat_id.basic_needs_satisfaction = -14
-    fat_id.pending_economy_income = 19
-    fat_id.forage_ratio = -4
-    fat_id.work_ratio = 14
-    fat_id.spend_savings_ratio = 18
-    fat_id.female = true
-    fat_id.busy = false
+        DATA.pop_set_price_belief_buy(id, j --[[@as trade_good_id]],  -12)    end
+    fat_id.savings = -2
+    fat_id.expected_wage = -12
+    fat_id.life_needs_satisfaction = -14
+    fat_id.basic_needs_satisfaction = 19
+    fat_id.pending_economy_income = -4
+    fat_id.forage_ratio = 14
+    fat_id.work_ratio = 18
+    fat_id.spend_savings_ratio = -11
+    fat_id.female = false
+    fat_id.busy = true
     fat_id.former_pop = true
-    fat_id.dead = true
+    fat_id.dead = false
     fat_id.free_will = false
-    fat_id.is_player = false
-    fat_id.rank = 0
+    fat_id.is_player = true
+    fat_id.rank = 2
     for j = 1, 20 do
-        DATA.pop_set_dna(id, j --[[@as number]],  2)    end
+        DATA.pop_set_dna(id, j --[[@as number]],  7)    end
     local test_passed = true
     test_passed = test_passed and fat_id.unique_id == 12
     if not test_passed then print("unique_id", 12, fat_id.unique_id) end
@@ -651,74 +662,76 @@ function DATA.test_set_get_0()
     if not test_passed then print("faith", -18, fat_id.faith) end
     test_passed = test_passed and fat_id.culture == -4
     if not test_passed then print("culture", -4, fat_id.culture) end
-    test_passed = test_passed and fat_id.age == 16
-    if not test_passed then print("age", 16, fat_id.age) end
+    test_passed = test_passed and fat_id.birth_year == 12
+    if not test_passed then print("birth_year", 12, fat_id.birth_year) end
+    test_passed = test_passed and fat_id.birth_tick == 15
+    if not test_passed then print("birth_tick", 15, fat_id.birth_tick) end
     for j = 1, 10 do
-        test_passed = test_passed and DATA.pop_get_traits(id, j --[[@as number]]) == 7
+        test_passed = test_passed and DATA.pop_get_traits(id, j --[[@as number]]) == 6
     end
-    if not test_passed then print("traits", 7, DATA.pop[id].traits[0]) end
+    if not test_passed then print("traits", 6, DATA.pop[id].traits[0]) end
     for j = 1, 20 do
-        test_passed = test_passed and DATA.pop_get_need_satisfaction_need(id, j) == 6
+        test_passed = test_passed and DATA.pop_get_need_satisfaction_need(id, j) == 4
     end
-    if not test_passed then print("need_satisfaction.need", 6, DATA.pop[id].need_satisfaction[0].need) end
+    if not test_passed then print("need_satisfaction.need", 4, DATA.pop[id].need_satisfaction[0].need) end
     for j = 1, 20 do
-        test_passed = test_passed and DATA.pop_get_need_satisfaction_use_case(id, j) == -1
+        test_passed = test_passed and DATA.pop_get_need_satisfaction_use_case(id, j) == 10
     end
-    if not test_passed then print("need_satisfaction.use_case", -1, DATA.pop[id].need_satisfaction[0].use_case) end
+    if not test_passed then print("need_satisfaction.use_case", 10, DATA.pop[id].need_satisfaction[0].use_case) end
     for j = 1, 20 do
-        test_passed = test_passed and DATA.pop_get_need_satisfaction_consumed(id, j) == 10
+        test_passed = test_passed and DATA.pop_get_need_satisfaction_consumed(id, j) == 2
     end
-    if not test_passed then print("need_satisfaction.consumed", 10, DATA.pop[id].need_satisfaction[0].consumed) end
+    if not test_passed then print("need_satisfaction.consumed", 2, DATA.pop[id].need_satisfaction[0].consumed) end
     for j = 1, 20 do
-        test_passed = test_passed and DATA.pop_get_need_satisfaction_demanded(id, j) == 2
+        test_passed = test_passed and DATA.pop_get_need_satisfaction_demanded(id, j) == 17
     end
-    if not test_passed then print("need_satisfaction.demanded", 2, DATA.pop[id].need_satisfaction[0].demanded) end
+    if not test_passed then print("need_satisfaction.demanded", 17, DATA.pop[id].need_satisfaction[0].demanded) end
     for j = 1, 100 do
-        test_passed = test_passed and DATA.pop_get_inventory(id, j --[[@as trade_good_id]]) == 17
+        test_passed = test_passed and DATA.pop_get_inventory(id, j --[[@as trade_good_id]]) == -7
     end
-    if not test_passed then print("inventory", 17, DATA.pop[id].inventory[0]) end
+    if not test_passed then print("inventory", -7, DATA.pop[id].inventory[0]) end
     for j = 1, 100 do
-        test_passed = test_passed and DATA.pop_get_price_belief_sell(id, j --[[@as trade_good_id]]) == -7
+        test_passed = test_passed and DATA.pop_get_price_belief_sell(id, j --[[@as trade_good_id]]) == 12
     end
-    if not test_passed then print("price_belief_sell", -7, DATA.pop[id].price_belief_sell[0]) end
+    if not test_passed then print("price_belief_sell", 12, DATA.pop[id].price_belief_sell[0]) end
     for j = 1, 100 do
-        test_passed = test_passed and DATA.pop_get_price_belief_buy(id, j --[[@as trade_good_id]]) == 12
+        test_passed = test_passed and DATA.pop_get_price_belief_buy(id, j --[[@as trade_good_id]]) == -12
     end
-    if not test_passed then print("price_belief_buy", 12, DATA.pop[id].price_belief_buy[0]) end
-    test_passed = test_passed and fat_id.savings == -12
-    if not test_passed then print("savings", -12, fat_id.savings) end
-    test_passed = test_passed and fat_id.expected_wage == -2
-    if not test_passed then print("expected_wage", -2, fat_id.expected_wage) end
-    test_passed = test_passed and fat_id.life_needs_satisfaction == -12
-    if not test_passed then print("life_needs_satisfaction", -12, fat_id.life_needs_satisfaction) end
-    test_passed = test_passed and fat_id.basic_needs_satisfaction == -14
-    if not test_passed then print("basic_needs_satisfaction", -14, fat_id.basic_needs_satisfaction) end
-    test_passed = test_passed and fat_id.pending_economy_income == 19
-    if not test_passed then print("pending_economy_income", 19, fat_id.pending_economy_income) end
-    test_passed = test_passed and fat_id.forage_ratio == -4
-    if not test_passed then print("forage_ratio", -4, fat_id.forage_ratio) end
-    test_passed = test_passed and fat_id.work_ratio == 14
-    if not test_passed then print("work_ratio", 14, fat_id.work_ratio) end
-    test_passed = test_passed and fat_id.spend_savings_ratio == 18
-    if not test_passed then print("spend_savings_ratio", 18, fat_id.spend_savings_ratio) end
-    test_passed = test_passed and fat_id.female == true
-    if not test_passed then print("female", true, fat_id.female) end
-    test_passed = test_passed and fat_id.busy == false
-    if not test_passed then print("busy", false, fat_id.busy) end
+    if not test_passed then print("price_belief_buy", -12, DATA.pop[id].price_belief_buy[0]) end
+    test_passed = test_passed and fat_id.savings == -2
+    if not test_passed then print("savings", -2, fat_id.savings) end
+    test_passed = test_passed and fat_id.expected_wage == -12
+    if not test_passed then print("expected_wage", -12, fat_id.expected_wage) end
+    test_passed = test_passed and fat_id.life_needs_satisfaction == -14
+    if not test_passed then print("life_needs_satisfaction", -14, fat_id.life_needs_satisfaction) end
+    test_passed = test_passed and fat_id.basic_needs_satisfaction == 19
+    if not test_passed then print("basic_needs_satisfaction", 19, fat_id.basic_needs_satisfaction) end
+    test_passed = test_passed and fat_id.pending_economy_income == -4
+    if not test_passed then print("pending_economy_income", -4, fat_id.pending_economy_income) end
+    test_passed = test_passed and fat_id.forage_ratio == 14
+    if not test_passed then print("forage_ratio", 14, fat_id.forage_ratio) end
+    test_passed = test_passed and fat_id.work_ratio == 18
+    if not test_passed then print("work_ratio", 18, fat_id.work_ratio) end
+    test_passed = test_passed and fat_id.spend_savings_ratio == -11
+    if not test_passed then print("spend_savings_ratio", -11, fat_id.spend_savings_ratio) end
+    test_passed = test_passed and fat_id.female == false
+    if not test_passed then print("female", false, fat_id.female) end
+    test_passed = test_passed and fat_id.busy == true
+    if not test_passed then print("busy", true, fat_id.busy) end
     test_passed = test_passed and fat_id.former_pop == true
     if not test_passed then print("former_pop", true, fat_id.former_pop) end
-    test_passed = test_passed and fat_id.dead == true
-    if not test_passed then print("dead", true, fat_id.dead) end
+    test_passed = test_passed and fat_id.dead == false
+    if not test_passed then print("dead", false, fat_id.dead) end
     test_passed = test_passed and fat_id.free_will == false
     if not test_passed then print("free_will", false, fat_id.free_will) end
-    test_passed = test_passed and fat_id.is_player == false
-    if not test_passed then print("is_player", false, fat_id.is_player) end
-    test_passed = test_passed and fat_id.rank == 0
-    if not test_passed then print("rank", 0, fat_id.rank) end
+    test_passed = test_passed and fat_id.is_player == true
+    if not test_passed then print("is_player", true, fat_id.is_player) end
+    test_passed = test_passed and fat_id.rank == 2
+    if not test_passed then print("rank", 2, fat_id.rank) end
     for j = 1, 20 do
-        test_passed = test_passed and DATA.pop_get_dna(id, j --[[@as number]]) == 2
+        test_passed = test_passed and DATA.pop_get_dna(id, j --[[@as number]]) == 7
     end
-    if not test_passed then print("dna", 2, DATA.pop[id].dna[0]) end
+    if not test_passed then print("dna", 7, DATA.pop[id].dna[0]) end
     print("SET_GET_TEST_0_pop:")
     if test_passed then print("PASSED") else print("ERROR") end
     local id = DATA.create_province()
@@ -796,13 +809,9 @@ function DATA.test_set_get_0()
     for j = 1, 25 do
         DATA.province_set_local_resources_location(id, j, -15)
     end
-    for j = 1, 300 do
-        DATA.province_set_total_resources(id, j --[[@as resource_id]],  12)    end
-    for j = 1, 300 do
-        DATA.province_set_used_resources(id, j --[[@as resource_id]],  20)    end
-    fat_id.mood = -20
-    for j = 1, 4 do
-        DATA.province_set_unit_types(id, j --[[@as unit_type_id]],  19)    end
+    fat_id.mood = 5
+    for j = 1, 5 do
+        DATA.province_set_unit_types(id, j --[[@as unit_type_id]],  20)    end
     for j = 1, 250 do
         DATA.province_set_throughput_boosts(id, j --[[@as production_method_id]],  11)    end
     for j = 1, 250 do
@@ -948,18 +957,10 @@ function DATA.test_set_get_0()
         test_passed = test_passed and DATA.province_get_local_resources_location(id, j) == -15
     end
     if not test_passed then print("local_resources.location", -15, DATA.province[id].local_resources[0].location) end
-    for j = 1, 300 do
-        test_passed = test_passed and DATA.province_get_total_resources(id, j --[[@as resource_id]]) == 12
-    end
-    if not test_passed then print("total_resources", 12, DATA.province[id].total_resources[0]) end
-    for j = 1, 300 do
-        test_passed = test_passed and DATA.province_get_used_resources(id, j --[[@as resource_id]]) == 20
-    end
-    if not test_passed then print("used_resources", 20, DATA.province[id].used_resources[0]) end
-    test_passed = test_passed and fat_id.mood == -20
-    if not test_passed then print("mood", -20, fat_id.mood) end
-    for j = 1, 4 do
-        test_passed = test_passed and DATA.province_get_unit_types(id, j --[[@as unit_type_id]]) == 19
+    test_passed = test_passed and fat_id.mood == 5
+    if not test_passed then print("mood", 5, fat_id.mood) end
+    for j = 1, 5 do
+        test_passed = test_passed and DATA.province_get_unit_types(id, j --[[@as unit_type_id]]) == 20
     end
     if not test_passed then print("unit_types", 19, DATA.province[id].unit_types[0]) end
     for j = 1, 250 do
@@ -986,25 +987,28 @@ function DATA.test_set_get_0()
     if test_passed then print("PASSED") else print("ERROR") end
     local id = DATA.create_warband()
     local fat_id = DATA.fatten_warband(id)
-    for j = 1, 4 do
+    for j = 1, 5 do
         DATA.warband_set_units_current(id, j --[[@as unit_type_id]],  4)    end
-    for j = 1, 4 do
+    for j = 1, 5 do
         DATA.warband_set_units_target(id, j --[[@as unit_type_id]],  6)    end
     fat_id.current_status = 0
     fat_id.idle_stance = 1
-    fat_id.current_free_time_ratio = 12
-    fat_id.treasury = 11
-    fat_id.total_upkeep = 5
-    fat_id.predicted_upkeep = -1
-    fat_id.supplies = 10
-    fat_id.supplies_target_days = 2
-    fat_id.morale = 17
+    fat_id.current_time_used_ratio = 12
+    for j = 1, 100 do
+        DATA.warband_set_inventory(id, j --[[@as trade_good_id]],  11)    end
+    fat_id.treasury = 5
+    fat_id.total_upkeep = -1
+    fat_id.predicted_upkeep = 10
+    fat_id.supplies = 2
+    fat_id.supplies_target_days = 17
+    fat_id.morale = -7
+    fat_id.in_settlement = true
     local test_passed = true
-    for j = 1, 4 do
+    for j = 1, 5 do
         test_passed = test_passed and DATA.warband_get_units_current(id, j --[[@as unit_type_id]]) == 4
     end
     if not test_passed then print("units_current", 4, DATA.warband[id].units_current[0]) end
-    for j = 1, 4 do
+    for j = 1, 5 do
         test_passed = test_passed and DATA.warband_get_units_target(id, j --[[@as unit_type_id]]) == 6
     end
     if not test_passed then print("units_target", 6, DATA.warband[id].units_target[0]) end
@@ -1012,20 +1016,26 @@ function DATA.test_set_get_0()
     if not test_passed then print("current_status", 0, fat_id.current_status) end
     test_passed = test_passed and fat_id.idle_stance == 1
     if not test_passed then print("idle_stance", 1, fat_id.idle_stance) end
-    test_passed = test_passed and fat_id.current_free_time_ratio == 12
-    if not test_passed then print("current_free_time_ratio", 12, fat_id.current_free_time_ratio) end
-    test_passed = test_passed and fat_id.treasury == 11
-    if not test_passed then print("treasury", 11, fat_id.treasury) end
-    test_passed = test_passed and fat_id.total_upkeep == 5
-    if not test_passed then print("total_upkeep", 5, fat_id.total_upkeep) end
-    test_passed = test_passed and fat_id.predicted_upkeep == -1
-    if not test_passed then print("predicted_upkeep", -1, fat_id.predicted_upkeep) end
-    test_passed = test_passed and fat_id.supplies == 10
-    if not test_passed then print("supplies", 10, fat_id.supplies) end
-    test_passed = test_passed and fat_id.supplies_target_days == 2
-    if not test_passed then print("supplies_target_days", 2, fat_id.supplies_target_days) end
-    test_passed = test_passed and fat_id.morale == 17
-    if not test_passed then print("morale", 17, fat_id.morale) end
+    test_passed = test_passed and fat_id.current_time_used_ratio == 12
+    if not test_passed then print("current_time_used_ratio", 12, fat_id.current_time_used_ratio) end
+    for j = 1, 100 do
+        test_passed = test_passed and DATA.warband_get_inventory(id, j --[[@as trade_good_id]]) == 11
+    end
+    if not test_passed then print("inventory", 11, DATA.warband[id].inventory[0]) end
+    test_passed = test_passed and fat_id.treasury == 5
+    if not test_passed then print("treasury", 5, fat_id.treasury) end
+    test_passed = test_passed and fat_id.total_upkeep == -1
+    if not test_passed then print("total_upkeep", -1, fat_id.total_upkeep) end
+    test_passed = test_passed and fat_id.predicted_upkeep == 10
+    if not test_passed then print("predicted_upkeep", 10, fat_id.predicted_upkeep) end
+    test_passed = test_passed and fat_id.supplies == 2
+    if not test_passed then print("supplies", 2, fat_id.supplies) end
+    test_passed = test_passed and fat_id.supplies_target_days == 17
+    if not test_passed then print("supplies_target_days", 17, fat_id.supplies_target_days) end
+    test_passed = test_passed and fat_id.morale == -7
+    if not test_passed then print("morale", -7, fat_id.morale) end
+    test_passed = test_passed and fat_id.in_settlement == true
+    if not test_passed then print("in_settlement", true, fat_id.in_settlement) end
     print("SET_GET_TEST_0_warband:")
     if test_passed then print("PASSED") else print("ERROR") end
     local id = DATA.create_realm()

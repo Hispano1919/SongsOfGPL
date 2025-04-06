@@ -157,7 +157,7 @@ local inspectors_table = {
 	["population"] = require "game.scenes.game.inspectors.population",
 	-- ["macrobuilder"] = require "game.scenes.game.inspectors.macrobuilder",
 	["macrodecision"] = require "game.scenes.game.inspectors.macrodecision",
-	["warband"] = require "game.scenes.game.inspectors.warband",
+	["warband"] = require "sote.game.scenes.game.inspector-party",
 	["property"] = require "game.scenes.game.inspectors.property",
 	["preferences"] = require "game.scenes.game.inspectors.character_stance",
 	["quests"] = require "game.scenes.game.inspectors.quests"
@@ -753,7 +753,6 @@ function gam.click_tile(tile_id)
 					military_values.warband_speed(warband),
 					DATA.realm_get_known_provinces(REALM(WORLD.player_character))
 				)
-				print(path)
 				if path then
 					tabb.print(path)
 					table.insert(path, WARBAND_TILE(warband))
@@ -2012,8 +2011,29 @@ function gam.draw()
 
 
 	if PROFILE_FLAG then
+		local pop_count, chr_count, war_count, est_count, rlm_count = 0, 0, 0, 0, 0
+		DATA.for_each_pop(function (item)
+			pop_count = pop_count + 1
+			if IS_CHARACTER(item) then
+				chr_count = chr_count + 1
+			end
+		end)
+		DATA.for_each_warband(function (item)
+			war_count = war_count + 1
+		end)
+		DATA.for_each_estate(function (item)
+			est_count = est_count + 1
+		end)
+		DATA.for_each_realm(function (item)
+			rlm_count = rlm_count + 1
+		end)
 		local profile_rect = ui.fullscreen():subrect(0, 0, 800, 300, "center", "center")
 		local reset_rect = profile_rect:subrect(0, 0, 50, 20, "left", "up")
+		local pop_rect = profile_rect:subrect(50, 0, 100, 20, "left", "up")
+		local chr_rect = profile_rect:subrect(150, 0, 100, 20, "left", "up")
+		local est_rect = profile_rect:subrect(250, 0, 100, 20, "left", "up")
+		local war_rect = profile_rect:subrect(350, 0, 100, 20, "left", "up")
+		local rlm_rect = profile_rect:subrect(450, 0, 100, 20, "left", "up")
 		ui.panel(profile_rect)
 		profile_rect.y = profile_rect.y + 20
 		profile_rect.height = profile_rect.height - 20
@@ -2035,6 +2055,11 @@ function gam.draw()
 		if ut.text_button("RESET", reset_rect) then
 			PROFILER:clear()
 		end
+		ut.generic_number_field("POP", pop_count, pop_rect, "number of pop in world",ut.NUMBER_MODE.INTEGER,ut.NAME_MODE.NAME)
+		ut.generic_number_field("CHR", chr_count, chr_rect, "number of characters in world",ut.NUMBER_MODE.INTEGER,ut.NAME_MODE.NAME)
+		ut.generic_number_field("EST", est_count, est_rect, "number of active estates in world",ut.NUMBER_MODE.INTEGER,ut.NAME_MODE.NAME)
+		ut.generic_number_field("WAR", war_count, war_rect, "number of characters in world",ut.NUMBER_MODE.INTEGER,ut.NAME_MODE.NAME)
+		ut.generic_number_field("RLM", rlm_count, rlm_rect, "number of active realms in world",ut.NUMBER_MODE.INTEGER,ut.NAME_MODE.NAME)
 	end
 end
 
@@ -2484,8 +2509,8 @@ function gam.recalculate_smooth_data_map(data_function, data_id, provinces_to_up
 				local corner_pair = {0, 0, 0, 0}
 
 				slow_tiles = slow_tiles + 1
-				for n_index, neighbour in ipairs(neighbours) do
-					for neighbour_of_neighour in tile.iter_neighbors(neighbour) do
+				for n_index, neighbor in ipairs(neighbours) do
+					for neighbour_of_neighour in tile.iter_neighbors(neighbor) do
 						if neighbour_of_neighour == tile_id then
 							goto continue
 						end

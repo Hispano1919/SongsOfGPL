@@ -1,4 +1,4 @@
-local warband_utils = require "game.entities.warband"
+local warband_effects = require "game.raws.effects.warband"
 local demography_values = require "game.raws.values.demography"
 
 local demo = {}
@@ -8,7 +8,7 @@ local demo = {}
 function demo.kill_pop(pop)
 	-- print("kill " .. pop.name)
 	demo.fire_pop(pop)
-	warband_utils.unregister_military(pop)
+	demo.unrecruit(pop)
 	DATA.delete_pop(pop)
 end
 
@@ -31,7 +31,7 @@ function demo.outlaw_pop(province, pop)
 	end
 
 	demo.fire_pop(pop)
-	warband_utils.unregister_military(pop)
+	demo.unrecruit(pop)
 	DATA.force_create_outlaw_location(province, pop)
 
 	local pop_location = DATA.get_pop_location_from_pop(pop)
@@ -41,44 +41,42 @@ function demo.outlaw_pop(province, pop)
 	DATA.delete_pop_location(pop_location)
 end
 
----Moves a pop from province to warband
+---recruitment logic
 ---@param pop pop_id
 ---@param warband warband_id
 ---@param unit_type UNIT_TYPE
 function demo.recruit(pop, warband, unit_type)
-	local membership = DATA.warband_unit_get_warband(DATA.get_warband_unit_from_unit(pop))
-	-- if pop is already drafted, do nothing
-	if membership ~= INVALID_ID then
-		return
-	end
-
 	-- clean pop data
 	demo.fire_pop(pop)
-	warband_utils.unregister_military(pop)
-
-	if DATA.character_location_get_location(DATA.get_character_location_from_character(pop)) ~= INVALID_ID then
-		DATA.delete_character_location(DATA.get_character_location_from_character(pop))
-	end
-
-	if DATA.pop_location_get_location(DATA.get_pop_location_from_pop(pop)) ~= INVALID_ID then
-		DATA.delete_pop_location(DATA.get_pop_location_from_pop(pop))
-	end
-
-	-- set warband
-	warband_utils.hire_unit(warband, pop, unit_type)
+	warband_effects.set_as_unit(warband,pop,unit_type)
+	-- recruit all dependents as followers
+	DATA.for_each_parent_child_relation_from_parent(pop, function (item)
+		local child = DATA.parent_child_relation_get_child(item)
+		if IS_DEPENDENT_OF(child,pop) then
+			demo.recruit(child,warband,UNIT_TYPE.FOLLOWER)
+		end
+	end)
 end
 
+---handles leaving warbands
+---@param pop pop_id
 function demo.unrecruit(pop)
 	local warband = UNIT_OF(pop)
-	local province = TILE_PROVINCE(WARBAND_TILE(warband))
-
-	if IS_CHARACTER(pop) then
-		DATA.force_create_character_location(province, pop)
-	else
-		DATA.force_create_pop_location(province, pop)
+	if warband ~= INVALID_ID then
+		-- demote to follower if not in settlement
+		if PROVINCE(pop) == INVALID_ID then
+			warband_effects.set_as_unit(warband,pop,UNIT_TYPE.FOLLOWER)
+		else
+			warband_effects.fire_unit(warband, pop)
+			-- unrecruit all dependent followers
+			DATA.for_each_parent_child_relation_from_parent(pop, function (item)
+				local child = DATA.parent_child_relation_get_child(item)
+				if IS_DEPENDENT_OF(child,pop) then
+					demo.unrecruit(child)
+				end
+			end)
+		end
 	end
-
-	warband_utils.fire_unit(warband, pop)
 end
 
 ---Kills ratio of army

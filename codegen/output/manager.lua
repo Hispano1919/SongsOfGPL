@@ -87,6 +87,37 @@ ffi.cdef[[
 
     void ai_update_price_belief(int32_t trader_raw_id);
 	void ai_trade(int32_t trader_raw_id);
+
+	// backend time tracking
+	void set_world_current_year(uint32_t year);
+	uint32_t get_world_current_year(void);
+	void set_world_current_tick(uint32_t tick);
+	uint32_t get_world_current_tick(void);
+	void set_world_tick_definitions(uint32_t minute, uint32_t hour, uint32_t day, uint32_t month);
+	uint32_t get_world_ticks_per_minute(void);
+	uint32_t get_world_ticks_per_hour(void);
+	uint32_t get_world_ticks_per_day(void);
+	uint32_t get_world_ticks_per_month(void);
+	// birthdate values
+	uint32_t birth_month(uint32_t pop_id);
+	uint32_t birth_day(uint32_t pop_id);
+	uint32_t birth_hour(uint32_t pop_id);
+	uint32_t birth_minute(uint32_t pop_id);
+	// age calculations
+	uint32_t age_ticks(uint32_t pop_id);
+	uint32_t age_months(uint32_t pop_id);
+	uint32_t age_years(uint32_t pop_id);
+	float age_multiplier(uint32_t pop_id);
+	float job_efficiency(uint32_t,uint8_t);
+    // pop time calculations
+	float pop_free_time(uint32_t pop);
+	float pop_warband_time(uint32_t pop,float free);
+	float pop_forage_time(uint32_t pop,float free,float party);
+	float pop_work_time(uint32_t pop,float free,float party,float forage);
+	// misc
+	bool pop_same_location(uint32_t pop_a,uint32_t pop_b);
+    bool is_dependent(uint32_t child);
+    bool is_dependent_of(uint32_t child,uint32_t parent);
 ]]
 
 

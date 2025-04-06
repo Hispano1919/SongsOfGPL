@@ -1055,10 +1055,10 @@ function ui.race_tooltip(race_id)
 	end
 	-- lastly mention if the race is specialized
 	if race.requires_large_river then
-		tooltip = tooltip .. "\n  Specialized river race."
+		tooltip = tooltip .. "\n Strong swimmers."
 	end
 	if race.requires_large_forest then
-		tooltip = tooltip .. "\n  Specialized forest race."
+		tooltip = tooltip .. "\n Forestwalking."
 	end
 
 	return tooltip

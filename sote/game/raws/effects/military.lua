@@ -12,14 +12,15 @@ local warband_effects = require "game.raws.effects.warband"
 
 local economy_values = require "game.raws.values.economy"
 local military_values = require "game.raws.values.military"
-local demography_utils = require "game.raws.effects.demography"
+local demography_effects = require "game.raws.effects.demography"
 
 local MilitaryEffects = {}
 
 ---Gathers new warband in the name of *leader*
 ---@param leader Character
 function MilitaryEffects.gather_warband(leader)
-	local province = PROVINCE(leader)
+	local settlement = PROVINCE(leader)
+	local province = LOCAL_PROVINCE(leader)
 	if LEADER_OF_WARBAND(leader) ~= INVALID_ID then
 		return
 	end
@@ -31,16 +32,24 @@ function MilitaryEffects.gather_warband(leader)
 	end
 
 	local warband = DATA.create_warband()
-	DATA.force_create_warband_location(DATA.province_get_center(province), warband)
+	if settlement ~= INVALID_ID then
+		DATA.warband_set_in_settlement(warband,true)
+		DATA.force_create_warband_location(DATA.province_get_center(province), warband)
+	else -- otherwise pop is already in a warband and is starting one there
+		DATA.force_create_warband_location(WARBAND_TILE(leader), warband)
+	end
 	DATA.warband_set_current_status(warband, WARBAND_STATUS.IDLE)
 	DATA.warband_set_idle_stance(warband, WARBAND_STANCE.FORAGE)
-	DATA.warband_set_name(warband, "Warband of " .. NAME(leader))
+	DATA.warband_set_name(warband, "Party of " .. NAME(leader))
 
+	demography_effects.recruit(leader, warband, UNIT_TYPE.CIVILIAN)
 	DATA.force_create_warband_leader(leader, warband)
 	warband_effects.set_recruiter(warband, leader)
 
-	if WORLD:does_player_see_realm_news(PROVINCE_REALM(province)) then
-		WORLD:emit_notification(NAME(leader) .. " is gathering his own warband.")
+	if WORLD:does_player_see_realm_news(PROVINCE_REALM(province))
+		or WORLD:does_player_see_province_news(province)
+	then
+		WORLD:emit_notification(NAME(leader) .. " is gathering his own party.")
 	end
 end
 
@@ -50,12 +59,16 @@ function MilitaryEffects.gather_guard(realm)
 	local province = CAPITOL(realm)
 	local warband = DATA.create_warband()
 	DATA.force_create_warband_location(DATA.province_get_center(province), warband)
+	DATA.warband_set_in_settlement(warband,true)
 	DATA.warband_set_current_status(warband, WARBAND_STATUS.IDLE)
 	DATA.warband_set_idle_stance(warband, WARBAND_STANCE.FORAGE)
 	DATA.warband_set_name(warband, "Guard of " .. DATA.realm_get_name(realm))
 	DATA.force_create_realm_guard(warband, realm)
-	if WORLD:does_player_see_realm_news(realm) then
-		WORLD:emit_notification("Guard was organised.")
+
+	if WORLD:does_player_see_realm_news(PROVINCE_REALM(province))
+		or WORLD:does_player_see_province_news(province)
+	then
+		WORLD:emit_notification(REALM_NAME(realm) .. " organised a new guard.")
 	end
 end
 
@@ -67,7 +80,17 @@ function MilitaryEffects.dissolve_guard(realm)
 	if guard == INVALID_ID then
 		return
 	end
-
+	local leader = LEADER(realm)
+	DATA.for_each_trade_good(function (item)
+		local amount = DATA.warband_get_inventory(guard,item)
+		DATA.pop_inc_inventory(leader,item,amount)
+	end)
+	economy_effects.change_treasury(realm, -DATA.warband_get_treasury(guard), ECONOMY_REASON.WARBAND)
+	-- place all pop into closest settlement
+	DATA.for_each_warband_unit_from_warband(guard, function(item)
+		local unit = DATA.warband_unit_get_unit(item)
+		demography_effects.unrecruit(unit)
+	end)
 	DATA.delete_warband(guard)
 	if WORLD:does_player_see_realm_news(realm) then
 		WORLD:emit_notification("Realm's guard was dissolved.")
@@ -81,10 +104,22 @@ function MilitaryEffects.dissolve_warband(leader)
 	if warband == INVALID_ID then
 		return
 	end
+	local local_province = TILE_PROVINCE(WARBAND_TILE(warband))
+	DATA.for_each_warband_unit_from_warband(warband, function (item)
+		local unit = DATA.warband_unit_get_unit(item)
+		DATA.force_create_pop_location(local_province, unit)
+		if (IS_CHARACTER(unit)) then
+			DATA.force_create_character_location(local_province, unit)
+		end
+	end)
+	DATA.for_each_trade_good(function (item)
+		local amount = DATA.warband_get_inventory(warband,item)
+		DATA.pop_inc_inventory(leader,item,amount)
+	end)
 	economy_effects.gift_to_warband(warband, leader, -DATA.warband_get_treasury(warband))
 	DATA.delete_warband(warband)
 
-	if WORLD:does_player_see_realm_news(PROVINCE_REALM(PROVINCE(leader))) then
+	if WORLD:does_player_see_province_news(TILE_PROVINCE(WARBAND_TILE(warband))) then
 		WORLD:emit_notification(NAME(leader) .. " dissolved his warband.")
 	end
 end
@@ -413,8 +448,8 @@ function MilitaryEffects.attack(attacker, defender, spotted)
 	local def_frac = defpower / (def_stack / atk_stack)
 
 	--- kill dead ones
-	local losses = demography_utils.kill_off_army(attacker, 1 - frac)
-	local def_losses = demography_utils.kill_off_army(defender, 1 - def_frac)
+	local losses = demography_effects.kill_off_army(attacker, 1 - frac)
+	local def_losses = demography_effects.kill_off_army(defender, 1 - def_frac)
 	return victory, losses, def_losses
 end
 

@@ -9,83 +9,83 @@ local ffi = require("ffi")
 ---@field is_province number
 ---@class (exact) fat_province_id
 ---@field id province_id Unique province id
----@field name string 
----@field r number 
----@field g number 
----@field b number 
----@field is_land boolean 
----@field province_id number 
----@field size number 
+---@field name string
+---@field r number
+---@field g number
+---@field b number
+---@field is_land boolean
+---@field province_id number
+---@field size number
 ---@field hydration number Number of humans that can live of off this provinces innate water
----@field movement_cost number 
+---@field movement_cost number
 ---@field center tile_id The tile which contains this province's settlement, if there is any.
----@field infrastructure_needed number 
----@field infrastructure number 
----@field infrastructure_investment number 
----@field infrastructure_efficiency number 
----@field local_wealth number 
----@field trade_wealth number 
----@field local_income number 
----@field local_building_upkeep number 
+---@field infrastructure_needed number
+---@field infrastructure number
+---@field infrastructure_investment number
+---@field infrastructure_efficiency number
+---@field local_wealth number
+---@field trade_wealth number
+---@field local_income number
+---@field local_building_upkeep number
 ---@field foragers number Keeps track of the number of foragers in the province. Used to calculate yields of independent foraging.
 ---@field foragers_water number amount foraged by pops and characters
 ---@field foragers_limit number amount of calories foraged by pops and characters
----@field forage_efficiency number 
+---@field forage_efficiency number
 ---@field mood number how local population thinks about the state
----@field on_a_river boolean 
----@field on_a_forest boolean 
+---@field on_a_river boolean
+---@field on_a_forest boolean
 
 ---@class struct_province
----@field r number 
----@field g number 
----@field b number 
----@field is_land boolean 
----@field province_id number 
----@field size number 
+---@field r number
+---@field g number
+---@field b number
+---@field is_land boolean
+---@field province_id number
+---@field size number
 ---@field hydration number Number of humans that can live of off this provinces innate water
----@field movement_cost number 
+---@field movement_cost number
 ---@field center tile_id The tile which contains this province's settlement, if there is any.
----@field infrastructure_needed number 
----@field infrastructure number 
----@field infrastructure_investment number 
----@field infrastructure_efficiency number 
----@field technologies_present table<technology_id, number> 
----@field technologies_researchable table<technology_id, number> 
----@field buildable_buildings table<building_type_id, number> 
----@field local_production table<trade_good_id, number> 
----@field temp_buffer_0 table<trade_good_id, number> 
----@field local_consumption table<trade_good_id, number> 
----@field local_demand table<trade_good_id, number> 
----@field local_satisfaction table<trade_good_id, number> 
----@field temp_buffer_use_0 table<use_case_id, number> 
----@field temp_buffer_use_grad table<use_case_id, number> 
----@field local_use_satisfaction table<use_case_id, number> 
----@field local_use_buffer_demand table<use_case_id, number> 
----@field local_use_buffer_supply table<use_case_id, number> 
----@field local_use_buffer_cost table<use_case_id, number> 
----@field local_storage table<trade_good_id, number> 
----@field local_merchants_demand table<trade_good_id, number> 
----@field local_prices table<trade_good_id, number> 
----@field local_wealth number 
----@field trade_wealth number 
----@field local_income number 
----@field local_building_upkeep number 
+---@field infrastructure_needed number
+---@field infrastructure number
+---@field infrastructure_investment number
+---@field infrastructure_efficiency number
+---@field technologies_present table<technology_id, number>
+---@field technologies_researchable table<technology_id, number>
+---@field buildable_buildings table<building_type_id, number>
+---@field local_production table<trade_good_id, number>
+---@field temp_buffer_0 table<trade_good_id, number>
+---@field local_consumption table<trade_good_id, number>
+---@field local_demand table<trade_good_id, number>
+---@field local_satisfaction table<trade_good_id, number>
+---@field temp_buffer_use_0 table<use_case_id, number>
+---@field temp_buffer_use_grad table<use_case_id, number>
+---@field local_use_satisfaction table<use_case_id, number>
+---@field local_use_buffer_demand table<use_case_id, number>
+---@field local_use_buffer_supply table<use_case_id, number>
+---@field local_use_buffer_cost table<use_case_id, number>
+---@field local_storage table<trade_good_id, number>
+---@field local_merchants_demand table<trade_good_id, number>
+---@field local_prices table<trade_good_id, number>
+---@field local_wealth number
+---@field trade_wealth number
+---@field local_income number
+---@field local_building_upkeep number
 ---@field foragers number Keeps track of the number of foragers in the province. Used to calculate yields of independent foraging.
 ---@field foragers_water number amount foraged by pops and characters
 ---@field foragers_limit number amount of calories foraged by pops and characters
----@field forage_efficiency number 
----@field foragers_targets table<number, struct_forage_container> 
+---@field forage_efficiency number
+---@field foragers_targets table<number, struct_forage_container>
 ---@field local_resources table<number, struct_resource_location> An array of local resources and their positions
----@field total_resources table<resource_id, number> 
----@field used_resources table<resource_id, number> 
+---@field total_resources table<resource_id, number>
+---@field used_resources table<resource_id, number>
 ---@field mood number how local population thinks about the state
----@field unit_types table<unit_type_id, number> 
----@field throughput_boosts table<production_method_id, number> 
----@field input_efficiency_boosts table<production_method_id, number> 
----@field local_efficiency_boosts table<production_method_id, number> 
----@field output_efficiency_boosts table<production_method_id, number> 
----@field on_a_river boolean 
----@field on_a_forest boolean 
+---@field unit_types table<unit_type_id, number>
+---@field throughput_boosts table<production_method_id, number>
+---@field input_efficiency_boosts table<production_method_id, number>
+---@field local_efficiency_boosts table<production_method_id, number>
+---@field output_efficiency_boosts table<production_method_id, number>
+---@field on_a_river boolean
+---@field on_a_forest boolean
 
 
 ffi.cdef[[
@@ -246,9 +246,9 @@ DCON.dcon_province_resize_local_merchants_demand(101)
 DCON.dcon_province_resize_local_prices(101)
 DCON.dcon_province_resize_foragers_targets(26)
 DCON.dcon_province_resize_local_resources(26)
+DCON.dcon_province_resize_unit_types(6)
 DCON.dcon_province_resize_total_resources(301)
 DCON.dcon_province_resize_used_resources(301)
-DCON.dcon_province_resize_unit_types(5)
 DCON.dcon_province_resize_throughput_boosts(251)
 DCON.dcon_province_resize_input_efficiency_boosts(251)
 DCON.dcon_province_resize_local_efficiency_boosts(251)
@@ -257,14 +257,14 @@ DCON.dcon_province_resize_output_efficiency_boosts(251)
 function DATA.create_province()
     ---@type province_id
     local i  = DCON.dcon_create_province() + 1
-    return i --[[@as province_id]] 
+    return i --[[@as province_id]]
 end
 ---@param i province_id
 function DATA.delete_province(i)
     assert(DCON.dcon_province_is_valid(i - 1), " ATTEMPT TO DELETE INVALID OBJECT " .. tostring(i))
     return DCON.dcon_delete_province(i - 1)
 end
----@param func fun(item: province_id) 
+---@param func fun(item: province_id)
 function DATA.for_each_province(func)
     ---@type number
     local range = DCON.dcon_province_size()
@@ -272,10 +272,10 @@ function DATA.for_each_province(func)
         if DCON.dcon_province_is_valid(i) then func(i + 1 --[[@as province_id]]) end
     end
 end
----@param func fun(item: province_id):boolean 
----@return table<province_id, province_id> 
+---@param func fun(item: province_id):boolean
+---@return table<province_id, province_id>
 function DATA.filter_province(func)
-    ---@type table<province_id, province_id> 
+    ---@type table<province_id, province_id>
     local t = {}
     ---@type number
     local range = DCON.dcon_province_size()
@@ -286,7 +286,7 @@ function DATA.filter_province(func)
 end
 
 ---@param province_id province_id valid province id
----@return string name 
+---@return string name
 function DATA.province_get_name(province_id)
     return DATA.province_name[province_id]
 end
@@ -296,7 +296,7 @@ function DATA.province_set_name(province_id, value)
     DATA.province_name[province_id] = value
 end
 ---@param province_id province_id valid province id
----@return number r 
+---@return number r
 function DATA.province_get_r(province_id)
     return DCON.dcon_province_get_r(province_id - 1)
 end
@@ -313,7 +313,7 @@ function DATA.province_inc_r(province_id, value)
     DCON.dcon_province_set_r(province_id - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return number g 
+---@return number g
 function DATA.province_get_g(province_id)
     return DCON.dcon_province_get_g(province_id - 1)
 end
@@ -330,7 +330,7 @@ function DATA.province_inc_g(province_id, value)
     DCON.dcon_province_set_g(province_id - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return number b 
+---@return number b
 function DATA.province_get_b(province_id)
     return DCON.dcon_province_get_b(province_id - 1)
 end
@@ -347,7 +347,7 @@ function DATA.province_inc_b(province_id, value)
     DCON.dcon_province_set_b(province_id - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return boolean is_land 
+---@return boolean is_land
 function DATA.province_get_is_land(province_id)
     return DCON.dcon_province_get_is_land(province_id - 1)
 end
@@ -357,7 +357,7 @@ function DATA.province_set_is_land(province_id, value)
     DCON.dcon_province_set_is_land(province_id - 1, value)
 end
 ---@param province_id province_id valid province id
----@return number province_id 
+---@return number province_id
 function DATA.province_get_province_id(province_id)
     return DCON.dcon_province_get_province_id(province_id - 1)
 end
@@ -374,7 +374,7 @@ function DATA.province_inc_province_id(province_id, value)
     DCON.dcon_province_set_province_id(province_id - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return number size 
+---@return number size
 function DATA.province_get_size(province_id)
     return DCON.dcon_province_get_size(province_id - 1)
 end
@@ -408,7 +408,7 @@ function DATA.province_inc_hydration(province_id, value)
     DCON.dcon_province_set_hydration(province_id - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return number movement_cost 
+---@return number movement_cost
 function DATA.province_get_movement_cost(province_id)
     return DCON.dcon_province_get_movement_cost(province_id - 1)
 end
@@ -435,7 +435,7 @@ function DATA.province_set_center(province_id, value)
     DCON.dcon_province_set_center(province_id - 1, value - 1)
 end
 ---@param province_id province_id valid province id
----@return number infrastructure_needed 
+---@return number infrastructure_needed
 function DATA.province_get_infrastructure_needed(province_id)
     return DCON.dcon_province_get_infrastructure_needed(province_id - 1)
 end
@@ -452,7 +452,7 @@ function DATA.province_inc_infrastructure_needed(province_id, value)
     DCON.dcon_province_set_infrastructure_needed(province_id - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return number infrastructure 
+---@return number infrastructure
 function DATA.province_get_infrastructure(province_id)
     return DCON.dcon_province_get_infrastructure(province_id - 1)
 end
@@ -469,7 +469,7 @@ function DATA.province_inc_infrastructure(province_id, value)
     DCON.dcon_province_set_infrastructure(province_id - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return number infrastructure_investment 
+---@return number infrastructure_investment
 function DATA.province_get_infrastructure_investment(province_id)
     return DCON.dcon_province_get_infrastructure_investment(province_id - 1)
 end
@@ -486,7 +486,7 @@ function DATA.province_inc_infrastructure_investment(province_id, value)
     DCON.dcon_province_set_infrastructure_investment(province_id - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return number infrastructure_efficiency 
+---@return number infrastructure_efficiency
 function DATA.province_get_infrastructure_efficiency(province_id)
     return DCON.dcon_province_get_infrastructure_efficiency(province_id - 1)
 end
@@ -504,7 +504,7 @@ function DATA.province_inc_infrastructure_efficiency(province_id, value)
 end
 ---@param province_id province_id valid province id
 ---@param index technology_id valid
----@return number technologies_present 
+---@return number technologies_present
 function DATA.province_get_technologies_present(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_technologies_present(province_id - 1, index - 1)
@@ -525,7 +525,7 @@ function DATA.province_inc_technologies_present(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index technology_id valid
----@return number technologies_researchable 
+---@return number technologies_researchable
 function DATA.province_get_technologies_researchable(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_technologies_researchable(province_id - 1, index - 1)
@@ -546,7 +546,7 @@ function DATA.province_inc_technologies_researchable(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index building_type_id valid
----@return number buildable_buildings 
+---@return number buildable_buildings
 function DATA.province_get_buildable_buildings(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_buildable_buildings(province_id - 1, index - 1)
@@ -567,7 +567,7 @@ function DATA.province_inc_buildable_buildings(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index trade_good_id valid
----@return number local_production 
+---@return number local_production
 function DATA.province_get_local_production(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_local_production(province_id - 1, index - 1)
@@ -588,7 +588,7 @@ function DATA.province_inc_local_production(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index trade_good_id valid
----@return number temp_buffer_0 
+---@return number temp_buffer_0
 function DATA.province_get_temp_buffer_0(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_temp_buffer_0(province_id - 1, index - 1)
@@ -609,7 +609,7 @@ function DATA.province_inc_temp_buffer_0(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index trade_good_id valid
----@return number local_consumption 
+---@return number local_consumption
 function DATA.province_get_local_consumption(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_local_consumption(province_id - 1, index - 1)
@@ -630,7 +630,7 @@ function DATA.province_inc_local_consumption(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index trade_good_id valid
----@return number local_demand 
+---@return number local_demand
 function DATA.province_get_local_demand(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_local_demand(province_id - 1, index - 1)
@@ -651,7 +651,7 @@ function DATA.province_inc_local_demand(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index trade_good_id valid
----@return number local_satisfaction 
+---@return number local_satisfaction
 function DATA.province_get_local_satisfaction(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_local_satisfaction(province_id - 1, index - 1)
@@ -672,7 +672,7 @@ function DATA.province_inc_local_satisfaction(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index use_case_id valid
----@return number temp_buffer_use_0 
+---@return number temp_buffer_use_0
 function DATA.province_get_temp_buffer_use_0(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_temp_buffer_use_0(province_id - 1, index - 1)
@@ -693,7 +693,7 @@ function DATA.province_inc_temp_buffer_use_0(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index use_case_id valid
----@return number temp_buffer_use_grad 
+---@return number temp_buffer_use_grad
 function DATA.province_get_temp_buffer_use_grad(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_temp_buffer_use_grad(province_id - 1, index - 1)
@@ -714,7 +714,7 @@ function DATA.province_inc_temp_buffer_use_grad(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index use_case_id valid
----@return number local_use_satisfaction 
+---@return number local_use_satisfaction
 function DATA.province_get_local_use_satisfaction(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_local_use_satisfaction(province_id - 1, index - 1)
@@ -735,7 +735,7 @@ function DATA.province_inc_local_use_satisfaction(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index use_case_id valid
----@return number local_use_buffer_demand 
+---@return number local_use_buffer_demand
 function DATA.province_get_local_use_buffer_demand(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_local_use_buffer_demand(province_id - 1, index - 1)
@@ -756,7 +756,7 @@ function DATA.province_inc_local_use_buffer_demand(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index use_case_id valid
----@return number local_use_buffer_supply 
+---@return number local_use_buffer_supply
 function DATA.province_get_local_use_buffer_supply(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_local_use_buffer_supply(province_id - 1, index - 1)
@@ -777,7 +777,7 @@ function DATA.province_inc_local_use_buffer_supply(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index use_case_id valid
----@return number local_use_buffer_cost 
+---@return number local_use_buffer_cost
 function DATA.province_get_local_use_buffer_cost(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_local_use_buffer_cost(province_id - 1, index - 1)
@@ -798,7 +798,7 @@ function DATA.province_inc_local_use_buffer_cost(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index trade_good_id valid
----@return number local_storage 
+---@return number local_storage
 function DATA.province_get_local_storage(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_local_storage(province_id - 1, index - 1)
@@ -819,7 +819,7 @@ function DATA.province_inc_local_storage(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index trade_good_id valid
----@return number local_merchants_demand 
+---@return number local_merchants_demand
 function DATA.province_get_local_merchants_demand(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_local_merchants_demand(province_id - 1, index - 1)
@@ -840,7 +840,7 @@ function DATA.province_inc_local_merchants_demand(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index trade_good_id valid
----@return number local_prices 
+---@return number local_prices
 function DATA.province_get_local_prices(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_local_prices(province_id - 1, index - 1)
@@ -860,7 +860,7 @@ function DATA.province_inc_local_prices(province_id, index, value)
     DCON.dcon_province_set_local_prices(province_id - 1, index - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return number local_wealth 
+---@return number local_wealth
 function DATA.province_get_local_wealth(province_id)
     return DCON.dcon_province_get_local_wealth(province_id - 1)
 end
@@ -877,7 +877,7 @@ function DATA.province_inc_local_wealth(province_id, value)
     DCON.dcon_province_set_local_wealth(province_id - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return number trade_wealth 
+---@return number trade_wealth
 function DATA.province_get_trade_wealth(province_id)
     return DCON.dcon_province_get_trade_wealth(province_id - 1)
 end
@@ -894,7 +894,7 @@ function DATA.province_inc_trade_wealth(province_id, value)
     DCON.dcon_province_set_trade_wealth(province_id - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return number local_income 
+---@return number local_income
 function DATA.province_get_local_income(province_id)
     return DCON.dcon_province_get_local_income(province_id - 1)
 end
@@ -911,7 +911,7 @@ function DATA.province_inc_local_income(province_id, value)
     DCON.dcon_province_set_local_income(province_id - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return number local_building_upkeep 
+---@return number local_building_upkeep
 function DATA.province_get_local_building_upkeep(province_id)
     return DCON.dcon_province_get_local_building_upkeep(province_id - 1)
 end
@@ -979,7 +979,7 @@ function DATA.province_inc_foragers_limit(province_id, value)
     DCON.dcon_province_set_foragers_limit(province_id - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return number forage_efficiency 
+---@return number forage_efficiency
 function DATA.province_get_forage_efficiency(province_id)
     return DCON.dcon_province_get_forage_efficiency(province_id - 1)
 end
@@ -997,28 +997,28 @@ function DATA.province_inc_forage_efficiency(province_id, value)
 end
 ---@param province_id province_id valid province id
 ---@param index number valid
----@return trade_good_id foragers_targets 
+---@return trade_good_id foragers_targets
 function DATA.province_get_foragers_targets_output_good(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_foragers_targets(province_id - 1, index - 1)[0].output_good
 end
 ---@param province_id province_id valid province id
 ---@param index number valid
----@return number foragers_targets 
+---@return number foragers_targets
 function DATA.province_get_foragers_targets_output_value(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_foragers_targets(province_id - 1, index - 1)[0].output_value
 end
 ---@param province_id province_id valid province id
 ---@param index number valid
----@return number foragers_targets 
+---@return number foragers_targets
 function DATA.province_get_foragers_targets_amount(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_foragers_targets(province_id - 1, index - 1)[0].amount
 end
 ---@param province_id province_id valid province id
 ---@param index number valid
----@return FORAGE_RESOURCE foragers_targets 
+---@return FORAGE_RESOURCE foragers_targets
 function DATA.province_get_foragers_targets_forage(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_foragers_targets(province_id - 1, index - 1)[0].forage
@@ -1091,7 +1091,7 @@ function DATA.province_set_local_resources_location(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index resource_id valid
----@return number total_resources 
+---@return number total_resources
 function DATA.province_get_total_resources(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_total_resources(province_id - 1, index - 1)
@@ -1112,7 +1112,7 @@ function DATA.province_inc_total_resources(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index resource_id valid
----@return number used_resources 
+---@return number used_resources
 function DATA.province_get_used_resources(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_used_resources(province_id - 1, index - 1)
@@ -1150,7 +1150,7 @@ function DATA.province_inc_mood(province_id, value)
 end
 ---@param province_id province_id valid province id
 ---@param index unit_type_id valid
----@return number unit_types 
+---@return number unit_types
 function DATA.province_get_unit_types(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_unit_types(province_id - 1, index - 1)
@@ -1171,7 +1171,7 @@ function DATA.province_inc_unit_types(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index production_method_id valid
----@return number throughput_boosts 
+---@return number throughput_boosts
 function DATA.province_get_throughput_boosts(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_throughput_boosts(province_id - 1, index - 1)
@@ -1192,7 +1192,7 @@ function DATA.province_inc_throughput_boosts(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index production_method_id valid
----@return number input_efficiency_boosts 
+---@return number input_efficiency_boosts
 function DATA.province_get_input_efficiency_boosts(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_input_efficiency_boosts(province_id - 1, index - 1)
@@ -1213,7 +1213,7 @@ function DATA.province_inc_input_efficiency_boosts(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index production_method_id valid
----@return number local_efficiency_boosts 
+---@return number local_efficiency_boosts
 function DATA.province_get_local_efficiency_boosts(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_local_efficiency_boosts(province_id - 1, index - 1)
@@ -1234,7 +1234,7 @@ function DATA.province_inc_local_efficiency_boosts(province_id, index, value)
 end
 ---@param province_id province_id valid province id
 ---@param index production_method_id valid
----@return number output_efficiency_boosts 
+---@return number output_efficiency_boosts
 function DATA.province_get_output_efficiency_boosts(province_id, index)
     assert(index ~= 0)
     return DCON.dcon_province_get_output_efficiency_boosts(province_id - 1, index - 1)
@@ -1254,7 +1254,7 @@ function DATA.province_inc_output_efficiency_boosts(province_id, index, value)
     DCON.dcon_province_set_output_efficiency_boosts(province_id - 1, index - 1, current + value)
 end
 ---@param province_id province_id valid province id
----@return boolean on_a_river 
+---@return boolean on_a_river
 function DATA.province_get_on_a_river(province_id)
     return DCON.dcon_province_get_on_a_river(province_id - 1)
 end
@@ -1264,7 +1264,7 @@ function DATA.province_set_on_a_river(province_id, value)
     DCON.dcon_province_set_on_a_river(province_id - 1, value)
 end
 ---@param province_id province_id valid province id
----@return boolean on_a_forest 
+---@return boolean on_a_forest
 function DATA.province_get_on_a_forest(province_id)
     return DCON.dcon_province_get_on_a_forest(province_id - 1)
 end

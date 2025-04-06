@@ -61,6 +61,7 @@ function load()
 			if expedition_leader == nil then
 				expedition_leader = political_effects.grant_nobility_to_random_pop(
 					associated_data.origin_province,
+					PROVINCE_REALM(associated_data.origin_province),
 					POLITICS_REASON.EXPEDITIONLEADER
 				)
 				if expedition_leader == nil then
@@ -101,8 +102,8 @@ function load()
 					local race = F_RACE(pop)
 					if
 						home_province == province
-						and AGE(pop) >= race.teen_age
-						and AGE(pop) < race.middle_age
+						and AGE_YEARS(pop) >= race.teen_age
+						and AGE_YEARS(pop) < race.middle_age
 					then
 						table.insert(family_units, pop)
 					end
@@ -245,7 +246,7 @@ function load()
 
 			political_effects.transfer_power(new_realm, expedition_leader, POLITICS_REASON.EXPEDITIONLEADER)
 
-			-- explore neighbour lands
+			-- explore neighbor lands
 			realm_utils.explore(new_realm, CAPITOL(new_realm))
 			diplomacy_events.set_tributary(colonizer_realm, new_realm)
 		end

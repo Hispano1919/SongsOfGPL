@@ -105,7 +105,7 @@ local function load()
                 return true
             end
 			local race = F_RACE(root)
-            return AGE(root) > race.elder_age * 0.5 + race.middle_age * 0.5
+            return AGE_YEARS(root) > race.elder_age * 0.5 + race.middle_age * 0.5
 		end,
 		clickable = function(root, primary_target)
 			if primary_target == root then

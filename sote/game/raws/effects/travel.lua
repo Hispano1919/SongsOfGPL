@@ -21,28 +21,27 @@ function travel_effects.exit_settlement(character)
 		return
 	end
 
-	local location_character = DATA.get_character_location_from_character(character)
-	if DATA.character_location_get_location(location_character) ~= INVALID_ID then
-		DATA.delete_character_location(location_character)
-	end
-
-	local location_pop = DATA.get_pop_location_from_pop(character)
-	if DATA.pop_location_get_location(location_pop) ~= INVALID_ID then
-		DATA.delete_pop_location(location_pop)
-	end
+	DATA.warband_set_in_settlement(warband,false)
 
 	DATA.for_each_warband_unit_from_warband(warband, function (item)
 		local unit = DATA.warband_unit_get_unit(item)
 
-		local location_unit_character = DATA.get_character_location_from_character(unit)
-		if DATA.character_location_get_location(location_unit_character) ~= INVALID_ID then
-			DATA.delete_character_location(location_unit_character)
+		DATA.delete_pop_location(DATA.get_pop_location_from_pop(unit))
+		if IS_CHARACTER(unit) then
+			DATA.delete_character_location(DATA.get_character_location_from_character(unit))
 		end
 
-		local location_unit_pop = DATA.get_pop_location_from_pop(unit)
-		if DATA.pop_location_get_location(location_unit_pop) ~= INVALID_ID then
-			DATA.delete_pop_location(location_unit_pop)
-		end
+		-- automatically recruit dependents as followers when leaving settlement
+		DATA.for_each_parent_child_relation_from_parent(unit,function(child_rel)
+			local child = DATA.parent_child_relation_get_child(child_rel)
+			if IS_DEPENDENT_OF(child,unit) and UNIT_OF(child)==INVALID_ID then
+				require "game.raws.effects.demography".recruit(child,warband,UNIT_TYPE.FOLLOWER)
+				DATA.delete_pop_location(DATA.get_pop_location_from_pop(child))
+				if IS_CHARACTER(child) then
+					DATA.delete_character_location(DATA.get_character_location_from_character(child))
+				end
+			end
+		end);
 	end)
 end
 
@@ -66,15 +65,21 @@ function travel_effects.enter_settlement(character)
 		return
 	end
 
-	DATA.force_create_character_location(local_province, character)
+	DATA.warband_set_in_settlement(warband,true)
 
 	DATA.for_each_warband_unit_from_warband(warband, function (item)
 		local unit = DATA.warband_unit_get_unit(item)
 
+		DATA.force_create_pop_location(local_province, unit)
 		if (IS_CHARACTER(unit)) then
 			DATA.force_create_character_location(local_province, unit)
-		else
-			DATA.force_create_pop_location(local_province, unit)
+		end
+		-- automatically unrecruit non dependent followers if at home
+		if DATA.warband_unit_get_type(item) == UNIT_TYPE.FOLLOWER then
+			local home = HOME(unit)
+			if home~=INVALID_ID and home==province and not IS_DEPENDENT(unit) then
+				require "game.raws.effects.demography".unrecruit(unit)
+			end
 		end
 	end)
 end

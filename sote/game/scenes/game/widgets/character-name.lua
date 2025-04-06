@@ -50,7 +50,7 @@ local function name(character_id)
                 in_warband = warband_recruiter
                 title = title .. "Recruiter"
             else
-                local unit_of = pop_utils.get_unit_of(character_id)
+                local unit_of = UNIT_OF(character_id)
                 if unit_of ~= INVALID_ID then
                     in_warband = unit_of
                     if guard and guard == in_warband then
@@ -67,7 +67,7 @@ local function name(character_id)
         if guard and guard == in_warband then
             return title .. " of " .. REALM_NAME(guard)
         else
-            return title .. " of " .. strings.title(DATA.warband_get_name(character_id))
+            return title .. " of " .. WARBAND_NAME(character_id)
         end
     elseif realm ~= INVALID_ID then
         return strings.title(rank_name(character_id)) .. " of " .. DATA.realm_get_name(realm)
