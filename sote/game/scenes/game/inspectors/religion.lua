@@ -1,88 +1,80 @@
-local ui = require "engine.ui"
-local ut = require "game.ui-utils"
-local string = require "engine.string"
+local language_utils = require "game.entities.language".Language
 
-local religion = {}
+local cl = {}
 
--- Calcula el rect del inspector de religión
-local function get_rect()
-    local fs = ui.fullscreen()
-    return fs:subrect(ut.BASE_HEIGHT*2, ut.BASE_HEIGHT * 12, ut.BASE_HEIGHT * 12, fs.height, "left", "up")
+
+cl.Spirit = {}
+cl.Spirit.__index = cl.Spirit
+---@param domain string
+---@param culture culture_id
+---@return deity_id
+function cl.Spirit:new(domain, culture)
+    local deity = DATA.create_deity()  -- Asume función de creación
+    
+    DATA.deity_set_name(deity, language_utils.get_random_name(DATA.culture_get_language(culture)))
+    DATA.deity_set_domain(deity, domain)
+    DATA.deity_set_rank(deity, 1)
+    
+    return deity
 end
 
--- Mask para cerrar al clicar fuera
-function religion.mask()
-    if ui.trigger(get_rect()) then return false end
-    return true
+cl.Religion = {}
+cl.Religion.__index = cl.Religion
+---@param culture culture_id
+---@return religion_id
+function cl.Religion:new(culture)
+	local religion = DATA.create_religion()
+
+	DATA.religion_set_r(religion, love.math.random())
+	DATA.religion_set_g(religion, love.math.random())
+	DATA.religion_set_b(religion, love.math.random())
+
+	DATA.religion_set_name(religion, language_utils.get_random_faith_name(DATA.culture_get_language(culture)))
+
+	return religion
 end
 
---- Dibuja el inspector de religión
----@param gam GameScene
----@param rect Rect
-function religion.draw(gam, rect)
-    -- Si no nos pasan rect, lo calculamos
-    rect = rect or get_rect()
+---@class Faith
+cl.Faith = {}
+cl.Faith.__index = cl.Faith
 
-    local pid = WORLD.player_character
-    --print(pid)
+---@param religion religion_id
+---@param culture culture_id
+---@return faith_id
+function cl.Faith:new(religion, culture)
+	local faith = DATA.create_faith()
 
-    local pop = DATA.fatten_pop(pid)
+	DATA.faith_set_religion(faith, religion)  -- <- Línea añadida
 
-    local fid = pop.faith      -- número (faith_id)
-    --print(fid)
 
-    local faith = DATA.fatten_faith(fid)
+	DATA.faith_set_r(faith, DATA.religion_get_r(religion))
+	DATA.faith_set_g(faith, DATA.religion_get_g(religion))
+	DATA.faith_set_b(faith, DATA.religion_get_b(religion))
 
-    local nombre_fe   = faith.name
-    --print(nombre_fe)
+	DATA.force_create_subreligion(religion, faith)
+	DATA.faith_set_name(faith, language_utils.get_random_faith_name(DATA.culture_get_language(culture)))
+	DATA.faith_set_burial_rites(faith, BURIAL_RIGHTS.BURIAL)
 
-    local rites_id = faith.burial_rites        -- valor de tipo BURIAL_RITES
-    print(rites_id)
-    local rite_string = BURIAL_NAMES[rites_id] or "DESCONOCIDO"
-    print(rite_string)
-    --[[
-    local br = DATA.fatten_burial_rites(rites_id)
-    local nombre_rito = br.name               -- string
-    local desc_rito   = br.description        -- string
+	DATA.faith_set_birth_rites(faith, BIRTH_RITES.BLESSING)
+    DATA.faith_set_passage_rites(faith, PASSAGE_RITES.COMING_OF_AGE)
+    DATA.faith_set_disease_rites(faith, DISEASE_RITES.HEALING_PRAYER)
 
-    print(nombre_rito)
-    print(desc_rito)
-    ]]--
-
-    -- Obtener la religión padre desde la fe
-    local religion_id = faith.religion  -- <- Nueva línea
-    local religion_name = DATA.religion_get_name(religion_id) or "Desconocida"  -- Asume que existe DATA.religion_get_name
-
-    -- Panel de fondo
-    ui.panel(rect)
-    local unit = ut.BASE_HEIGHT
-
-    -- Título del inspector
-    local title_panel = rect:subrect(0, 0, rect.width, unit, "left", "up"):shrink(5)
-    ui.centered_text("Religion Inspector", title_panel)
-
-    -- Área de contenido
-    local content = rect:subrect(0, unit, rect.width, rect.height - unit, "left", "up"):shrink(5)
-    local layout = ui.layout_builder()
-        :vertical()
-        :position(content.x, content.y)
-        :spacing(unit)
-        :build()
-
-    -- Sección: Faith
-    local faith_panel = layout:next(content.width, unit)
-    ut.data_entry("Faith: ", nombre_fe, faith_panel, "TODO: cargar y mostrar la fe del personaje")
-
-    -- Sección: Religion
-    local rel_panel = layout:next(content.width, unit)
-    ut.data_entry("Religion: ", religion_name, rel_panel, "TODO: cargar y mostrar la religión")
-
-    -- Sección: Burial Rites
-    local rites_panel = layout:next(content.width, unit)
-    ut.data_entry("Burial Rites: ", rite_string, rites_panel, "TODO: cargar y mostrar el rito funerario")
-
-    -- TODO: Añadir más secciones (doctrinas, rituales, estadísticas, etc.)
+	return faith
 end
 
-return religion
+---@class Rite
+cl.Rite = {}
+cl.Rite.__index = cl.Rite
+---@param faith faith_id
+---@param culture culture_id
+---@return rite_id
+function cl.Rite:new(faith, culture)
+    local rite = DATA.create_rite()  -- Necesitarías implementar esto
+    
+    DATA.rite_set_faith(rite, faith)
+    DATA.rite_set_name(rite, language_utils.get_random_faith_name(DATA.culture_get_language(culture)))
+    
+    return rite
+end
 
+return cl
