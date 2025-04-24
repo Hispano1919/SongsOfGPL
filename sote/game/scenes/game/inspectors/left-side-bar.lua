@@ -41,7 +41,8 @@ function inspector.draw(gam)
         "warband",
         "property",
         "preferences",
-        "quests"
+        "quests",
+        "religion"
     }
 
     local inspector_icons = {
@@ -52,7 +53,8 @@ function inspector.draw(gam)
         ["warband"] = ASSETS.icons["barbute.png"],
         ["property"] = ASSETS.icons["bank.png"],
         ["preferences"] = ASSETS.icons["shrug.png"],
-        ["quests"] =ASSETS.icons["coins.png"]
+        ["quests"] =ASSETS.icons["coins.png"],
+        ["religion"] =ASSETS.icons["coins.png"]
     }
 
     local inspector_tooltips = {
@@ -63,7 +65,8 @@ function inspector.draw(gam)
         ["warband"] = "View your warband",
         ["property"] = "Assess your property",
         ["preferences"] = "Decide your preferences",
-        ["quests"] = "View available quests"
+        ["quests"] = "View available quests",
+        ["religion"] = "View religion"
     }
 
     local inspector_visible = {
@@ -99,7 +102,14 @@ function inspector.draw(gam)
         ["quests"] = function ()
             if WORLD.player_character == INVALID_ID then return false end
             return true
+        end,
+
+        ["religion"] = function ()
+            if WORLD.player_character == INVALID_ID then return false end
+            return true
         end
+
+
     }
 
     for _, inspector in pairs(inspectors) do
@@ -130,6 +140,9 @@ function inspector.draw(gam)
 	) then
 		gam.inspector = "confirm-exit"
 	end
+
+
+
 end
 
 
