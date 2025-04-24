@@ -41,6 +41,9 @@ DATA.faith_name= {}
 ---@type (BURIAL_RITES)[]
 DATA.faith_burial_rites= {}
 
+---@type (religion_id)[]  -- Línea añadida
+DATA.faith_religion = {}  -- Almacena el religion_id de cada faith
+
 ---faith: LUA bindings---
 
 DATA.faith_size = 10000
@@ -148,6 +151,18 @@ function DATA.faith_set_burial_rites(faith_id, value)
     DATA.faith_burial_rites[faith_id] = value
 end
 
+---@param faith_id faith_id valid faith id
+---@return religion_id religion 
+function DATA.faith_get_religion(faith_id)
+    return DATA.faith_religion[faith_id]
+end
+
+---@param faith_id faith_id valid faith id
+---@param value religion_id valid religion_id
+function DATA.faith_set_religion(faith_id, value)
+    DATA.faith_religion[faith_id] = value
+end
+
 local fat_faith_id_metatable = {
     __index = function (t,k)
         if (k == "name") then return DATA.faith_get_name(t.id) end
@@ -155,6 +170,8 @@ local fat_faith_id_metatable = {
         if (k == "g") then return DATA.faith_get_g(t.id) end
         if (k == "b") then return DATA.faith_get_b(t.id) end
         if (k == "burial_rites") then return DATA.faith_get_burial_rites(t.id) end
+        -- Añadir la religión:
+        if (k == "religion") then return DATA.faith_get_religion(t.id) end
         return rawget(t, k)
     end,
     __newindex = function (t,k,v)
@@ -176,6 +193,11 @@ local fat_faith_id_metatable = {
         end
         if (k == "burial_rites") then
             DATA.faith_set_burial_rites(t.id, v)
+            return
+        end
+        -- Añadir setter para religión:
+        if (k == "religion") then
+            DATA.faith_set_religion(t.id, v)
             return
         end
         rawset(t, k, v)
