@@ -43,6 +43,19 @@ DATA.faith_burial_rites= {}
 
 ---@type (religion_id)[]  -- Línea añadida
 DATA.faith_religion = {}  -- Almacena el religion_id de cada faith
+---faith: FFI arrays---
+---@type (string)[]
+DATA.faith_name = {}
+---@type (BURIAL_RITES)[]
+DATA.faith_burial_rites = {}
+---@type (BIRTH_RITES)[]  -- Nuevo
+DATA.faith_birth_rites = {}
+---@type (PASSAGE_RITES)[]  -- Nuevo
+DATA.faith_passage_rites = {}
+---@type (DISEASE_RITES)[]  -- Nuevo
+DATA.faith_disease_rites = {}
+
+
 
 ---faith: LUA bindings---
 
@@ -163,6 +176,31 @@ function DATA.faith_set_religion(faith_id, value)
     DATA.faith_religion[faith_id] = value
 end
 
+-- Funciones para los nuevos ritos
+function DATA.faith_get_birth_rites(faith_id)
+    return DATA.faith_birth_rites[faith_id]
+end
+
+function DATA.faith_set_birth_rites(faith_id, value)
+    DATA.faith_birth_rites[faith_id] = value
+end
+
+function DATA.faith_get_passage_rites(faith_id)
+    return DATA.faith_passage_rites[faith_id]
+end
+
+function DATA.faith_set_passage_rites(faith_id, value)
+    DATA.faith_passage_rites[faith_id] = value
+end
+
+function DATA.faith_get_disease_rites(faith_id)
+    return DATA.faith_disease_rites[faith_id]
+end
+
+function DATA.faith_set_disease_rites(faith_id, value)
+    DATA.faith_disease_rites[faith_id] = value
+end
+
 local fat_faith_id_metatable = {
     __index = function (t,k)
         if (k == "name") then return DATA.faith_get_name(t.id) end
@@ -170,8 +208,10 @@ local fat_faith_id_metatable = {
         if (k == "g") then return DATA.faith_get_g(t.id) end
         if (k == "b") then return DATA.faith_get_b(t.id) end
         if (k == "burial_rites") then return DATA.faith_get_burial_rites(t.id) end
-        -- Añadir la religión:
         if (k == "religion") then return DATA.faith_get_religion(t.id) end
+        if (k == "birth_rites") then return DATA.faith_get_birth_rites(t.id) end
+        if (k == "passage_rites") then return DATA.faith_get_passage_rites(t.id) end
+        if (k == "disease_rites") then return DATA.faith_get_disease_rites(t.id) end
         return rawget(t, k)
     end,
     __newindex = function (t,k,v)
@@ -198,6 +238,18 @@ local fat_faith_id_metatable = {
         -- Añadir setter para religión:
         if (k == "religion") then
             DATA.faith_set_religion(t.id, v)
+            return
+        end
+        if (k == "birth_rites") then
+            DATA.faith_set_birth_rites(t.id, v)
+            return
+        end
+        if (k == "passage_rites") then
+            DATA.faith_set_passage_rites(t.id, v)
+            return
+        end
+        if (k == "disease_rites") then
+            DATA.faith_set_disease_rites(t.id, v)
             return
         end
         rawset(t, k, v)
