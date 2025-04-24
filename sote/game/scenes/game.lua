@@ -160,7 +160,9 @@ local inspectors_table = {
 	["warband"] = require "sote.game.scenes.game.inspector-party",
 	["property"] = require "game.scenes.game.inspectors.property",
 	["preferences"] = require "game.scenes.game.inspectors.character_stance",
-	["quests"] = require "game.scenes.game.inspectors.quests"
+	["quests"] = require "game.scenes.game.inspectors.quests",
+	["religion"] = require "game.scenes.game.inspectors.religion"
+
 }
 
 local tile_inspectors = {
