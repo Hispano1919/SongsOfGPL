@@ -28,6 +28,9 @@ cl.Faith.__index = cl.Faith
 function cl.Faith:new(religion, culture)
 	local faith = DATA.create_faith()
 
+	DATA.faith_set_religion(faith, religion)  -- <- Línea añadida
+
+
 	DATA.faith_set_r(faith, DATA.religion_get_r(religion))
 	DATA.faith_set_g(faith, DATA.religion_get_g(religion))
 	DATA.faith_set_b(faith, DATA.religion_get_b(religion))
