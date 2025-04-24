@@ -1,0 +1,88 @@
+local ui = require "engine.ui"
+local ut = require "game.ui-utils"
+local string = require "engine.string"
+
+local religion = {}
+
+-- Calcula el rect del inspector de religión
+local function get_rect()
+    local fs = ui.fullscreen()
+    return fs:subrect(ut.BASE_HEIGHT*2, ut.BASE_HEIGHT * 12, ut.BASE_HEIGHT * 12, fs.height, "left", "up")
+end
+
+-- Mask para cerrar al clicar fuera
+function religion.mask()
+    if ui.trigger(get_rect()) then return false end
+    return true
+end
+
+--- Dibuja el inspector de religión
+---@param gam GameScene
+---@param rect Rect
+function religion.draw(gam, rect)
+    -- Si no nos pasan rect, lo calculamos
+    rect = rect or get_rect()
+
+    local pid = WORLD.player_character
+    --print(pid)
+
+    local pop = DATA.fatten_pop(pid)
+
+    local fid = pop.faith      -- número (faith_id)
+    --print(fid)
+
+    local faith = DATA.fatten_faith(fid)
+
+    local nombre_fe   = faith.name
+    --print(nombre_fe)
+
+    local rites_id = faith.burial_rites        -- valor de tipo BURIAL_RITES
+    print(rites_id)
+    local rite_string = BURIAL_NAMES[rites_id] or "DESCONOCIDO"
+    print(rite_string)
+    --[[
+    local br = DATA.fatten_burial_rites(rites_id)
+    local nombre_rito = br.name               -- string
+    local desc_rito   = br.description        -- string
+
+    print(nombre_rito)
+    print(desc_rito)
+    ]]--
+
+    -- Obtener la religión padre desde la fe
+    local religion_id = faith.religion  -- <- Nueva línea
+    local religion_name = DATA.religion_get_name(religion_id) or "Desconocida"  -- Asume que existe DATA.religion_get_name
+
+    -- Panel de fondo
+    ui.panel(rect)
+    local unit = ut.BASE_HEIGHT
+
+    -- Título del inspector
+    local title_panel = rect:subrect(0, 0, rect.width, unit, "left", "up"):shrink(5)
+    ui.centered_text("Religion Inspector", title_panel)
+
+    -- Área de contenido
+    local content = rect:subrect(0, unit, rect.width, rect.height - unit, "left", "up"):shrink(5)
+    local layout = ui.layout_builder()
+        :vertical()
+        :position(content.x, content.y)
+        :spacing(unit)
+        :build()
+
+    -- Sección: Faith
+    local faith_panel = layout:next(content.width, unit)
+    ut.data_entry("Faith: ", nombre_fe, faith_panel, "TODO: cargar y mostrar la fe del personaje")
+
+    -- Sección: Religion
+    local rel_panel = layout:next(content.width, unit)
+    ut.data_entry("Religion: ", religion_name, rel_panel, "TODO: cargar y mostrar la religión")
+
+    -- Sección: Burial Rites
+    local rites_panel = layout:next(content.width, unit)
+    ut.data_entry("Burial Rites: ", rite_string, rites_panel, "TODO: cargar y mostrar el rito funerario")
+
+    -- TODO: Añadir más secciones (doctrinas, rituales, estadísticas, etc.)
+end
+
+return religion
+
