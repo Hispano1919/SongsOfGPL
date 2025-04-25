@@ -1,88 +1,120 @@
-local language_utils = require "game.entities.language".Language
+local ui = require "engine.ui"
+local ut = require "game.ui-utils"
+local string = require "engine.string"
+local spirit_module = require "game.entities.spirit" -- <-- Importar el módulo
 
-local cl = {}
+local religion = {}
 
-
--- Módulo para manejar espíritus (Lua puro)
-local spirit_module = require "game.entities.spirit"
-
-cl.Spirit = {}
-cl.Spirit.__index = cl.Spirit
----@param domain string
----@param culture culture_id
----@return spirit_id
-function cl.Spirit:new(domain,culture)
-    local spirit = spirit_module.create_spirit()
-    
-    spirit_module.set_name(spirit, language_utils.get_random_name(DATA.culture_get_language(culture)))
-    spirit_module.set_domain(spirit, domain)
-    spirit_module.set_rank(spirit, 1)
-    
-    return spirit
+-- Calcula el rect del inspector de religión
+local function get_rect()
+    local fs = ui.fullscreen()
+    return fs:subrect(ut.BASE_HEIGHT*2, ut.BASE_HEIGHT * 11, ut.BASE_HEIGHT * 16, fs.height, "left", "up")
 end
 
-
-cl.Religion = {}
-cl.Religion.__index = cl.Religion
----@param culture culture_id
----@return religion_id
-function cl.Religion:new(culture)
-	local religion = DATA.create_religion()
-
-	DATA.religion_set_r(religion, love.math.random())
-	DATA.religion_set_g(religion, love.math.random())
-	DATA.religion_set_b(religion, love.math.random())
-
-	DATA.religion_set_name(religion, language_utils.get_random_faith_name(DATA.culture_get_language(culture)))
-
-	return religion
+-- Mask para cerrar al clicar fuera
+function religion.mask()
+    if ui.trigger(get_rect()) then return false end
+    return true
 end
 
----@class Faith
-cl.Faith = {}
-cl.Faith.__index = cl.Faith
+--- Dibuja el inspector de religión
+---@param gam GameScene
+---@param rect Rect
+function religion.draw(gam, rect)
+    -- Si no nos pasan rect, lo calculamos
+    rect = rect or get_rect()
 
----@param religion religion_id
----@param culture culture_id
----@return faith_id
-function cl.Faith:new(religion, culture)
-	local faith = DATA.create_faith()
+    local pid = WORLD.player_character
+    --print(pid)
 
-	DATA.faith_set_religion(faith, religion)  -- <- Línea añadida
+    local pop = DATA.fatten_pop(pid)
 
+    local fid = pop.faith      -- número (faith_id)
+    --print(fid)
 
-	DATA.faith_set_r(faith, DATA.religion_get_r(religion))
-	DATA.faith_set_g(faith, DATA.religion_get_g(religion))
-	DATA.faith_set_b(faith, DATA.religion_get_b(religion))
+    local faith = DATA.fatten_faith(fid)
 
-	DATA.force_create_subreligion(religion, faith)
-	DATA.faith_set_name(faith, language_utils.get_random_faith_name(DATA.culture_get_language(culture)))
-	DATA.faith_set_burial_rites(faith, BURIAL_RIGHTS.BURIAL)
+    local nombre_fe   = faith.name
+    --print(nombre_fe)
 
-	DATA.faith_set_birth_rites(faith, BIRTH_RITES.BLESSING)
-    DATA.faith_set_passage_rites(faith, PASSAGE_RITES.COMING_OF_AGE)
-    DATA.faith_set_disease_rites(faith, DISEASE_RITES.HEALING_PRAYER)
+    local rites_id = faith.burial_rites        -- valor de tipo BURIAL_RITES
+    --print(rites_id)
+    local rite_string = BURIAL_NAMES[rites_id] or "DESCONOCIDO"
+    --print(rite_string)
+    --[[
+    local br = DATA.fatten_burial_rites(rites_id)
+    local nombre_rito = br.name               -- string
+    local desc_rito   = br.description        -- string
 
-	local spirit = cl.Spirit:new("Fuego",culture)  -- <-- Agregar local aquí
-	DATA.faith_set_spirit(faith, spirit)  -- Necesitarías crear esta función en tu módulo DATA
+    print(nombre_rito)
+    print(desc_rito)
+    ]]--
 
+    -- Obtener la religión padre desde la fe
+    local religion_id = faith.religion  -- <- Nueva línea
+    local religion_name = DATA.religion_get_name(religion_id) or "Desconocida"  -- Asume que existe DATA.religion_get_name
 
-	return faith
-end
+    -- Panel de fondo
+    ui.panel(rect)
+    local unit = ut.BASE_HEIGHT
 
----@class Rite
-cl.Rite = {}
-cl.Rite.__index = cl.Rite
----@param faith faith_id
----@param culture culture_id
----@return rite_id
-function cl.Rite:new(faith, culture)
-    local rite = DATA.create_rite()  -- Necesitarías implementar esto
+    -- Título del inspector
+    local title_panel = rect:subrect(0, 0, rect.width, unit, "left", "up"):shrink(5)
+    ui.centered_text("Religion Inspector", title_panel)
+
+    -- Área de contenido
+    local content = rect:subrect(0, unit, rect.width, rect.height - unit, "left", "up"):shrink(5)
+    local layout = ui.layout_builder()
+        :vertical()
+        :position(content.x, content.y)
+        :spacing(unit)
+        :build()
+
+    -- Sección: Faith
+    local faith_panel = layout:next(content.width, unit)
+    ut.data_entry("Faith: ", nombre_fe, faith_panel, "TODO: cargar y mostrar la fe del personaje")
+
+    -- Sección: Religion
+    local rel_panel = layout:next(content.width, unit)
+    ut.data_entry("Religion: ", religion_name, rel_panel, "TODO: cargar y mostrar la religión")
+
+    -- Sección: Burial Rites
+    local rites_panel = layout:next(content.width, unit)
+    ut.data_entry("Burial Rites: ", rite_string, rites_panel, "TODO: cargar y mostrar el rito funerario")
+
+        -- Obtener nombres de los ritos
+    local birth_rite = BIRTH_NAMES[faith.birth_rites] or "Desconocido"
+    local passage_rite = PASSAGE_NAMES[faith.passage_rites] or "Desconocido"
+    local disease_rite = DISEASE_NAMES[faith.disease_rites] or "Desconocido"
     
-    DATA.rite_set_faith(rite, faith)
-    DATA.rite_set_name(rite, language_utils.get_random_faith_name(DATA.culture_get_language(culture)))
-    
-    return rite
-end
+    -- Mostrar en UI
+    local rites_1 = layout:next(content.width, unit)
+    local rites_2 = layout:next(content.width, unit)
+    local rites_3 = layout:next(content.width, unit)
 
-return cl
+    ut.data_entry("Ritos de Nacimiento:", birth_rite, rites_1,"")
+    ut.data_entry("Ritos de Paso:", passage_rite, rites_2, "")
+    ut.data_entry("Ritos de Enfermedad:", disease_rite, rites_3,"")
+
+    -- En religion.draw()
+    local spirit_name = "Ninguno"
+    spirit_name = spirit_module.get_name(faith.spirit)
+    spirit_domain = spirit_module.get_domain(faith.spirit)
+    spirit_rank = spirit_module.get_rank(faith.spirit)
+
+    -- Mostrar en UI
+    local spirit_panel_1 = layout:next(content.width, unit)
+    local spirit_panel_2 = layout:next(content.width, unit)
+    local spirit_panel_3 = layout:next(content.width, unit)
+
+    ut.data_entry("Espíritu principal: ", spirit_name, spirit_panel_1, "Espíritu asociado a esta fe")
+    ut.data_entry("Dominio: ", spirit_domain, spirit_panel_2, "Espíritu asociado a esta fe")
+    ut.data_entry("Spirit Rank: ", spirit_rank, spirit_panel_3, "Espíritu asociado a esta fe")
+
+
+
+
+    end
+
+return religion
+
