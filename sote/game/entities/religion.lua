@@ -3,20 +3,24 @@ local language_utils = require "game.entities.language".Language
 local cl = {}
 
 
+-- Módulo para manejar espíritus (Lua puro)
+local spirit_module = require "game.entities.spirit"
+
 cl.Spirit = {}
 cl.Spirit.__index = cl.Spirit
 ---@param domain string
 ---@param culture culture_id
----@return deity_id
-function cl.Spirit:new(domain, culture)
-    local deity = DATA.create_deity()  -- Asume función de creación
+---@return spirit_id
+function cl.Spirit:new(domain,culture)
+    local spirit = spirit_module.create_spirit()
     
-    DATA.deity_set_name(deity, language_utils.get_random_name(DATA.culture_get_language(culture)))
-    DATA.deity_set_domain(deity, domain)
-    DATA.deity_set_rank(deity, 1)
+    spirit_module.set_name(spirit, language_utils.get_random_name(DATA.culture_get_language(culture)))
+    spirit_module.set_domain(spirit, domain)
+    spirit_module.set_rank(spirit, 1)
     
-    return deity
+    return spirit
 end
+
 
 cl.Religion = {}
 cl.Religion.__index = cl.Religion
@@ -58,6 +62,10 @@ function cl.Faith:new(religion, culture)
 	DATA.faith_set_birth_rites(faith, BIRTH_RITES.BLESSING)
     DATA.faith_set_passage_rites(faith, PASSAGE_RITES.COMING_OF_AGE)
     DATA.faith_set_disease_rites(faith, DISEASE_RITES.HEALING_PRAYER)
+
+	local spirit = cl.Spirit:new("Fuego",culture)  -- <-- Agregar local aquí
+	DATA.faith_set_spirit(faith, spirit)  -- Necesitarías crear esta función en tu módulo DATA
+
 
 	return faith
 end
