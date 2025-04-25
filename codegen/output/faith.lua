@@ -54,7 +54,8 @@ DATA.faith_birth_rites = {}
 DATA.faith_passage_rites = {}
 ---@type (DISEASE_RITES)[]  -- Nuevo
 DATA.faith_disease_rites = {}
-
+---@type (spirits)[]
+DATA.faith_spirit = {}
 
 
 ---faith: LUA bindings---
@@ -201,8 +202,19 @@ function DATA.faith_set_disease_rites(faith_id, value)
     DATA.faith_disease_rites[faith_id] = value
 end
 
+function DATA.faith_set_spirit(faith_id, spirit_id)
+    DATA.faith_spirit[faith_id] = spirit_id
+end
+
+---@param faith_id faith_id
+---@return spirit_id
+function DATA.faith_get_spirit(faith_id)
+    return DATA.faith_spirit[faith_id]
+end
+
 local fat_faith_id_metatable = {
-    __index = function (t,k)
+    __index = function(t, k)
+        -- Campos existentes
         if (k == "name") then return DATA.faith_get_name(t.id) end
         if (k == "r") then return DATA.faith_get_r(t.id) end
         if (k == "g") then return DATA.faith_get_g(t.id) end
@@ -212,9 +224,12 @@ local fat_faith_id_metatable = {
         if (k == "birth_rites") then return DATA.faith_get_birth_rites(t.id) end
         if (k == "passage_rites") then return DATA.faith_get_passage_rites(t.id) end
         if (k == "disease_rites") then return DATA.faith_get_disease_rites(t.id) end
+        if (k == "spirit") then return DATA.faith_get_spirit(t.id) end
+        
         return rawget(t, k)
     end,
-    __newindex = function (t,k,v)
+    __newindex = function(t, k, v)
+        -- Campos existentes
         if (k == "name") then
             DATA.faith_set_name(t.id, v)
             return
@@ -235,7 +250,6 @@ local fat_faith_id_metatable = {
             DATA.faith_set_burial_rites(t.id, v)
             return
         end
-        -- Añadir setter para religión:
         if (k == "religion") then
             DATA.faith_set_religion(t.id, v)
             return
@@ -252,6 +266,13 @@ local fat_faith_id_metatable = {
             DATA.faith_set_disease_rites(t.id, v)
             return
         end
+        
+        -- Nuevo setter para el espíritu
+        if (k == "spirit") then
+            DATA.faith_set_spirit(t.id, v)
+            return
+        end
+        
         rawset(t, k, v)
     end
 }
