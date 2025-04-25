@@ -1,6 +1,7 @@
 local ui = require "engine.ui"
 local ut = require "game.ui-utils"
 local string = require "engine.string"
+local spirit_module = require "game.entities.spirit" -- <-- Importar el módulo
 
 local religion = {}
 
@@ -95,9 +96,25 @@ function religion.draw(gam, rect)
     ut.data_entry("Ritos de Paso:", passage_rite, rites_2, "")
     ut.data_entry("Ritos de Enfermedad:", disease_rite, rites_3,"")
 
+    -- En religion.draw()
+    local spirit_name = "Ninguno"
+    spirit_name = spirit_module.get_name(faith.spirit)
+    spirit_domain = spirit_module.get_domain(faith.spirit)
+    spirit_rank = spirit_module.get_rank(faith.spirit)
 
-    -- TODO: Añadir más secciones (doctrinas, rituales, estadísticas, etc.)
-end
+    -- Mostrar en UI
+    local spirit_panel_1 = layout:next(content.width, unit)
+    local spirit_panel_2 = layout:next(content.width, unit)
+    local spirit_panel_3 = layout:next(content.width, unit)
+
+    ut.data_entry("Espíritu principal: ", spirit_name, spirit_panel_1, "Espíritu asociado a esta fe")
+    ut.data_entry("Dominio: ", spirit_domain, spirit_panel_2, "Espíritu asociado a esta fe")
+    ut.data_entry("Spirit Rank: ", spirit_rank, spirit_panel_3, "Espíritu asociado a esta fe")
+
+
+
+
+    end
 
 return religion
 
