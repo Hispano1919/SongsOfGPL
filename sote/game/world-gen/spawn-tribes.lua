@@ -2,7 +2,6 @@ local realm_utils = require "game.entities.realm".Realm
 local cult = require "game.entities.culture"
 local rel = require "game.entities.religion"
 local pop_utils = require "game.entities.pop".POP
-local rite_utils  = require "game.entities.rite".Rite
 local language_utils = require "game.entities.language".Language
 local tabb = require "engine.table"
 local tile      = require "game.entities.tile"
@@ -267,7 +266,7 @@ function st.run()
 
 			local rg = rel.Religion:new(culture)
 			local faith = rel.Faith:new(rg, culture)
-			local rite = rite_utils:new(faith, culture)
+			local rite = rel.Faith:new(faith, culture)
 			DATA.faith_set_burial_rites(faith, tabb.select_one(love.math.random(), {
 				{
 					weight = 1,
