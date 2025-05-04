@@ -1,113 +1,80 @@
-local ffi = require("ffi")
+-- game/entities/rite.lua
+-- Low-level module to manage rites
+local rite = {
+    data = {},
+    last_id = 0
+}
 
-----------rite----------
-
----rite: LSP types---
-
----@class (exact) rite_id : table
----@field is_rite number
----@class (exact) fat_rite_id
----@field id rite_id
----@field name string
----@field faith faith_id
----@field spirits deity_id[]
-
----@class struct_rite
----@field faith faith_id
-
-ffi.cdef[[
-// Funciones FFI para rites (similar a faith.lua)
-int32_t dcon_create_rite();
-bool dcon_rite_is_valid(int32_t);
-void dcon_delete_rite(int32_t);
-]]
-
----rite: FFI arrays---
----@type string[]
-DATA.rite_name = {}
----@type faith_id[]
-DATA.rite_faith = {} -- Religión/fe asociada
----@type table<rite_id, deity_id[]> 
-DATA.rite_spirits = {} -- Lista de deidades/espíritus
-
----rite: LUA bindings---
+---@class rite_id
+---@field id number
 
 ---@return rite_id
-function DATA.create_rite()
-    local id = DCON.dcon_create_rite() + 1
-    return id --[[@as rite_id]]
+function rite.create_rite()
+    local new_id = rite.last_id + 1
+    rite.last_id = new_id
+    
+    -- Initialize the rite data structure
+    rite.data[new_id] = {
+        id = new_id,
+        name = "",
+        faith = nil,
+        spirits = {}  -- list of spirit_id
+    }
+
+    return { id = new_id }
 end
 
 ---@param rite_id rite_id
-function DATA.delete_rite(rite_id)
-    assert(DCON.dcon_rite_is_valid(rite_id - 1), "Rite inválido")
-    DCON.dcon_delete_rite(rite_id - 1)
+function rite.delete_rite(rite_id)
+    rite.data[rite_id.id] = nil
 end
 
 ---@param rite_id rite_id
 ---@return string
-function DATA.rite_get_name(rite_id)
-    return DATA.rite_name[rite_id] or ""
+function rite.get_name(rite_id)
+    return rite.data[rite_id.id].name
 end
 
 ---@param rite_id rite_id
----@param value string
-function DATA.rite_set_name(rite_id, value)
-    DATA.rite_name[rite_id] = value
+---@param name string
+function rite.set_name(rite_id, name)
+    rite.data[rite_id.id].name = name
 end
 
 ---@param rite_id rite_id
 ---@return faith_id
-function DATA.rite_get_faith(rite_id)
-    return DATA.rite_faith[rite_id]
+function rite.get_faith(rite_id)
+    return rite.data[rite_id.id].faith
 end
 
 ---@param rite_id rite_id
----@param value faith_id
-function DATA.rite_set_faith(rite_id, value)
-    DATA.rite_faith[rite_id] = value
+---@param faith faith_id
+function rite.set_faith(rite_id, faith)
+    rite.data[rite_id.id].faith = faith
 end
 
 ---@param rite_id rite_id
----@return deity_id[]
-function DATA.rite_get_spirits(rite_id)
-    return DATA.rite_spirits[rite_id] or {}
+---@return spirit_id[]
+function rite.get_spirits(rite_id)
+    return rite.data[rite_id.id].spirits
 end
 
 ---@param rite_id rite_id
----@param deity_id deity_id
-function DATA.rite_add_spirit(rite_id, deity_id)
-    if not DATA.rite_spirits[rite_id] then
-        DATA.rite_spirits[rite_id] = {}
-    end
-    table.insert(DATA.rite_spirits[rite_id], deity_id)
+---@param spirit_id spirit_id
+function rite.add_spirit(rite_id, spirit_id)
+    table.insert(rite.data[rite_id.id].spirits, spirit_id)
 end
 
--- Metatable para fat_rite_id
-local fat_rite_id_metatable = {
-    __index = function(t, k)
-        if k == "name" then return DATA.rite_get_name(t.id) end
-        if k == "faith" then return DATA.rite_get_faith(t.id) end
-        if k == "spirits" then return DATA.rite_get_spirits(t.id) end
-        return rawget(t, k)
-    end,
-    __newindex = function(t, k, v)
-        if k == "name" then
-            DATA.rite_set_name(t.id, v)
-        elseif k == "faith" then
-            DATA.rite_set_faith(t.id, v)
-        else
-            rawset(t, k, v)
+---@param rite_id rite_id
+---@param spirit_id spirit_id
+function rite.remove_spirit(rite_id, spirit_id)
+    local list = rite.data[rite_id.id].spirits
+    for i, sp in ipairs(list) do
+        if sp.id == spirit_id.id then
+            table.remove(list, i)
+            return
         end
     end
-}
-
----@param id rite_id
----@return fat_rite_id
-function DATA.fatten_rite(id)
-    local result = { id = id }
-    setmetatable(result, fat_rite_id_metatable)
-    return result --[[@as fat_rite_id]]
 end
 
-return DATA
+return rite

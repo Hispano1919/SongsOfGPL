@@ -6,12 +6,13 @@ rtab.POP = {}
 ---Creates a new POP
 ---@param race race_id
 ---@param faith faith_id
+---@param rite rite_id
 ---@param culture culture_id
 ---@param female boolean
 ---@param year number year pop was born
 ---@param birth_tick number tick in year pop was born
 ---@return pop_id
-function rtab.POP.new(race, faith, culture, female, year, birth_tick)
+function rtab.POP.new(race, faith, rite, culture, female, year, birth_tick)	
 	local r = DATA.fatten_pop(DATA.create_pop())
 
 	assert(faith ~= nil)
@@ -26,6 +27,7 @@ function rtab.POP.new(race, faith, culture, female, year, birth_tick)
 
 	r.race = race
 	r.faith = faith
+	r.rite    = rite
 	r.culture = culture
 	r.female = female
 	r.birth_year = year

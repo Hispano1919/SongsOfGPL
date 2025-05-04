@@ -70,19 +70,39 @@ function cl.Faith:new(religion, culture)
 	return faith
 end
 
----@class Rite
+-- al inicio del fichero, junto con el resto de requires
+local rite_module   = require "game.entities.rite"
+
 cl.Rite = {}
 cl.Rite.__index = cl.Rite
+
 ---@param faith faith_id
 ---@param culture culture_id
 ---@return rite_id
 function cl.Rite:new(faith, culture)
-    local rite = DATA.create_rite()  -- Necesitarías implementar esto
-    
-    DATA.rite_set_faith(rite, faith)
-    DATA.rite_set_name(rite, language_utils.get_random_faith_name(DATA.culture_get_language(culture)))
-    
+    -- 1) Creas el rito de bajo nivel
+    local rite = rite_module.create_rite()
+
+    -- 2) Lo vinculas a la fe y le pones un nombre
+    rite_module.set_faith(rite, faith)
+    rite_module.set_name(rite,
+        language_utils.get_random_rite_name(
+            DATA.culture_get_language(culture)
+        )
+    )
+
+    -- 3) Le añades X espíritus (puedes decidir cantidad o dominios como creas)
+    --    Aquí de ejemplo creamos entre 1 y 3 espíritus y les asignamos dominios aleatorios
+    local domains = { "Fuego", "Agua", "Tierra", "Aire" }
+    local count   = love.math.random(1, 3)
+    for i = 1, count do
+        local dom    = domains[love.math.random(#domains)]
+        local spirit = cl.Spirit:new(dom, culture)
+        rite_module.add_spirit(rite, spirit)
+    end
+
     return rite
 end
+
 
 return cl
