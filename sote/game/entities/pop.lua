@@ -2,7 +2,7 @@ local language_utils = require "game.entities.language".Language
 
 local rtab = {}
 rtab.POP = {}
-
+local pop_to_rite = {}
 ---Creates a new POP
 ---@param race race_id
 ---@param faith faith_id
