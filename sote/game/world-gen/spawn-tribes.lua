@@ -21,7 +21,7 @@ local st = {}
 ---@param race_id race_id
 ---@param culture culture_id
 ---@param faith faith_id
-local function make_new_realm(capitol_id, race_id, culture, faith)
+local function make_new_realm(capitol_id, race_id, culture, faith, rite)
 	-- print("new realm")
 
 	local r = realm_utils.new()
@@ -79,7 +79,7 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 	-- spawn leader
 
 	do
-		local elite_character = pe.generate_new_noble(r, capitol_id, race_id, faith, culture)
+		local elite_character = pe.generate_new_noble(r, capitol_id, race_id, faith, culture, rite)
 		local popularity = DATA.force_create_popularity(elite_character, r)
 		local fat_popularity = DATA.fatten_popularity(popularity)
 		fat_popularity.value = AGE_YEARS(elite_character) / 10
@@ -88,7 +88,7 @@ local function make_new_realm(capitol_id, race_id, culture, faith)
 
 	-- spawn nobles
 	for i = 1, pop_to_spawn / 10 do
-		local contender = pe.generate_new_noble(r, capitol_id, race_id, faith, culture)
+		local contender = pe.generate_new_noble(r, capitol_id, race_id, faith, culture, rite)
 		local popularity = DATA.force_create_popularity(contender, r)
 		local fat_popularity = DATA.fatten_popularity(popularity)
 		fat_popularity.value = AGE_YEARS(contender) / 15
@@ -281,7 +281,7 @@ function st.run()
 					entry = BURIAL_RIGHTS.NONE
 				}
 			}))
-			make_new_realm(prov, r, culture, faith)
+			make_new_realm(prov, r, culture, faith, rite)
 			queue:enqueue(prov)
 		end
 	end
@@ -332,7 +332,8 @@ function st.run()
 							neigh,
 							race,
 							culture,
-							faith
+							faith,
+							rite
 						)
 						queue:enqueue(neigh)
 					end

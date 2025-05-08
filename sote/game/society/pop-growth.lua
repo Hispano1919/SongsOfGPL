@@ -85,6 +85,7 @@ function pg.add_remove(to_add,to_remove)
 
 		local race = DATA.pop_get_race(pp)
 		local faith = DATA.pop_get_faith(pp)
+		local rite = pop_utils.get_rite(pp)
 		local culture = DATA.pop_get_culture(pp)
 		local fat_race = DATA.fatten_race(race)
 
@@ -104,6 +105,7 @@ function pg.add_remove(to_add,to_remove)
 		local newborn = pop_utils.new(
 			race,
 			faith,
+			rite,
 			culture,
 			love.math.random() > fat_race.males_per_hundred_females / (100 + fat_race.males_per_hundred_females),
 			WORLD.year,

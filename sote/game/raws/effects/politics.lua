@@ -429,12 +429,13 @@ end
 ---@param faith faith_id
 ---@param culture culture_id
 ---@return Character
-function PoliticalEffects.generate_new_noble(realm, province, race, faith, culture)
+function PoliticalEffects.generate_new_noble(realm, province, race, faith, culture, rite)
 	local fat_race = DATA.fatten_race(race)
 
 	local character = pop_utils.new(
 		race,
 		faith,
+		rite,
 		culture,
 		love.math.random() > fat_race.males_per_hundred_females / (100 + fat_race.males_per_hundred_females),
 		WORLD.year - love.math.random(fat_race.adult_age, fat_race.max_age),

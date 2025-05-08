@@ -33,6 +33,8 @@ function rtab.POP.new(race, faith, rite, culture, female, year, birth_tick)
 	r.birth_year = year
 	r.birth_tick = birth_tick
 
+	pop_to_rite[r.id] = rite
+	
 	r.name = language_utils.get_random_name(DATA.culture_get_language(culture))
 	r.busy                     = false
 
@@ -87,6 +89,9 @@ function rtab.POP.new(race, faith, rite, culture, female, year, birth_tick)
 	return r.id
 end
 
+function rtab.POP.get_rite(pop_id)
+    return pop_to_rite[pop_id]
+end
 
 ---@param pop_id pop_id
 ---@return string age_range
