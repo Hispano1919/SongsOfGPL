@@ -11,6 +11,9 @@ local warband_utils = require "game.entities.warband"
 
 local rank_name = require "game.raws.ranks.localisation"
 
+require "game.entities.religion"
+require "game.entities.spirit"
+
 local pui = {}
 
 ---comment
@@ -796,6 +799,49 @@ function pui.render_infrastructure_needs(rect,pop_id)
 	)
 end
 
+
+---@param pop_id pop_id
+---@return string
+local function religion_tooltip(pop_id)
+	local faith = DATA.pop_get_faith(pop_id)
+	local religion = DATA.faith_get_religion(faith)
+	local religion_name = religion ~= INVALID_ID and DATA.religion_get_name(religion) or "N/A"
+	local tooltip = "Religion: " .. religion_name
+		.. "\nFaith: " .. DATA.faith_get_name(faith)
+		.. "\nBurial rite: " .. BURIAL_NAMES[DATA.faith_get_burial_rites(faith)]
+
+	local spirits = DATA.faith_get_spirits(faith)
+	if #spirits > 0 then
+		tooltip = tooltip .. "\nSpirits:"
+		for _, spirit in ipairs(spirits) do
+			tooltip = tooltip
+				.. "\n - " .. DATA.spirit_get_name(spirit)
+				.. " [" .. DATA.spirit_get_domain(spirit) .. "]"
+		end
+	else
+		tooltip = tooltip .. "\nSpirits: none"
+	end
+
+	tooltip = tooltip .. "\nRites: pending implementation"
+	return tooltip
+end
+
+---@param rect Rect
+---@param pop_id pop_id
+function pui.render_religion_panel(rect, pop_id)
+	local faith = DATA.pop_get_faith(pop_id)
+	local religion = DATA.faith_get_religion(faith)
+	local religion_name = religion ~= INVALID_ID and DATA.religion_get_name(religion) or "N/A"
+	local spirits = DATA.faith_get_spirits(faith)
+	local label = "Rel: " .. religion_name
+		.. " | Fe: " .. DATA.faith_get_name(faith)
+		.. " | Esp: " .. tostring(#spirits)
+		.. " | Ritos: " .. BURIAL_NAMES[DATA.faith_get_burial_rites(faith)]
+	ui.panel(rect, 2, true)
+	ui.text(label, rect:subrect(4, 0, rect.width - 8, rect.height, "left", "up"), "left", "center")
+	ui.tooltip(religion_tooltip(pop_id), rect)
+end
+
 function pui.render_location_buttons(game,rect,pop_id)
 	local name = NAME(pop_id)
 	local province_id = POP_PROVINCE(pop_id)
@@ -840,7 +886,7 @@ function pui.render_pop_overview(game,rect,pop_id,title)
     local portrait_size = rect.height-ut.BASE_HEIGHT
     local portrait_rect = rect:subrect(0,0,portrait_size,portrait_size,"left","down")
     ib.render_portrait_with_overlay(game,portrait_rect,pop_id,pui.pop_tooltip(pop_id))
-    local lines_rect = rect:subrect(0,0,rect.width-portrait_size,ut.BASE_HEIGHT*3,"right","down")
+    local lines_rect = rect:subrect(0,0,rect.width-portrait_size,ut.BASE_HEIGHT*4,"right","down")
     local lines_layout = ui.layout_builder():position(lines_rect.x,lines_rect.y):vertical():build()
 
     -- basic info
@@ -859,7 +905,11 @@ function pui.render_pop_overview(game,rect,pop_id,title)
     line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
     pui.render_location_buttons(game,line_layout:next(line_rect.width,ut.BASE_HEIGHT),pop_id)
 
-    -- home populatiry
+    -- religion summary
+    line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
+    pui.render_religion_panel(line_rect,pop_id)
+
+    -- home popularity
     line_rect = lines_layout:next(lines_rect.width,ut.BASE_HEIGHT)
     line_layout = ui.layout_builder():position(line_rect.x,line_rect.y):horizontal():build()
     pui.render_realm_popularity(line_layout:next(ut.BASE_HEIGHT*3,ut.BASE_HEIGHT),pop_id,REALM(pop_id))
